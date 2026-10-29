@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import z from "@deepseek-ai/schemastery";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -415,14 +415,14 @@ test("renderSources reads a config whose values are references", () => {
 // holds paths but never file contents.
 // ---------------------------------------------------------------------------
 
-test("diagnostics records decisions and writes them beside the memory folder", () => {
-  const folder = mkdtempSync(join(tmpdir(), "ofttold-diag-"));
+test("diagnostics records decisions and writes them under the plugin storage root", () => {
+  const storage = mkdtempSync(join(tmpdir(), "ofttold-diag-"));
   try {
     const diagnostics = new Diagnostics();
     diagnostics.record("injected", { loaded: 2, chars: 700 });
     diagnostics.record("nothing-loaded", { reason: "no configured section resolved" });
-    const file = diagnostics.flush(folder);
-    assert.equal(file, join(folder, DIAGNOSTICS_DIR, DIAGNOSTICS_FILE));
+    const file = diagnostics.flush(storage);
+    assert.equal(file, join(storage, DIAGNOSTICS_DIR, DIAGNOSTICS_FILE));
     const written = JSON.parse(readFileSync(file, "utf8"));
     assert.equal(written.plugin, "dsh-ofttold-memory");
     assert.equal(written.entries.length, 2);
@@ -431,7 +431,7 @@ test("diagnostics records decisions and writes them beside the memory folder", (
     // Every entry carries a timestamp, or the file cannot order a symptom.
     assert.match(written.entries[1].at, /^\d{4}-\d{2}-\d{2}T/);
   } finally {
-    rmSync(folder, { recursive: true, force: true });
+    rmSync(storage, { recursive: true, force: true });
   }
 });
 
@@ -453,15 +453,37 @@ test("diagnostics never throws when the folder cannot be written", () => {
 });
 
 test("diagnostics records no file contents, only the facts about them", () => {
-  const folder = mkdtempSync(join(tmpdir(), "ofttold-diag2-"));
+  const memory = mkdtempSync(join(tmpdir(), "ofttold-diag2-"));
+  const storage = mkdtempSync(join(tmpdir(), "ofttold-diag2-store-"));
   try {
-    writeFileSync(join(folder, "MEMORY.md"), "# 常被提起\n\n这是不该出现在诊断里的正文。\n");
+    writeFileSync(join(memory, "MEMORY.md"), "# 常被提起\n\n这是不该出现在诊断里的正文。\n");
     const diagnostics = new Diagnostics();
-    const rendered = renderSources({ sections: ["常被提起"] }, folder);
+    const rendered = renderSources({ sections: ["常被提起"] }, memory);
     diagnostics.record("injected", { loaded: rendered.loaded, failed: rendered.failed, chars: rendered.text.length });
-    const written = readFileSync(diagnostics.flush(folder), "utf8");
+    const written = readFileSync(diagnostics.flush(storage), "utf8");
     assert.ok(!written.includes("这是不该出现在诊断里的正文"), "diagnostics leaked file contents");
   } finally {
-    rmSync(folder, { recursive: true, force: true });
+    rmSync(memory, { recursive: true, force: true });
+    rmSync(storage, { recursive: true, force: true });
+  }
+});
+
+test("diagnostics never writes inside the memory folder", () => {
+  // The memory folder is read-only input. A plugin that drops files among notes
+  // someone already keeps is not the read-only promise the README makes, so the
+  // diagnostic lives under the plugin's own storage root instead.
+  const memory = mkdtempSync(join(tmpdir(), "ofttold-mem-"));
+  const storage = mkdtempSync(join(tmpdir(), "ofttold-store-"));
+  try {
+    const diagnostics = new Diagnostics();
+    diagnostics.record("injected", { loaded: 1, chars: 100 });
+    const file = diagnostics.flush(storage);
+    assert.equal(file, join(storage, DIAGNOSTICS_DIR, DIAGNOSTICS_FILE));
+    // Nothing new inside the memory folder, including the diagnostics directory.
+    assert.deepEqual(readdirSync(memory), []);
+    assert.ok(!existsSync(join(memory, DIAGNOSTICS_DIR)), "diagnostics wrote inside the memory folder");
+  } finally {
+    rmSync(memory, { recursive: true, force: true });
+    rmSync(storage, { recursive: true, force: true });
   }
 });

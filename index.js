@@ -23,6 +23,8 @@
  */
 
 import { createUserMessage } from "@deepseek-ai/dsh-llm";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import z from "@deepseek-ai/schemastery";
 import { z as zod } from "zod";
 
@@ -182,6 +184,21 @@ function memoryDirectory(agent, config) {
 }
 
 /**
+ * Where the plugin keeps its own files.
+ *
+ * Resolved from `DSH_HOME` when the harness sets it, else `~/.dsh` — the same
+ * root the plugin's default memory folder lives under. Kept separate from
+ * `memoryDirectory` on purpose: the memory folder is read-only input, and the
+ * diagnostics file must not land among the user's notes.
+ *
+ * @returns {string} Absolute storage root.
+ */
+function storageDirectory() {
+  const configured = process.env.DSH_HOME;
+  return configured !== undefined && configured !== "" ? expandPath(configured, process.cwd()) : join(homedir(), ".dsh");
+}
+
+/**
  * Register the pre-step listener for the lifetime of `ctx`.
  *
  * Injection happens only at step 1 of a turn. Later steps in the same turn share
@@ -286,7 +303,7 @@ export function apply(ctx, config) {
       // The most common "it does nothing" report: the folder exists, the heading
       // does not match. Recording it is the whole point of the diagnostic file.
       diagnostics.record("nothing-loaded", { memoryDir, reason: "no configured section resolved" });
-      diagnostics.flush(memoryDir);
+      diagnostics.flush(storageDirectory());
       return decision;
     }
     diagnostics.record("injected", {
@@ -295,7 +312,7 @@ export function apply(ctx, config) {
       failed: rendered.failed,
       chars: rendered.text.length,
     });
-    diagnostics.flush(memoryDir);
+    diagnostics.flush(storageDirectory());
 
     return {
       ...decision,

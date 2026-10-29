@@ -19,6 +19,7 @@
     "templates/",
     "cordis.patch.yml",
     "icon.png",
+    "docs/",
     "locale/*.json",
     "README.md",
     "README.zh-CN.md",

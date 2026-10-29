@@ -305,7 +305,7 @@ window.__ModuleLoader__.load({
           { style: { margin: "8px 0" } },
           h("code", {}, state.memoryDir?.text ?? ""),
           " → ",
-          h("code", {}, ".ofttold-memory/diagnostics.json"),
+          h("code", {}, "~/.dsh/ofttold-memory/diagnostics.json"),
         ),
         h(
           "button",
@@ -322,7 +322,7 @@ window.__ModuleLoader__.load({
                 `workspaceRelative: ${state.workspaceRelative?.text ?? "(not set)"}`,
                 `namespace served: ${state.available === true ? "yes" : "no"}`,
                 `writable: ${state.writable === true ? "yes" : "no"}`,
-                "diagnostics file: .ofttold-memory/diagnostics.json inside the memory folder",
+                "diagnostics file: ~/.dsh/ofttold-memory/diagnostics.json",
               ].join("\n");
               // `navigator.clipboard` is absent on insecure origins, so the button
               // must not be the only way to get the text out: it also selects the
