@@ -134,7 +134,11 @@ const stateSchema = zod.object({
  * @returns {string} Absolute directory used to resolve relative paths.
  */
 function baseDirectory(agent, config) {
-  if (config.workspaceRelative) {
+  // The Config schema defaults this to true, but that default only exists after
+  // validation. Testing truthiness would silently mean "false" for any caller
+  // that hands `apply` an unvalidated object, so the code states the documented
+  // default itself and only an explicit `false` turns it off.
+  if (config.workspaceRelative !== false) {
     const cwd = agent?.session?.header?.cwd;
     if (typeof cwd === "string" && cwd !== "") return cwd;
   }

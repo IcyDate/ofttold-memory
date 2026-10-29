@@ -90,3 +90,46 @@ test("the registered state schema accepts what init produces", async () => {
     messageCount: 0,
   });
 });
+
+test("the injected message the listener returns is what the reducer later recognises", async () => {
+  // The whole design rests on this: the listener builds a message stamped with
+  // `source.kind = name`, and the reducer decides "this was my injection" by
+  // reading that same field back out of the durable event. If the two ever
+  // drifted apart, injection would happen once and then immediately repeat,
+  // because the reducer would never see an injection to record.
+  const ctx = await mounted();
+  const dir = mkdtempSync(join(tmpdir(), "anchor-loop-"));
+  writeFileSync(join(dir, "notes.md"), "## anchors\n\n- one\n", "utf8");
+  apply(ctx, { sources: [{ path: "notes.md", heading: "anchors" }], header: "Standing", maxChars: 100 });
+
+  // Capture the listener the plugin registered on this context.
+  let listener;
+  const original = ctx.on.bind(ctx);
+  ctx.on = (event, handler, options) => {
+    if (event === "agent/pre-step") listener = handler;
+    return original(event, handler, options);
+  };
+  apply(ctx, { sources: [{ path: "notes.md", heading: "anchors" }], header: "Standing", maxChars: 100 });
+  assert.ok(listener, "the pre-step listener must be registered");
+
+  const session = realSession(dir);
+  const agent = { session };
+  const decision = await listener(
+    { agent, messages: [], turn: 1, step: 1, signal: { aborted: false } },
+    async () => ({ kind: "enter", messages: [] }),
+  );
+  assert.equal(decision.messages.length, 1, "step 1 must inject");
+
+  // Commit exactly what the listener produced, then let the registry fold it.
+  session.append("user/message", decision.messages[0], { surfaceOp: "append" });
+  const state = ctx.sessionProjections.stateOf(session, name);
+  assert.equal(state.injectedCount, 1, "the reducer must recognise its own message");
+  assert.equal(state.messageCount, 1);
+
+  // A second turn at step 1 now sees one prior injection and must stay quiet.
+  const again = await listener(
+    { agent, messages: [], turn: 2, step: 1, signal: { aborted: false } },
+    async () => ({ kind: "enter", messages: [] }),
+  );
+  assert.deepEqual(again.messages, [], "the second turn must not inject again");
+});
