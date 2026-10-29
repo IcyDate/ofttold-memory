@@ -197,22 +197,16 @@ function fakeClientContext() {
   const registered = [];
   const disposers = [];
   const services = new Map();
-  // Deferred service waits, the way `ctx.inject` works: the callback is held
-  // until the service is provided, because a client service that arrives after
-  // `apply` does not re-run `apply`.
-  const waiting = new Map();
+  // Service arrival is an event, not a deferred callback: the dynamic client
+  // facade withholds `inject` entirely, so a plugin can only observe a
+  // late-provided service through ctx.on("internal/service").
+  const serviceListeners = new Set();
   const ctx = {
     get: (name) => services.get(name),
-    inject(deps, callback) {
-      for (const dep of deps) {
-        if (services.has(dep)) {
-          callback(ctx);
-          return;
-        }
-        const list = waiting.get(dep) ?? [];
-        list.push(callback);
-        waiting.set(dep, list);
-      }
+    on(name, listener) {
+      if (name !== "internal/service") return () => {};
+      serviceListeners.add(listener);
+      return () => serviceListeners.delete(listener);
     },
     effect(fn, label) {
       const dispose = fn();
@@ -238,9 +232,9 @@ function fakeClientContext() {
     registered,
     supply(name, value) {
       services.set(name, value);
-      const list = waiting.get(name) ?? [];
-      waiting.delete(name);
-      for (const callback of list) callback(ctx);
+      // The real event carries the name and the value; the name is what the
+      // plugin filters on.
+      serviceListeners.forEach((listener) => listener(name, value));
     },
   };
 }

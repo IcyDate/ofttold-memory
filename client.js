@@ -137,18 +137,24 @@ window.__ModuleLoader__.load({
         }
       };
       // The mirror is only subscribable once the service exists, and a service
-      // that arrives after `apply` does NOT re-run `apply`. Waiting through
-      // `ctx.inject` is what makes a late-arriving configForms still bind: the
-      // callback runs the moment the service is provided, and its fiber is owned
-      // by this plugin, so it is disposed with the page.
+      // that arrives after `apply` does NOT re-run `apply` — verified against the
+      // real cordis Context. Waiting for it therefore has to be an event, not a
+      // `ctx.inject` call: the dynamic client facade deliberately withholds
+      // `inject` from its verb whitelist (only effect/on/once/provide/timer
+      // helpers are exposed), so calling it here would throw in the browser.
+      // `internal/service` fires on every provide, carrying the service name and
+      // its value, and `on` is in that whitelist.
       const attach = () => {
         const forms = ctx.get("configForms");
         mirrorOff?.();
         mirrorOff = forms?.describe().subscribe?.(rebind);
         rebind();
       };
-      if (ctx.get("configForms") === undefined) ctx.inject(["configForms"], attach);
-      else attach();
+      const serviceOff = ctx.on?.("internal/service", (name) => {
+        if (name !== "configForms") return;
+        attach();
+      });
+      if (ctx.get("configForms") !== undefined) attach();
       return {
         getSnapshot: () => current?.getSnapshot() ?? { status: "unavailable", value: undefined, writable: false },
         subscribe: (listener) => {
@@ -168,6 +174,7 @@ window.__ModuleLoader__.load({
         dispose: () => {
           currentOff?.();
           mirrorOff?.();
+          serviceOff?.();
           current = undefined;
           listeners.clear();
         },
