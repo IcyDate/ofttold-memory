@@ -132,6 +132,43 @@ An agent that writes its own memory mixes "what I just thought of" with "what ke
 coming back", and within a few turns the list stops being trustworthy. The value of
 memory comes from the fact that someone else chose it.
 
+## What a rule hangs on
+
+Whether a rule gets followed has little to do with how well it is written, and a lot to
+do with **what is in hand at the moment it fires**.
+
+Four measured cells: a rule hung on a moment — "read two files at the start of work" —
+fired **1/11**; another on a moment — "write the diary" — fired **4/4**; one on an
+event — "update the index after writing" — **5/5**; another on an event — "also refresh
+the emotion cache" — **0/9**. Every cell has both hits and misses, so "events beat
+moments" on its own predicts nothing.
+
+Three questions instead:
+
+1. **Hanging on an event is usually better — but not because it is an event; because it
+   puts the trigger where the information is still warm.**
+2. **A moment works, but only at a place where attention is free.** "Before you deliver"
+   qualifies: the work is done and a reply is being assembled.
+3. **The only real test: is the information this step needs already in hand?** Generated
+   in place from what you just finished → it fires. Requiring a file to be re-read, or an
+   answer to a question you do not already have ("how do I feel right now") → it is
+   skipped.
+
+Two consequences: make a maintenance step **a by-product of the same material** (the
+index line is a compression of the diary), not a second question; and **make it as cheap
+as one command** — when editing one line means reading a whole file, the cost exceeds
+the benefit.
+
+## When the index needs tiers
+
+One line per day, about 472 characters each. Twenty lines ≈ 9436 characters ≈ 6300
+tokens — **that is the trigger, not the ceiling**: at that size the index starts being
+the thing that overflows the context (left untiled for a year, it measured 101324
+characters ≈ 67549 tokens).
+
+Three tiers: hot = the last 14 days kept in full; warm = older, four days merged into
+one line; cold = untouched original text, still greppable.
+
 ## After a stranger installs it, how do they grow their own fish
 
 This section answers the question most easily skipped: **what actually happens when
