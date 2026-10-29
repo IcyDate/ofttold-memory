@@ -151,10 +151,9 @@ window.__ModuleLoader__.load({
         /**
          * Release every subscription this scope holds.
          *
-         * The `ctx.inject` callback's fiber is disposed with the plugin, but the
-         * mirror subscription it took out is not: an unsubscribe returned to a
-         * callback is the caller's to keep. Without this, a page that is
-         * unloaded and reloaded leaks one mirror listener per load.
+         * The service-event listener and the mirror subscription both outlive
+         * `apply` unless they are dropped explicitly; without this, a page that is
+         * unloaded and reloaded leaks one listener per load.
          */
         dispose: () => {
           currentOff?.();
@@ -171,13 +170,6 @@ window.__ModuleLoader__.load({
       };
     }
 
-    /**
-     * Stage the entry's config into a form the shared Plugins page can save.
-     *
-     * The list and boolean fields need explicit parse rules: the shared model
-     * only knows how to stage text and numbers, and a `sections` list typed as
-     * text must become an array before it reaches the Host schema.
-     */
     /**
      * Render a `sections` array as the one-heading-per-line text the field edits.
      *
