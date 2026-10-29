@@ -225,3 +225,23 @@ test("an unvalidated config with no sections still injects the default one", asy
   assert.equal(decision.messages.length, 1, "the documented default section must apply");
   assert.match(decision.messages[0].content[0].text, /常被提起/);
 });
+
+test("the settings page never renders an object section as [object Object]", async () => {
+  // The profile this plugin is developed against uses the object form for its
+  // sections (a per-section file, budget, and label). The settings form can only
+  // express bare headings, so the object form must be shown read-only rather than
+  // flattened into text -- saving a flattened array would drop every per-section
+  // file and budget without saying so.
+  const { readFileSync } = await import("node:fs");
+  const { fileURLToPath } = await import("node:url");
+  const { dirname, join } = await import("node:path");
+  const here = dirname(fileURLToPath(import.meta.url));
+  const source = readFileSync(join(here, "..", "client.js"), "utf8");
+  // The defect was joining the raw array, which stringifies object entries.
+  // Mapping each entry to its heading first is the fix, so a bare `raw.join`
+  // (or `value.join`) is what must not come back.
+  assert.equal(source.includes("raw.join("), false, "the raw array must never be joined directly");
+  assert.equal(source.includes(".value.join("), false, "the raw array must never be joined directly");
+  assert.equal(source.includes("sectionsComplex"), true, "the form must detect the object form and disable that field");
+  assert.equal(source.includes("entry?.heading"), true, "object entries must be displayed by their heading");
+});

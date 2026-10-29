@@ -17,6 +17,7 @@ window.__ModuleLoader__.load({
       memoryDirHint: "Markdown notes live here. Created with a starter file on first run.",
       sections: "Sections to keep visible",
       sectionsHint: "One heading per line, written exactly as it appears in your file.",
+      sectionsComplexHint: "This config uses the object form (per-section file or budget), so it is edited in the profile file rather than here.",
       maxChars: "Characters per section",
       maxCharsHint: "600 characters is roughly 400 tokens, once per session.",
       header: "First line of the injected block",
@@ -47,6 +48,7 @@ window.__ModuleLoader__.load({
       memoryDirHint: "markdown 笔记放在这里。第一次运行会自动创建并放一份起始文件。",
       sections: "常驻的小节",
       sectionsHint: "一行一个小节名，必须和文件里的标题一字不差。",
+      sectionsComplexHint: "这份配置用了对象写法（某节单独的文件或预算），请在 profile 文件里改，这里只读。",
       maxChars: "每节字符上限",
       maxCharsHint: "600 字符约 400 token，每个会话一次。",
       header: "注入块的第一行",
@@ -118,11 +120,21 @@ window.__ModuleLoader__.load({
         ]);
         this.state = this.form.bind(() => {
           const value = this.form.field("sections");
+          const raw = value?.value;
+          // An object entry (`{ file, heading, maxChars, label }`) cannot be
+          // represented in a one-heading-per-line text field. Round-tripping it
+          // through text would replace the whole array on save and silently drop
+          // every per-section file and budget, so the field is shown read-only
+          // instead. Only the entries the text form can express are editable.
+          const complex = Array.isArray(raw) && raw.some((entry) => typeof entry === "object" && entry !== null);
+          const headings = Array.isArray(raw)
+            ? raw.map((entry) => (typeof entry === "string" ? entry : typeof entry?.heading === "string" ? entry.heading : "")).join("\n")
+            : "";
           return {
             ...this.form.shell(),
             memoryDir: this.form.field("memoryDir"),
-            // The Host stores a list; the text field shows one heading per line.
-            sections: Array.isArray(value?.value) ? value.value.join("\n") : value,
+            sections: complex ? { value: headings, overridden: value?.overridden } : Array.isArray(raw) ? { ...value, value: headings } : value,
+            sectionsComplex: complex,
             maxChars: this.form.field("maxChars"),
             header: this.form.field("header"),
             refreshIntervalMs: this.form.field("refreshIntervalMs"),
@@ -149,15 +161,20 @@ window.__ModuleLoader__.load({
       const state = props.useMemoryForm((snapshot) => snapshot);
       if (props.view === "summary") return t("description");
       const disabled = !state.writable;
+      // A config that uses the object form for any section is not editable here:
+      // the text field can only express bare headings, so saving would rewrite
+      // the array and drop every per-section file and budget. Showing it read-only
+      // is honest; silently mangling it is not.
+      const sectionsDisabled = disabled || state.sectionsComplex === true;
       const field = (id, label, hint, extra) =>
         h(SettingsValueField, {
           id: `ofttold-${id}`,
           label: t(label),
-          hint: t(hint),
+          hint: t(id === "sections" && state.sectionsComplex ? "sectionsComplexHint" : hint),
           overriddenLabel: t("overridden"),
           resetLabel: t("reset"),
           invalidLabel: t("invalidNumber"),
-          disabled,
+          disabled: id === "sections" ? sectionsDisabled : disabled,
           ...state[id],
           onEdit: (text) => props.edit(id, text),
           onReset: () => props.resetField(id),
