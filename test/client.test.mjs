@@ -1,0 +1,394 @@
+/**
+ * Registration test for the client half, run in Node against a fake loader.
+ *
+ * Why this exists: the settings page failed to appear on a live harness while
+ * every host-side test passed, and the host half was genuinely fine. The defect
+ * was in the wiring, which no test touched — `configForms` was a hard inject
+ * dependency, so the whole client half silently never applied when that service
+ * was not yet served, and the page could not even report that it was waiting.
+ *
+ * A browser is not needed to catch that class of bug. `client.js` is plain
+ * JavaScript that asks `window.__ModuleLoader__` for a factory; supplying a fake
+ * loader, a fake context, and stub primitives is enough to assert *what gets
+ * registered*, which is exactly what was wrong. Rendering is not under test here
+ * and the stub components are never mounted.
+ */
+
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+import vm from "node:vm";
+
+const PACKAGE_ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
+const CLIENT_SOURCE = readFileSync(join(PACKAGE_ROOT, "client.js"), "utf8");
+
+/**
+ * Load `client.js` the way the browser module system does and return its plugin.
+ *
+ * The bundle is evaluated in a fresh `vm` context with only the three globals it
+ * touches: `window` (carrying the loader), plus the stub `require`. Evaluating
+ * rather than importing is what makes this possible at all — the file is a script
+ * that registers itself with a global, not an ES module.
+ *
+ * @returns {{ plugin: any, requireCalls: string[] }} The exported plugin object
+ *   and every module specifier the bundle asked for, so a dependency that would
+ *   not resolve in the browser is visible instead of silent.
+ */
+function loadClientPlugin() {
+  const requireCalls = [];
+  let plugin;
+  const sandbox = {
+    console,
+    window: {
+      __ModuleLoader__: {
+        load({ id, factory }) {
+          plugin = factory(fakeRequire);
+          return id;
+        },
+      },
+    },
+  };
+  /** Stand-ins for the two packages the bundle requires. */
+  function fakeRequire(specifier) {
+    requireCalls.push(specifier);
+    if (specifier === "react") {
+      const createElement = () => null;
+      return { createElement, default: { createElement } };
+    }
+    if (specifier === "@deepseek-ai/dsh-client-ui-primitives") {
+      // Every primitive is a stub: the test asserts registrations, never renders.
+      /**
+       * A stand-in for the real form model, shaped from the shipped implementation.
+       *
+       * The three contracts that matter are copied from the real
+       * `SettingsFormModel`, because approximating them is what let two genuine
+       * bugs through:
+       *
+       * 1. `field(id)` returns `{ text, overridden, invalid }` — staged *text*,
+       *    already run through the field's `format`. It never returns `.value`.
+       * 2. `format(value)` is the inverse of `parse(text)`, and a field without
+       *    one only handles strings/numbers.
+       * 3. Saving goes through `scope.mutate(ops, revision)` with JSON-patch
+       *    operations, not through a per-field setter.
+       *
+       * `bind(select)` returns a slot hook: an object with `getSnapshot` and
+       * `subscribe`. Anything less would let a plugin that forgot to produce a
+       * hook pass this suite.
+       */
+      class SettingsFormModel {
+        constructor(scope, fields) {
+          this.scope = scope;
+          this.specs = new Map(fields.map((entry) => [entry.id, entry]));
+          this.staged = new Map();
+          this.listeners = new Set();
+          this.unsubscribe = scope?.subscribe?.(() => this.publish());
+        }
+        spec(id) {
+          const spec = this.specs.get(id);
+          if (spec === undefined) throw new Error(`plugin card has no field ${id}`);
+          return spec;
+        }
+        storedValue(id) {
+          return this.scope?.getSnapshot?.().value?.[id];
+        }
+        field(id) {
+          const spec = this.spec(id);
+          const staged = this.staged.get(id);
+          // A field that supplies no `format` falls back exactly like the real
+          // helper: strings pass through, everything else becomes "".
+          const format = spec.format ?? ((value) => (typeof value === "string" ? value : ""));
+          if (staged === undefined) return { text: format(this.storedValue(id)), overridden: false, invalid: false };
+          if (staged.clear) return { text: "", overridden: false, invalid: false };
+          const parsed = spec.parse ? spec.parse(staged.text) : { kind: "set", value: staged.text };
+          return { text: staged.text, overridden: parsed?.kind === "set", invalid: parsed === undefined };
+        }
+        shell() {
+          const snapshot = this.scope?.getSnapshot?.();
+          return { available: snapshot?.status === "ready", writable: snapshot?.writable === true };
+        }
+        bind(select) {
+          const store = {
+            getSnapshot: () => select(),
+            subscribe: (listener) => {
+              this.listeners.add(listener);
+              return () => this.listeners.delete(listener);
+            },
+          };
+          this.publish = () => this.listeners.forEach((listener) => listener());
+          this.store = store;
+          return store;
+        }
+        actions() {
+          return {
+            edit: (id, text) => this.stage(id, { text, clear: false }),
+            resetField: (id) => this.stage(id, { text: "", clear: true }),
+            save: () => this.save(),
+            discard: () => {
+              this.staged.clear();
+              this.publish?.();
+            },
+          };
+        }
+        async save() {
+          const ops = [];
+          for (const [id, entry] of this.staged) {
+            const spec = this.spec(id);
+            if (entry.clear) {
+              ops.push({ op: "unset", path: [id] });
+              continue;
+            }
+            const parsed = spec.parse ? spec.parse(entry.text) : { kind: "set", value: entry.text };
+            if (parsed === undefined) return false;
+            if (parsed.kind === "clear") ops.push({ op: "unset", path: [id] });
+            else ops.push({ op: "set", path: [id], value: parsed.value });
+          }
+          // Mirrors the real model: an empty plan is a no-op that returns
+          // `undefined`, and a read-only scope skips the write entirely rather
+          // than reporting a failure it never attempted.
+          if (ops.length === 0) return undefined;
+          if (this.scope?.getSnapshot?.().writable !== true) return undefined;
+          const accepted = await this.scope.mutate(ops, undefined);
+          if (accepted) {
+            this.staged.clear();
+            this.publish?.();
+          }
+          return accepted;
+        }
+        stage(id, entry) {
+          this.staged.set(id, entry);
+          this.publish?.();
+        }
+        dispose() {
+          this.unsubscribe?.();
+          this.listeners.clear();
+        }
+      }
+      const component = () => null;
+      return {
+        SettingsForm: component,
+        SettingsValueField: component,
+        settingsTextField: (id) => ({ id }),
+        settingsNumberField: (id) => ({ id }),
+        SettingsFormModel,
+      };
+    }
+    throw new Error(`client.js required an unexpected module: ${specifier}`);
+  }
+  vm.createContext(sandbox);
+  vm.runInContext(CLIENT_SOURCE, sandbox, { filename: "client.js" });
+  assert.ok(plugin !== undefined, "client.js did not hand a plugin to the module loader");
+  return { plugin, requireCalls };
+}
+
+/**
+ * Build a context whose services can be supplied after the plugin applies.
+ *
+ * `get(name)` is the soft read: it returns undefined until `supply` is called,
+ * which is exactly the state a real client half starts in. This is what makes the
+ * original bug reproducible — with a hard inject the plugin never applies at all,
+ * and there would be nothing left to assert.
+ *
+ * @returns {{ ctx: any, supply: (name: string, value: any) => void,
+ *   registered: any[], effects: number[] }}
+ */
+function fakeClientContext() {
+  const registered = [];
+  const disposers = [];
+  const services = new Map();
+  const ctx = {
+    get: (name) => services.get(name),
+    effect(fn, label) {
+      const dispose = fn();
+      if (typeof dispose === "function") disposers.push(dispose);
+      return { dispose, label };
+    },
+    slots: {
+      inject(key, callback) {
+        return callback();
+      },
+      register(meta, component) {
+        registered.push({ meta, component });
+        return () => {};
+      },
+    },
+    locale: {
+      bind: () => (key) => key,
+      register: () => () => {},
+    },
+  };
+  return {
+    ctx,
+    registered,
+    supply(name, value) {
+      services.set(name, value);
+    },
+  };
+}
+
+/**
+ * A stand-in for the config-forms service, shaped like the real one.
+ *
+ * Only the three reads the scope performs are modelled: `describe()` exposing the
+ * served namespaces with a `load` refresh and a subscription, `get(ns)` handing
+ * back a per-namespace scope, and that scope's snapshot/subscribe/set.
+ */
+function fakeConfigForms(initial, { writable = true, value = {} } = {}) {
+  let namespaces = [...initial];
+  const mirrorListeners = new Set();
+  const scopes = new Map();
+  let loads = 0;
+  const describe = {
+    getSnapshot: () => ({ view: { namespaces: namespaces.map((ns) => ({ ns })) } }),
+    subscribe: (listener) => {
+      mirrorListeners.add(listener);
+      return () => mirrorListeners.delete(listener);
+    },
+    load: () => {
+      loads += 1;
+    },
+  };
+  const forms = {
+    describe: () => describe,
+    get: (ns) => {
+      if (!namespaces.includes(ns)) return undefined;
+      if (!scopes.has(ns)) {
+        const scopeListeners = new Set();
+        scopes.set(ns, {
+          ns,
+          writes: [],
+          getSnapshot: () => ({ status: "ready", value, writable }),
+          subscribe: (listener) => {
+            scopeListeners.add(listener);
+            return () => scopeListeners.delete(listener);
+          },
+          // The real scope writes through a JSON-patch batch. A stub exposing
+          // `set(field, value)` would let a plugin that calls a method the real
+          // service does not have pass this suite.
+          mutate: (ops, revision) => {
+            scopes.get(ns).writes.push({ ops, revision });
+            return Promise.resolve(writable);
+          },
+        });
+      }
+      return scopes.get(ns);
+    },
+  };
+  return {
+    forms,
+    loads: () => loads,
+    scope: (ns) => scopes.get(ns),
+    serve(names) {
+      namespaces = [...names];
+      mirrorListeners.forEach((listener) => listener());
+    },
+  };
+}
+
+test("client half does not hard-inject configForms", () => {
+  const { plugin } = loadClientPlugin();
+  // A client service named in `inject` is a hard dependency: while it is unserved
+  // the whole client half never applies. Listing it here is the bug that hid the
+  // settings page on a live harness.
+  assert.ok(
+    !plugin.inject.includes("configForms"),
+    `configForms must be probed through ctx.get(), not declared in inject (got ${JSON.stringify(plugin.inject)})`,
+  );
+  assert.deepEqual([...plugin.inject].sort(), ["locale", "slots"]);
+});
+
+test("the bundle requires only packages the shell registers", () => {
+  const { requireCalls } = loadClientPlugin();
+  // The shell registers `react` and `@deepseek-ai/dsh-client-ui-primitives` for
+  // plugin bundles. Requiring anything else is a runtime failure in the browser
+  // that no host test can see.
+  for (const specifier of requireCalls) {
+    assert.ok(
+      specifier === "react" || specifier === "@deepseek-ai/dsh-client-ui-primitives",
+      `client.js required ${specifier}, which the shell does not provide`,
+    );
+  }
+});
+
+test("the page registers before configForms is served", () => {
+  const { plugin } = loadClientPlugin();
+  const { ctx, registered } = fakeClientContext();
+  // No configForms supplied at all: the exact state that used to keep the page
+  // from ever registering.
+  plugin.apply(ctx);
+  const page = registered.find((entry) => entry.meta.name === "plugins.bundle.config");
+  assert.ok(page !== undefined, "the settings page did not register without configForms");
+  assert.equal(page.meta.key, "dsh-ofttold-memory");
+  assert.equal(typeof page.meta.inject, "function");
+  // The injected props must be complete enough to render: a missing hook would
+  // throw inside the component, not here.
+  const props = page.meta.inject();
+  assert.equal(typeof props.hooks.memoryForm, "object");
+  assert.equal(typeof props.save, "function");
+  assert.equal(typeof props.edit, "function");
+  assert.equal(typeof props.resetField, "function");
+});
+
+test("the form reports itself unavailable until a namespace is served", async () => {
+  const { plugin } = loadClientPlugin();
+  const { ctx, registered } = fakeClientContext();
+  plugin.apply(ctx);
+  const page = registered.find((entry) => entry.meta.name === "plugins.bundle.config");
+  const props = page.meta.inject();
+  // Read-only, not a broken form: the page must be honest that nothing is
+  // configurable yet rather than offering controls whose saves are refused.
+  const snapshot = props.hooks.memoryForm.getSnapshot();
+  // Read-only, not broken: `available` distinguishes "this deployment does not
+  // serve the namespace" from "the namespace exists but refuses writes", and the
+  // page needs both to word its banner honestly.
+  assert.equal(snapshot.available, false);
+  assert.equal(snapshot.writable, false);
+  // A save staged against an unserved namespace must not reach the Host at all.
+  props.edit("memoryDir", "/tmp/nowhere");
+  assert.equal(await props.save(), undefined);
+});
+
+test("the scope binds to whatever namespace the Host actually serves", async () => {
+  const { plugin } = loadClientPlugin();
+  const { ctx, registered } = fakeClientContext();
+  // A profile can serve the row under the package name, the bare id, or the
+  // include-prefixed id. Binding one exact string left every write refused.
+  const served = fakeConfigForms(["include:ofttold-memory"], {
+    value: { memoryDir: "~/.dsh/memory", sections: ["常被提起"], maxChars: 600 },
+  });
+  ctx.get = (name) => (name === "configForms" ? served.forms : undefined);
+  plugin.apply(ctx);
+  const page = registered.find((entry) => entry.meta.name === "plugins.bundle.config");
+  const props = page.meta.inject();
+  const snapshot = props.hooks.memoryForm.getSnapshot();
+  assert.equal(snapshot.writable, true);
+  // The stored list must arrive as text, one heading per line, or the field
+  // renders blank on a config that is perfectly valid.
+  assert.equal(snapshot.sections.text, "常被提起");
+  assert.equal(snapshot.memoryDir.text, "~/.dsh/memory");
+  // Editing stages a draft; saving writes one atomic patch batch to the served
+  // namespace rather than a per-field setter the real scope does not have.
+  props.edit("memoryDir", "/tmp/elsewhere");
+  assert.equal(await props.save(), true);
+  const writes = served.scope("include:ofttold-memory").writes;
+  assert.equal(writes.length, 1);
+  assert.deepEqual(writes[0].ops, [{ op: "set", path: ["memoryDir"], value: "/tmp/elsewhere" }]);
+});
+
+test("a namespace that appears later still binds", () => {
+  const { plugin } = loadClientPlugin();
+  const { ctx, registered } = fakeClientContext();
+  const served = fakeConfigForms([]);
+  ctx.get = (name) => (name === "configForms" ? served.forms : undefined);
+  plugin.apply(ctx);
+  const page = registered.find((entry) => entry.meta.name === "plugins.bundle.config");
+  const props = page.meta.inject();
+  // First read: nothing served yet, and the mirror was asked to refresh once.
+  assert.equal(props.hooks.memoryForm.getSnapshot().writable, false);
+  assert.equal(served.loads(), 1);
+  // The Host now serves the row under its bare id; the mirror notifies, and the
+  // scope must follow without a page reload.
+  served.serve(["ofttold-memory"]);
+  assert.equal(props.hooks.memoryForm.getSnapshot().writable, true);
+});

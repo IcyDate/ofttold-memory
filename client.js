@@ -83,18 +83,110 @@ window.__ModuleLoader__.load({
     ];
 
     /**
+     * A config scope that follows whichever namespace the Host actually serves.
+     *
+     * Three separate facts force this indirection:
+     *
+     * 1. `configForms` may not be served yet. A client service that is still
+     *    starting is `undefined` through `ctx.get()`, and reaching for
+     *    `ctx.configForms` directly throws. Reads therefore go through a getter
+     *    and degrade to `unavailable` until the service arrives.
+     * 2. The namespace is not a stable string. A profile's insert row can be
+     *    served as `ofttold-memory`, `include:ofttold-memory`, or the package
+     *    name, and binding one exact string left every write refused while the
+     *    controls still looked enabled.
+     * 3. The describe mirror is the only honest answer to "what exists". It is
+     *    refreshed on first miss and subscribed to, so a namespace that appears
+     *    later still binds without a reload.
+     *
+     * Before the mirror answers, `writable` is false, so the page renders
+     * read-only rather than offering controls that cannot save.
+     */
+    function liveScope(getForms) {
+      let current;
+      let currentOff;
+      let refreshed = false;
+      const listeners = new Set();
+      const notify = () => {
+        for (const listener of [...listeners]) listener();
+      };
+      const pick = (namespaces) =>
+        namespaces.find((entry) => entry.ns === "ofttold-memory") ??
+        namespaces.find((entry) => /ofttold-memory/i.test(entry.ns));
+      const rebind = () => {
+        const forms = getForms();
+        let served;
+        try {
+          served = pick(forms?.describe().getSnapshot().view?.namespaces ?? []);
+        } catch {
+          served = undefined;
+        }
+        const next = served === undefined || forms === undefined ? undefined : forms.get(served.ns);
+        if (next !== current) {
+          currentOff?.();
+          current = next;
+          currentOff = current?.subscribe(notify);
+          notify();
+        }
+        if (next === undefined && !refreshed) {
+          refreshed = true;
+          try {
+            forms?.describe().load?.();
+          } catch {}
+        }
+      };
+      rebind();
+      getForms()?.describe().subscribe?.(rebind);
+      return {
+        getSnapshot: () => current?.getSnapshot() ?? { status: "unavailable", value: undefined, writable: false },
+        subscribe: (listener) => {
+          listeners.add(listener);
+          return () => {
+            listeners.delete(listener);
+          };
+        },
+        // The form model writes through `mutate(ops, revision)`, never through a
+        // per-field setter: a save is one atomic batch of JSON-patch operations
+        // against the Host's revision. Forgetting this method makes every save
+        // throw inside the shared model, which surfaces as "save did nothing".
+        mutate: (ops, revision) => (current === undefined ? Promise.resolve(false) : current.mutate(ops, revision)),
+      };
+    }
+
+    /**
      * Stage the entry's config into a form the shared Plugins page can save.
      *
      * The list and boolean fields need explicit parse rules: the shared model
      * only knows how to stage text and numbers, and a `sections` list typed as
      * text must become an array before it reaches the Host schema.
      */
+    /**
+     * Render a `sections` array as the one-heading-per-line text the field edits.
+     *
+     * Object entries are still flattened to their heading so the read-only view
+     * shows what the file actually contains instead of a row of blanks; the
+     * field is disabled in that case, so the flattened text is never written back.
+     */
+    function headingsOf(raw) {
+      if (!Array.isArray(raw)) return "";
+      return raw
+        .map((entry) =>
+          typeof entry === "string" ? entry : typeof entry?.heading === "string" ? entry.heading : "",
+        )
+        .join("\n");
+    }
+
     class MemoryForm {
       constructor(scope) {
+        this.scope = scope;
         this.form = new SettingsFormModel(scope, [
           { ...settingsTextField("memoryDir") },
           {
             ...settingsTextField("sections"),
+            // Both directions are overridden: the shared text helpers only know
+            // strings, so without these an array would render as "" and every
+            // save would look like "unchanged" and write nothing.
+            format: (value) => headingsOf(value),
             parse: (text) => {
               const lines = text
                 .split("\n")
@@ -109,9 +201,13 @@ window.__ModuleLoader__.load({
           { ...settingsNumberField("refreshAfterMessages") },
           {
             ...settingsTextField("workspaceRelative"),
+            // Same trap in the boolean direction: `format` must round-trip the
+            // value it parses, or the staged text never equals the stored value
+            // and the field reads as permanently dirty.
+            format: (value) => (typeof value === "boolean" ? String(value) : ""),
             parse: (text) => {
               const value = text.trim().toLowerCase();
-              if (value === "" ) return { kind: "clear" };
+              if (value === "") return { kind: "clear" };
               if (value === "true") return { kind: "set", value: true };
               if (value === "false") return { kind: "set", value: false };
               return undefined;
@@ -120,20 +216,21 @@ window.__ModuleLoader__.load({
         ]);
         this.state = this.form.bind(() => {
           const value = this.form.field("sections");
-          const raw = value?.value;
+          // `field()` yields `{ text, overridden, invalid }` — the *staged* text
+          // form of the value, already formatted by the field's `format`. Reading
+          // a `.value` that does not exist made this look like "nothing
+          // configured" on every render, so the list always showed blank.
+          const raw = this.rawValue("sections");
           // An object entry (`{ file, heading, maxChars, label }`) cannot be
           // represented in a one-heading-per-line text field. Round-tripping it
           // through text would replace the whole array on save and silently drop
           // every per-section file and budget, so the field is shown read-only
           // instead. Only the entries the text form can express are editable.
           const complex = Array.isArray(raw) && raw.some((entry) => typeof entry === "object" && entry !== null);
-          const headings = Array.isArray(raw)
-            ? raw.map((entry) => (typeof entry === "string" ? entry : typeof entry?.heading === "string" ? entry.heading : "")).join("\n")
-            : "";
           return {
             ...this.form.shell(),
             memoryDir: this.form.field("memoryDir"),
-            sections: complex ? { value: headings, overridden: value?.overridden } : Array.isArray(raw) ? { ...value, value: headings } : value,
+            sections: complex ? { ...value, text: headingsOf(raw), invalid: false } : value,
             sectionsComplex: complex,
             maxChars: this.form.field("maxChars"),
             header: this.form.field("header"),
@@ -142,6 +239,17 @@ window.__ModuleLoader__.load({
             workspaceRelative: this.form.field("workspaceRelative"),
           };
         });
+      }
+      /**
+       * The stored value of one field, before the field's `format` touched it.
+       *
+       * `field()` deliberately hands back staged text; the raw value is only
+       * reachable through the scope snapshot. Wrapped because a scope with no
+       * served namespace has no snapshot to read.
+       */
+      rawValue(id) {
+        const snapshot = this.scope?.getSnapshot?.();
+        return snapshot?.value?.[id];
       }
       inject() {
         return { hooks: { memoryForm: this.state }, ...this.form.actions() };
@@ -205,32 +313,42 @@ window.__ModuleLoader__.load({
     }
 
     return {
-      inject: ["slots", "locale", "configForms"],
+      // `configForms` is deliberately NOT in this list. A client service listed
+      // here is a hard dependency: while it is unserved the whole client half
+      // never applies, so the page silently never appears and the plugin looks
+      // installed-but-dead. It is probed through `ctx.get()` instead, which
+      // returns undefined rather than throwing, and the page registers anyway so
+      // it can show itself as unavailable until the service arrives.
+      inject: ["slots", "locale"],
       apply(ctx) {
         const t = ctx.locale.bind(NS);
         ctx.effect(() => ctx.locale.register(NS, { zh, en }), "ofttold-memory: dictionaries");
 
-        // The Host entry id is the profile's patch row id, which the bundle's
-        // own patch declares as `ofttold-memory`. Reading a form for an entry
-        // this deployment never composed leaves it unavailable rather than
-        // failing, so the page simply does not appear.
-        const scope = ctx.configForms.get("ofttold-memory");
+        // The namespace this page edits is the Host entry id, which is not a
+        // stable string: a bundle insert row can surface as `ofttold-memory`,
+        // `include:ofttold-memory`, or the package name depending on how the
+        // profile composed it. Matching one exact string bound the form to a
+        // namespace the Host may never serve, so every write was refused while
+        // the controls stayed enabled. The scope therefore follows whatever the
+        // describe mirror currently lists.
+        const scope = liveScope(() => ctx.get("configForms"));
         const form = new MemoryForm(scope);
         ctx.effect(() => () => form.dispose(), "ofttold-memory: form subscription");
 
+        // Registered unconditionally: the card must exist before configForms
+        // answers, or the page cannot report that it is waiting. A slot-API
+        // breakage degrades to a console.error instead of failing the loader.
         ctx.effect(
           () =>
-            ctx.configForms.whileServed(["ofttold-memory"], () =>
-              ctx.slots.inject("plugins.bundle.config", () =>
-                ctx.slots.register(
-                  {
-                    name: "plugins.bundle.config",
-                    key: "dsh-ofttold-memory",
-                    locale: NS,
-                    inject: () => form.inject(),
-                  },
-                  MemoryPanel,
-                ),
+            ctx.slots.inject("plugins.bundle.config", () =>
+              ctx.slots.register(
+                {
+                  name: "plugins.bundle.config",
+                  key: "dsh-ofttold-memory",
+                  locale: NS,
+                  inject: () => form.inject(),
+                },
+                MemoryPanel,
               ),
             ),
           "ofttold-memory: bundle page",
