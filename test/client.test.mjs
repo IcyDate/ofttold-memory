@@ -197,8 +197,23 @@ function fakeClientContext() {
   const registered = [];
   const disposers = [];
   const services = new Map();
+  // Deferred service waits, the way `ctx.inject` works: the callback is held
+  // until the service is provided, because a client service that arrives after
+  // `apply` does not re-run `apply`.
+  const waiting = new Map();
   const ctx = {
     get: (name) => services.get(name),
+    inject(deps, callback) {
+      for (const dep of deps) {
+        if (services.has(dep)) {
+          callback(ctx);
+          return;
+        }
+        const list = waiting.get(dep) ?? [];
+        list.push(callback);
+        waiting.set(dep, list);
+      }
+    },
     effect(fn, label) {
       const dispose = fn();
       if (typeof dispose === "function") disposers.push(dispose);
@@ -223,6 +238,9 @@ function fakeClientContext() {
     registered,
     supply(name, value) {
       services.set(name, value);
+      const list = waiting.get(name) ?? [];
+      waiting.delete(name);
+      for (const callback of list) callback(ctx);
     },
   };
 }
@@ -391,4 +409,24 @@ test("a namespace that appears later still binds", () => {
   // scope must follow without a page reload.
   served.serve(["ofttold-memory"]);
   assert.equal(props.hooks.memoryForm.getSnapshot().writable, true);
+});
+
+test("configForms arriving after apply still binds", () => {
+  const { plugin } = loadClientPlugin();
+  const { ctx, registered, supply } = fakeClientContext();
+  // Nothing is served when the plugin applies. This is the ordering that used to
+  // lose the page forever: a client service that appears later does NOT re-run
+  // `apply`, so anything captured at apply time stays undefined for the life of
+  // the session unless it waits through ctx.inject.
+  plugin.apply(ctx);
+  const page = registered.find((entry) => entry.meta.name === "plugins.bundle.config");
+  const props = page.meta.inject();
+  assert.equal(props.hooks.memoryForm.getSnapshot().available, false);
+  // The service now arrives, serving the row under its bare id.
+  const served = fakeConfigForms(["ofttold-memory"], { value: { memoryDir: "~/.dsh/memory" } });
+  supply("configForms", served.forms);
+  const snapshot = props.hooks.memoryForm.getSnapshot();
+  assert.equal(snapshot.available, true);
+  assert.equal(snapshot.writable, true);
+  assert.equal(snapshot.memoryDir.text, "~/.dsh/memory");
 });

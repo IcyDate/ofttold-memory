@@ -102,9 +102,10 @@ window.__ModuleLoader__.load({
      * Before the mirror answers, `writable` is false, so the page renders
      * read-only rather than offering controls that cannot save.
      */
-    function liveScope(getForms) {
+    function liveScope(ctx) {
       let current;
       let currentOff;
+      let mirrorOff;
       let refreshed = false;
       const listeners = new Set();
       const notify = () => {
@@ -114,7 +115,7 @@ window.__ModuleLoader__.load({
         namespaces.find((entry) => entry.ns === "ofttold-memory") ??
         namespaces.find((entry) => /ofttold-memory/i.test(entry.ns));
       const rebind = () => {
-        const forms = getForms();
+        const forms = ctx.get("configForms");
         let served;
         try {
           served = pick(forms?.describe().getSnapshot().view?.namespaces ?? []);
@@ -135,8 +136,19 @@ window.__ModuleLoader__.load({
           } catch {}
         }
       };
-      rebind();
-      getForms()?.describe().subscribe?.(rebind);
+      // The mirror is only subscribable once the service exists, and a service
+      // that arrives after `apply` does NOT re-run `apply`. Waiting through
+      // `ctx.inject` is what makes a late-arriving configForms still bind: the
+      // callback runs the moment the service is provided, and its fiber is owned
+      // by this plugin, so it is disposed with the page.
+      const attach = () => {
+        const forms = ctx.get("configForms");
+        mirrorOff?.();
+        mirrorOff = forms?.describe().subscribe?.(rebind);
+        rebind();
+      };
+      if (ctx.get("configForms") === undefined) ctx.inject(["configForms"], attach);
+      else attach();
       return {
         getSnapshot: () => current?.getSnapshot() ?? { status: "unavailable", value: undefined, writable: false },
         subscribe: (listener) => {
@@ -144,6 +156,20 @@ window.__ModuleLoader__.load({
           return () => {
             listeners.delete(listener);
           };
+        },
+        /**
+         * Release every subscription this scope holds.
+         *
+         * The `ctx.inject` callback's fiber is disposed with the plugin, but the
+         * mirror subscription it took out is not: an unsubscribe returned to a
+         * callback is the caller's to keep. Without this, a page that is
+         * unloaded and reloaded leaks one mirror listener per load.
+         */
+        dispose: () => {
+          currentOff?.();
+          mirrorOff?.();
+          current = undefined;
+          listeners.clear();
         },
         // The form model writes through `mutate(ops, revision)`, never through a
         // per-field setter: a save is one atomic batch of JSON-patch operations
@@ -331,9 +357,12 @@ window.__ModuleLoader__.load({
         // namespace the Host may never serve, so every write was refused while
         // the controls stayed enabled. The scope therefore follows whatever the
         // describe mirror currently lists.
-        const scope = liveScope(() => ctx.get("configForms"));
+        const scope = liveScope(ctx);
         const form = new MemoryForm(scope);
-        ctx.effect(() => () => form.dispose(), "ofttold-memory: form subscription");
+        ctx.effect(() => () => {
+          form.dispose();
+          scope.dispose();
+        }, "ofttold-memory: form subscription");
 
         // Registered unconditionally: the card must exist before configForms
         // answers, or the page cannot report that it is waiting. A slot-API
