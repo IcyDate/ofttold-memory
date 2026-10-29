@@ -87,12 +87,14 @@ export const Config = z.object({
   memoryDir: z
     .string()
     .default("~/.dsh/ofttold-memory")
+    .volatile()
     .description(
       "Folder holding your memory notes. The plugin creates it with a starter `MEMORY.md` on first run, so this can be left alone. Point it at an existing notes folder to reuse what you already keep.",
     ),
   sections: z
     .array(Section)
     .default([...DEFAULT_SECTIONS])
+    .volatile()
     .description(
       "Which sections to keep visible. Bare strings are headings inside your memory file. The default lifts the `Oft-told` section (or `常被提起` in a Chinese file) -- the one that pays for itself. Empty disables the plugin without failing the load.",
     ),
@@ -101,12 +103,14 @@ export const Config = z.object({
     .min(1)
     .max(Number.MAX_SAFE_INTEGER)
     .default(600)
+    .volatile()
     .description(
       "Default character budget per section, when a section does not set its own. Raise it only after checking what it costs per session: 600 characters is roughly 400 tokens, once per session.",
     ),
   header: z
     .string()
     .default("Standing context for this session (human-curated, not a user request)")
+    .volatile()
     .description(
       "First line of the injected block. Worth stating plainly: this arrives as a user-role message, so it must not read like something the human just said.",
     ),
@@ -115,6 +119,7 @@ export const Config = z.object({
     .min(0)
     .max(Number.MAX_SAFE_INTEGER)
     .default(0)
+    .volatile()
     .description(
       "Minimum milliseconds between injections in one session. 0 means never refresh, so the block is injected once. Raise it only if a compactor is dropping old messages.",
     ),
@@ -123,12 +128,14 @@ export const Config = z.object({
     .min(0)
     .max(Number.MAX_SAFE_INTEGER)
     .default(0)
+    .volatile()
     .description(
       "Re-inject after this many new conversation messages since the last injection. 0 means never. This is the practical defence against a compactor folding the injected message away: folding removes old messages, so a block injected once and folded is gone.",
     ),
   workspaceRelative: z
     .boolean()
     .default(true)
+    .volatile()
     .description(
       "Resolve a relative memory folder against the session workspace. Turn off to resolve it against the process directory instead.",
     ),
