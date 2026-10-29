@@ -457,3 +457,63 @@ test("the section and the plugin card share one form, so a save in either is the
   // scope would let the section show a stale value the card had just saved.
   assert.equal(section.meta.inject().hooks.memoryForm, card.meta.inject().hooks.memoryForm);
 });
+
+test("every key the panel asks for exists in both dictionaries", () => {
+  // The panel and its dictionaries live in the same file, so a missing key is
+  // invisible until a user sees the raw key rendered in the UI — which is exactly
+  // what happened: `diagnostics`, `diagnosticsHint` and `copyReport` were added to
+  // the panel and to locale/*.json but not to client.js's inline dictionaries,
+  // and 79 tests stayed green.
+  //
+  // There are two dictionaries on purpose. `locale/*.json` is what the plugin
+  // manager shows for the package (title and description); the inline ones are
+  // what the settings panel resolves through `ctx.locale.bind`. A key added to one
+  // and not the other renders as its own name.
+  const source = CLIENT_SOURCE;
+  // `(?<![.\w])` matters: `ctx.get("configForms")` also ends in `t(` and would
+  // otherwise be counted as a dictionary lookup for a key named "configForms".
+  const asked = new Set(
+    [...source.matchAll(/(?<![.\w])t\("([A-Za-z][A-Za-z0-9]*)"\)/g)].map((match) => match[1]),
+  );
+  assert.ok(asked.size > 10, "the key scan found almost nothing; the pattern is wrong");
+
+  // Pull each dictionary out by its literal text and evaluate it, rather than
+  // importing: the file is a browser script, not a module.
+  for (const [label, marker] of [
+    ["en", "const en = {"],
+    ["zh", "const zh = {"],
+  ]) {
+    const start = source.indexOf(marker);
+    assert.ok(start >= 0, `${label} dictionary not found`);
+    const end = source.indexOf("\n    };", start);
+    assert.ok(end > start, `${label} dictionary is not terminated as expected`);
+    const body = source.slice(start + marker.length, end);
+    // Anchored to the start of an indented line: a colon inside a value ("The
+    // name is the idea: ...") is prose, not a key, and matching it made the check
+    // fail on its own sentence.
+    const entries = [...body.matchAll(/\n\s{6}([A-Za-z][A-Za-z0-9]*):/g)].map((match) => match[1]);
+    const keys = new Set(entries);
+    const missing = [...asked].filter((key) => !keys.has(key));
+    assert.deepEqual(missing, [], `${label} dictionary is missing: ${missing.join(", ")}`);
+  }
+});
+
+test("both dictionaries define the same keys, so neither locale is thinner", () => {
+  // The panel resolves keys through whichever dictionary the active locale selects.
+  // A key present in one and missing from the other means one language renders the
+  // raw key while the other looks fine — the failure mode that shipped.
+  const source = CLIENT_SOURCE;
+  const dictionary = (marker) => {
+    const start = source.indexOf(marker);
+    assert.ok(start >= 0, `${marker} not found`);
+    const end = source.indexOf("\n    };", start);
+    const body = source.slice(start + marker.length, end);
+    return new Set([...body.matchAll(/\n\s{6}([A-Za-z][A-Za-z0-9]*):/g)].map((match) => match[1]));
+  };
+  const en = dictionary("const en = {");
+  const zh = dictionary("const zh = {");
+  const onlyEn = [...en].filter((key) => !zh.has(key));
+  const onlyZh = [...zh].filter((key) => !en.has(key));
+  assert.deepEqual(onlyEn, [], `only in en: ${onlyEn.join(", ")}`);
+  assert.deepEqual(onlyZh, [], `only in zh: ${onlyZh.join(", ")}`);
+});

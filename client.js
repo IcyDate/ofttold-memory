@@ -10,9 +10,9 @@ window.__ModuleLoader__.load({
     const NS = "ofttold-memory";
 
     const en = {
-      nav: "Memory",
-      title: "Memory",
-      description: "A few notes from your memory folder ride along in every session, so recall stops depending on remembering to look.",
+      nav: "Oft-told",
+      title: "Oft-told",
+      description: "A few notes from your memory folder ride along in every session, so recall stops depending on remembering to look. The name is the idea: what is told often enough stops needing to be remembered.",
       memoryDir: "Memory folder",
       memoryDirHint: "Markdown notes live here. Created with a starter file on first run.",
       sections: "Sections to keep visible",
@@ -36,12 +36,15 @@ window.__ModuleLoader__.load({
       saving: "Saving…",
       saveFailed: "The deployment did not accept these values; they were left for you to correct.",
       invalidNumber: "Enter a number, or leave blank to use the default.",
+      diagnostics: "Troubleshooting",
+      diagnosticsHint: "The plugin never fails a session to report a problem, so 'nothing was injected' stays silent by design — it only leaves a record here. The file holds paths and per-injection outcomes, never the text of your notes, so it is safe to paste into an issue.",
+      copyReport: "Copy issue summary",
     };
 
     const zh = {
-      nav: "记忆",
-      title: "记忆",
-      description: "把记忆文件夹里的几节带进每个会话，回忆就不再依赖「记得去看」。",
+      nav: "拾光",
+      title: "拾光",
+      description: "把记忆文件夹里的几节带进每个会话，回忆就不再依赖「记得去看」。它叫拾光——把散落在字里行间的自己，一次一次拾回来。",
       memoryDir: "记忆文件夹",
       memoryDirHint: "markdown 笔记放在这里。第一次运行会自动创建并放一份起始文件。",
       sections: "常驻的小节",
@@ -65,6 +68,9 @@ window.__ModuleLoader__.load({
       saving: "保存中…",
       saveFailed: "本部署没有接受这些值，已保留供你修改。",
       invalidNumber: "请填数字；留空表示使用默认值。",
+      diagnostics: "排查问题",
+      diagnosticsHint: "插件从不因为出错而中断会话，所以「什么都没注入」不会报错——它只在这里留下记录。这个文件里有路径和每次注入的结果，但没有你笔记的正文，可以直接贴进 issue。",
+      copyReport: "复制问题摘要",
     };
 
     /**
