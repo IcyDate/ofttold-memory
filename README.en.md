@@ -1,4 +1,4 @@
-# dsh-ofttold-memory · Oft-told
+# ofttold-memory · Oft-told
 
 <p align="center"><a href="./README.md">中文</a> | <a href="./README.en.md">English</a></p>
 
@@ -6,14 +6,16 @@
 
 <p align="center"><sub>a note helps only when it is in front of the model · <em>injected once, present throughout</em> · no dependence on remembering to look · works out of the box</sub></p>
 
+<p align="center"><sub><strong>A DSH plugin</strong> · skill version for other harnesses: <a href="./docs/skill.en.md">planned</a></sub></p>
+
 <p align="center">
-<a href="https://www.npmjs.com/package/dsh-ofttold-memory"><img src="https://img.shields.io/npm/v/dsh-ofttold-memory.svg?style=flat-square" alt="npm"></a>
-<a href="https://github.com/IcyDate/dsh-ofttold-memory/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/dsh-ofttold-memory.svg?style=flat-square" alt="license"></a>
-<a href="https://github.com/IcyDate/dsh-ofttold-memory"><img src="https://img.shields.io/badge/GitHub-IcyDate%2Fdsh--ofttold--memory-181717?style=flat-square&logo=github" alt="GitHub"></a>
+<a href="https://www.npmjs.com/package/ofttold-memory"><img src="https://img.shields.io/npm/v/ofttold-memory.svg?style=flat-square" alt="npm"></a>
+<a href="https://github.com/IcyDate/ofttold-memory/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/ofttold-memory.svg?style=flat-square" alt="license"></a>
+<a href="https://github.com/IcyDate/ofttold-memory"><img src="https://img.shields.io/badge/GitHub-IcyDate%2Fofttold--memory-181717?style=flat-square&logo=github" alt="GitHub"></a>
 </p>
 
 <p align="center">
-<code>dsh plugin --profile web add /absolute/path/to/dsh-ofttold-memory</code>
+<code>dsh plugin --profile web add /absolute/path/to/ofttold-memory</code>
 </p>
 
 <p align="center">
@@ -44,12 +46,14 @@ One read, one injection. No index, no embeddings, no database, no second pass.
 ## Quick start
 
 ```sh
-dsh plugin --profile web add /absolute/path/to/dsh-ofttold-memory
+dsh plugin --profile web add /absolute/path/to/ofttold-memory
 ```
 
 **That is the whole setup.** The first run creates `~/.dsh/ofttold-memory/` with a
-`MEMORY.md` whose structure is already filled in; replace the contents with your
-own. Point `memoryDir` at a folder you already use — a diary, an index, a rules
+four-file skeleton: `MEMORY.md` (the injected source), `INDEX.md` (the diary index),
+`relationship.md` (who the assistant is, plus the live emotion value), and `diary/`
+(one file per day). **All of it is empty shells and comments — not one memory is
+pre-filled**, because what to remember is the one thing nobody can decide for you. Point `memoryDir` at a folder you already use — a diary, an index, a rules
 file — and the plugin only reads: **it never writes into a notes folder that
 already has content.**
 
@@ -91,7 +95,7 @@ nothing is ever enough.
 
 | Setting | Default | Meaning |
 | --- | --- | --- |
-| `memoryDir` | `~/.dsh/ofttold-memory` | Your memory folder. Created on first run. |
+| `memoryDir` | `~/.dsh/ofttold-memory` | Your memory folder. Created on first run with the four-file skeleton. |
 | `sections` | `["Oft-told", "常被提起"]` | Which headings ride along. Just the heading text. |
 | `maxChars` | `600` | Character budget per section. 600 characters ≈ 400 tokens. |
 
@@ -117,10 +121,6 @@ new message is the only thing that matters.
 
 So the instruction became a mechanism. That is the whole change: **the list moved
 out of something the model had to remember into context it cannot miss.**
-
-The package stays `dsh-ofttold-memory`; the Chinese display name lives in
-`locale/zh.json`. Two names, two jobs, no migration. The icon is the agent this was
-built with, drawn for [dsh-meme](https://github.com/yyh-001/dsh-meme) (MIT).
 
 ---
 
@@ -178,6 +178,30 @@ information.
 
 An absent file means the plugin never reached a decision, which points at the
 install rather than the content.
+
+---
+
+## Other harnesses
+
+The plugin is DSH-specific: it registers a Cordis plugin and injects a message into a
+session, and that mechanism does not exist outside this harness.
+
+**To carry the same idea elsewhere, use a skill:** one `SKILL.md`, usable by any
+harness that reads skills, with no plugin API to implement. Both are written
+([`skills/ofttold-memory/SKILL.md`](skills/ofttold-memory/SKILL.md) for which sections
+to read, [`skills/ofttold-ritual/SKILL.md`](skills/ofttold-ritual/SKILL.md) for how to
+write) and checked against the real frontmatter contract.
+
+The layering is not either/or: **one spec, one adapter per harness.** Those two
+`SKILL.md` files are the spec; DSH's adapter is this plugin (it publishes them with
+`ctx.skills.register()`); other harnesses are missing their few dozen lines.
+
+Worth being clear about what it loses: **a skill is discovered, not injected**, and
+its body is read only when called. It cannot remove the decision to look — it can only
+make that decision cheaper. The plugin removes the decision itself.
+
+So this says planned, not supported — the details and the three open items are in
+**[Skill version](docs/skill.en.md)**.
 
 ---
 

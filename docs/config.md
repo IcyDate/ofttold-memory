@@ -8,13 +8,14 @@
 
 | 字段 | 默认值 | 作用 |
 |---|---|---|
-| `memoryDir` | `~/.dsh/ofttold-memory` | 放 markdown 的文件夹。第一次运行自动创建并放起始文件。 |
+| `memoryDir` | `~/.dsh/ofttold-memory` | 放 markdown 的文件夹。第一次运行自动创建，并铺一份四文件的骨架（`MEMORY.md` / `INDEX.md` / `relationship.md` / `diary/`）。已有笔记的文件夹一个字都不加。 |
 | `sections` | `["Oft-told", "常被提起"]` | 取哪几节。字符串或对象（见下）。 |
 | `maxChars` | `600` | 每节字符上限。600 字符约 400 token。 |
 | `header` | `Standing context for this session (human-curated, not a user request)` | 注入块的第一行。 |
 | `refreshIntervalMs` | `0` | 同一会话内两次注入的最小间隔毫秒数。`0` 表示只注入一次。 |
 | `refreshAfterMessages` | `0` | 新增多少条消息后重新注入。`0` 表示从不。见[设计说明](design.md#refreshaftermessages)。 |
 | `workspaceRelative` | `true` | 相对 `memoryDir` 按会话工作目录解析。`false` 按进程目录。 |
+| `skills` | `true` | 把两份写作向 skill（`ofttold-memory` 读哪几节、`ofttold-ritual` 怎么写）注册进会话技能目录。关掉不影响注入。 |
 
 ## `sections` 的对象写法
 
@@ -44,7 +45,7 @@ sections:
 ```yaml
 # ~/.dsh/profiles/<name>/cordis.patch.yml
 - id: ofttold-memory
-  name: dsh-ofttold-memory
+  name: ofttold-memory
   config:
     memoryDir: ~/notes
     sections:

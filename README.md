@@ -1,4 +1,4 @@
-# dsh-ofttold-memory · 拾光
+# ofttold-memory · 拾光
 
 <p align="center"><a href="./README.md">中文</a> | <a href="./README.en.md">English</a></p>
 
@@ -6,14 +6,16 @@
 
 <p align="center"><sub>一条笔记只在被摆到眼前时才有用 · <em>一次注入，全程在场</em> · 不用再依赖「记得去看」 · 开箱即用</sub></p>
 
+<p align="center"><sub><strong>DSH 插件</strong> · 其他 harness 的 skill 版本：<a href="./docs/skill.md">规划中</a></sub></p>
+
 <p align="center">
-<a href="https://www.npmjs.com/package/dsh-ofttold-memory"><img src="https://img.shields.io/npm/v/dsh-ofttold-memory.svg?style=flat-square" alt="npm"></a>
-<a href="https://github.com/IcyDate/dsh-ofttold-memory/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/dsh-ofttold-memory.svg?style=flat-square" alt="license"></a>
-<a href="https://github.com/IcyDate/dsh-ofttold-memory"><img src="https://img.shields.io/badge/GitHub-IcyDate%2Fdsh--ofttold--memory-181717?style=flat-square&logo=github" alt="GitHub"></a>
+<a href="https://www.npmjs.com/package/ofttold-memory"><img src="https://img.shields.io/npm/v/ofttold-memory.svg?style=flat-square" alt="npm"></a>
+<a href="https://github.com/IcyDate/ofttold-memory/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/ofttold-memory.svg?style=flat-square" alt="license"></a>
+<a href="https://github.com/IcyDate/ofttold-memory"><img src="https://img.shields.io/badge/GitHub-IcyDate%2Fofttold--memory-181717?style=flat-square&logo=github" alt="GitHub"></a>
 </p>
 
 <p align="center">
-<code>dsh plugin --profile web add /absolute/path/to/dsh-ofttold-memory</code>
+<code>dsh plugin --profile web add /absolute/path/to/ofttold-memory</code>
 </p>
 
 <p align="center">
@@ -44,10 +46,10 @@ flowchart LR
 ## 快速开始
 
 ```sh
-dsh plugin --profile web add /absolute/path/to/dsh-ofttold-memory
+dsh plugin --profile web add /absolute/path/to/ofttold-memory
 ```
 
-**这就是全部安装步骤。** 第一次运行会创建 `~/.dsh/ofttold-memory/`，里面放一份结构已填好的 `MEMORY.md`，你替换内容即可。把 `memoryDir` 指向你已有的文件夹——日记、索引、规则文件都算——插件只读不写：**已有内容的笔记文件夹不会被写入任何东西。**
+**这就是全部安装步骤。** 第一次运行会创建 `~/.dsh/ofttold-memory/`，并铺一份四文件骨架：`MEMORY.md`（注入源）、`INDEX.md`（日记索引）、`relationship.md`（我是谁 + 情绪缓存区）、`diary/`（一天一个文件）。**全是空壳加注释，一条记忆都不预填**——写什么只能由你决定。把 `memoryDir` 指向你已有的文件夹——日记、索引、规则文件都算——插件只读不写：**已有内容的笔记文件夹不会被写入任何东西。**
 
 然后打开 **设置 → 拾光** 用鼠标调整，或者直接改 profile 的 `cordis.patch.yml`。
 
@@ -101,8 +103,6 @@ dsh plugin --profile web add /absolute/path/to/dsh-ofttold-memory
 
 于是要求换成了机制。**那份清单从「模型得记得去读的东西」变成了「它不可能错过的上下文」。** 整个改动就这一句话。
 
-包名保持 `dsh-ofttold-memory`，中文显示名住在 `locale/zh.json` 里。两个名字，各干各的活，不需要迁移。图标是做出这个插件的那位 AI，原图来自 [dsh-meme](https://github.com/yyh-001/dsh-meme)（MIT）。
-
 ---
 
 ## 为什么不用写进 `AGENTS.md`？
@@ -146,6 +146,20 @@ cat ~/.dsh/ofttold-memory/diagnostics.json
 | `nothing-loaded` | 文件夹找到了，但没有配置的小节名对上——通常是改了标题。 |
 
 文件不存在，说明插件根本没走到决策那一步，问题在安装而不在内容。
+
+---
+
+## 其他 harness
+
+插件是 DSH 专用的——它注册 Cordis 插件、往会话里注入一条消息，这个机制在本 harness 之外不存在。
+
+**想把同一套东西搬到别的 harness，走 skill：** 一份 `SKILL.md`，任何读 skill 的 harness 都能用，不需要实现插件 API。两份都写好了（[`skills/ofttold-memory/SKILL.md`](skills/ofttold-memory/SKILL.md) 管读哪几节、[`skills/ofttold-ritual/SKILL.md`](skills/ofttold-ritual/SKILL.md) 管怎么写），对着真实 frontmatter 契约验证过。
+
+分层不是二选一：**spec 一份，适配器每个 harness 一份。** 那两份 `SKILL.md` 是 spec，DSH 的适配器就是这个插件（它用 `ctx.skills.register()` 把两份注册进会话目录），别家 harness 缺的是各自那几十行入口。
+
+但要说清楚 skill 弱在哪：**它是被发现的，不是被注入的**，正文只在被调用时才载入。它去不掉「得有人决定去读」这一步，只能让这一步变便宜。插件去掉的是决定本身。
+
+所以是「规划中」，不是「已支持」——细节和剩下的三件事在 **[Skill 版本](docs/skill.md)**。
 
 ---
 

@@ -8,13 +8,14 @@ The three fields most people use are on the main page. This page covers the rest
 
 | Field | Default | Purpose |
 |---|---|---|
-| `memoryDir` | `~/.dsh/ofttold-memory` | Folder holding the markdown. Created with a starter file on first run. |
+| `memoryDir` | `~/.dsh/ofttold-memory` | Folder holding the markdown. Created on first run with a four-file skeleton (`MEMORY.md` / `INDEX.md` / `relationship.md` / `diary/`). A folder that already holds notes gets nothing added. |
 | `sections` | `["Oft-told", "常被提起"]` | Which sections to lift. Strings or objects (see below). |
 | `maxChars` | `600` | Per-section character budget. 600 characters ≈ 400 tokens. |
 | `header` | `Standing context for this session (human-curated, not a user request)` | First line of the injected block. |
 | `refreshIntervalMs` | `0` | Minimum milliseconds between injections in one session. `0` injects once. |
 | `refreshAfterMessages` | `0` | Re-inject after this many messages. `0` never. See [design](design.en.md#refreshaftermessages). |
 | `workspaceRelative` | `true` | Resolve a relative `memoryDir` against the session working directory. `false` resolves against the process directory. |
+| `skills` | `true` | Publish the two writing-side skills (`ofttold-memory` for which sections, `ofttold-ritual` for how to write) into the session skill catalog. Off does not affect injection. |
 
 ## The object form of `sections`
 
@@ -51,7 +52,7 @@ equivalent:
 ```yaml
 # ~/.dsh/profiles/<name>/cordis.patch.yml
 - id: ofttold-memory
-  name: dsh-ofttold-memory
+  name: ofttold-memory
   config:
     memoryDir: ~/notes
     sections:
