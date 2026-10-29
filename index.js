@@ -1,5 +1,5 @@
 /**
- * dsh-ofttold-memory — keep your memory in front of the model, every session.
+ * ofttold-memory — keep your memory in front of the model, every session.
  *
  * The problem this solves is not storage, it is *retrieval without a trigger*.
  * A note that lives in a file is only useful if something puts it in front of the
@@ -31,6 +31,7 @@ import { z as zod } from "zod";
 import { configValue } from "./lib/config.js";
 import { Diagnostics } from "./lib/diagnostics.js";
 import { scaffoldMemory } from "./lib/scaffold.js";
+import { registerSkills } from "./lib/skills.js";
 import { DEFAULT_SECTIONS, expandPath, renderSources } from "./lib/sources.js";
 
 export const name = "ofttold-memory";
@@ -143,6 +144,13 @@ export const Config = z.object({
     .description(
       "What a relative folder path is resolved against. On: this session's working folder. Off: the folder the process started in. Usually no need to change it.",
     ),
+  skills: z
+    .boolean()
+    .default(true)
+    .volatile()
+    .description(
+      "Publish the writing-side skills (diary entry, index line, emotion tag, relationship.md) into the session skill catalog. On by default: the reading side alone tells a new user what they already know but not how to add to it. Off removes them without affecting injection.",
+    ),
 });
 
 
@@ -215,6 +223,16 @@ export function apply(ctx, config) {
   const sections = configValue(config, "sections") ?? DEFAULT_SECTIONS;
   if (sections.length === 0) return;
 
+  // The writing side is published once, here, because skills belong to the
+  // plugin rather than to any one session. It is best-effort in both directions:
+  // a harness without the skill service gets the injection and no catalog entry,
+  // and a service that is not yet served at load time is retried on the first
+  // session rather than silently skipped — that silent-skip is exactly how a
+  // client half failed to apply once, and it took a live harness to notice.
+  const skillsEnabled = configValue(config, "skills") !== false;
+  const warn = (message) => ctx.logger?.warn?.(`ofttold-memory: ${message}`);
+  let skillsPending = registerSkills(ctx, skillsEnabled, warn).length === 0 && skillsEnabled;
+
   // Directories already prepared in this process. Scaffolding runs lazily from
   // the pre-step listener, because a relative `memoryDir` resolves against the
   // *session* cwd — at `apply` time there is no session yet, so preparing here
@@ -256,6 +274,12 @@ export function apply(ctx, config) {
     const decision = await next();
     if (decision.kind === "reject" || signal.aborted) return decision;
     if (step !== 1) return decision;
+
+    // Retry the skill registration once, at the first session that actually
+    // exists. `skills` may be served later than this plugin is loaded, and a
+    // one-shot attempt at `apply` time would then lose the catalog entry for the
+    // whole process — the same failure mode the client half had.
+    if (skillsPending) skillsPending = registerSkills(ctx, skillsEnabled, warn).length === 0;
 
     const state = ctx.sessionProjections.stateOf(agent.session, name);
     // `stateOf` is typed `| undefined`: it returns undefined when this key is not

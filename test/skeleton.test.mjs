@@ -1,0 +1,162 @@
+/**
+ * Tests for the two halves a fresh install has to get right beyond injection:
+ * the skeleton it lays down, and the skills it publishes.
+ *
+ * Why these exist: the plugin's reading side can be perfect and still leave a
+ * new user stuck, because "here is what I know" does not answer "how do I add to
+ * it". That gap used to be closed by a README the user may never open. Closing it
+ * with files and a skill catalog entry means two new failure modes worth testing —
+ * a skeleton that writes into somebody's existing notes, and a skill that is
+ * declared but never actually registered.
+ */
+
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
+import { scaffoldMemory } from "../lib/scaffold.js";
+import { loadSkills, parseFrontmatter, registerSkills } from "../lib/skills.js";
+
+/** A fake plugin context whose `get("skills")` returns a recording registry. */
+function skillContext(available = true) {
+  const registered = [];
+  const ctx = {
+    get(name) {
+      if (name !== "skills" || !available) return undefined;
+      return {
+        register(skill) {
+          registered.push(skill);
+        },
+      };
+    },
+  };
+  return { ctx, registered };
+}
+
+test("the skeleton lays down all four files in an empty folder", () => {
+  const dir = mkdtempSync(join(tmpdir(), "ofttold-skeleton-"));
+  const result = scaffoldMemory(dir);
+  assert.equal(result.skipped, false);
+  assert.deepEqual(result.createdFiles, ["MEMORY.md", "INDEX.md", "relationship.md", "diary/README.md"]);
+  assert.ok(existsSync(join(dir, "MEMORY.md")));
+  assert.ok(existsSync(join(dir, "INDEX.md")));
+  assert.ok(existsSync(join(dir, "relationship.md")));
+  assert.ok(existsSync(join(dir, "diary", "README.md")));
+});
+
+test("the skeleton pre-fills no memory, only empty shells", () => {
+  // The point of the skeleton is to show the shape, not to decide what is worth
+  // remembering. Pre-filled entries would be exactly the thing "no automatic
+  // writes" forbids, just done by the installer instead of by a model.
+  const dir = mkdtempSync(join(tmpdir(), "ofttold-shell-"));
+  scaffoldMemory(dir);
+  const relationship = readFileSync(join(dir, "relationship.md"), "utf8");
+  const index = readFileSync(join(dir, "INDEX.md"), "utf8");
+  // The emotion cache exists but holds no value: `未填` is a placeholder, not a tag.
+  assert.match(relationship, /\*\*现在\*\*：`（未填）`/);
+  // The index has the section the plugin reads, and no dated line yet. The
+  // example format lives inside an HTML comment on purpose, so a real entry is
+  // recognizable as a line that starts with a dated bullet.
+  assert.match(index, /## 常被提起/);
+  // Comments are stripped first: the format example lives inside one, and a
+  // commented-out sample is documentation, not a memory the user has to delete.
+  const visible = index.replace(/<!--[\s\S]*?-->/g, "");
+  assert.equal(/^- \*\*\d{2}-\d{2}\*\*/m.test(visible), false, "no dated entry may be pre-filled");
+});
+
+test("the skeleton does not add anything to a folder that already has notes", () => {
+  const dir = mkdtempSync(join(tmpdir(), "ofttold-hasnotes-"));
+  writeFileSync(join(dir, "INDEX.md"), "# 索引\n\n- 真的一条\n", "utf8");
+  const before = readdirSync(dir).sort();
+  const result = scaffoldMemory(dir);
+  assert.equal(result.skipped, true);
+  assert.deepEqual(result.createdFiles, []);
+  assert.deepEqual(readdirSync(dir).sort(), before, "an existing notes folder must not gain a single file");
+});
+
+test("the skeleton never overwrites a file that already exists", () => {
+  // Half-scaffolded folders are normal: someone deletes INDEX.md and keeps the
+  // rest. The missing file is created; the kept one is not touched.
+  const dir = mkdtempSync(join(tmpdir(), "ofttold-partial-"));
+  scaffoldMemory(dir);
+  writeFileSync(join(dir, "MEMORY.md"), "## 常被提起\n\n- mine\n", "utf8");
+  scaffoldMemory(dir);
+  assert.equal(readFileSync(join(dir, "MEMORY.md"), "utf8"), "## 常被提起\n\n- mine\n");
+});
+
+test("both shipped skills parse and satisfy the registry contract", () => {
+  const { skills, skipped } = loadSkills();
+  assert.deepEqual(skipped, []);
+  assert.deepEqual(
+    skills.map((skill) => skill.name).sort(),
+    ["ofttold-memory", "ofttold-ritual"],
+  );
+  for (const skill of skills) {
+    // The same two rules `ctx.skills.register()` throws on, checked here so a
+    // typo fails a test instead of a live session.
+    assert.match(skill.name, /^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+    assert.ok(skill.description.length > 0);
+    // The catalog truncates at 500 by default; a description longer than that
+    // would be silently cut, so it must fit.
+    assert.ok(skill.description.length <= 500, `${skill.name} description is too long for the catalog`);
+    assert.ok(skill.content.length > 200, `${skill.name} has no body worth loading`);
+  }
+});
+
+test("the ritual skill covers the four things injection cannot teach", () => {
+  const { skills } = loadSkills();
+  const ritual = skills.find((skill) => skill.name === "ofttold-ritual");
+  assert.ok(ritual !== undefined, "the writing side must ship");
+  const body = ritual.content;
+  for (const topic of ["diary", "index", "emotion", "relationship.md"]) {
+    assert.ok(body.toLowerCase().includes(topic), `ritual skill must cover ${topic}`);
+  }
+});
+
+test("a malformed skill file is skipped, not thrown on", () => {
+  // One bad skill must not stop the plugin from loading, for the same reason a
+  // renamed heading must not stop a session.
+  const root = mkdtempSync(join(tmpdir(), "ofttold-badskill-"));
+  mkdirSync(join(root, "skills", "Bad_Name"), { recursive: true });
+  writeFileSync(join(root, "skills", "Bad_Name", "SKILL.md"), "---\nname: Bad_Name\ndescription: x\n---\nbody\n", "utf8");
+  const { skills, skipped } = loadSkills(root);
+  assert.deepEqual(skills, []);
+  assert.deepEqual(skipped, ["Bad_Name"]);
+});
+
+test("a package with no skills directory loads nothing and does not throw", () => {
+  const root = mkdtempSync(join(tmpdir(), "ofttold-noskills-"));
+  const { skills, skipped } = loadSkills(root);
+  assert.deepEqual(skills, []);
+  assert.deepEqual(skipped, []);
+});
+
+test("frontmatter parsing keeps quoted descriptions intact", () => {
+  // A description containing a colon would otherwise be cut at the first one.
+  const parsed = parseFrontmatter('---\nname: x\ndescription: "Use when: writing"\n---\nbody\n');
+  assert.equal(parsed.fields.name, "x");
+  assert.equal(parsed.fields.description, "Use when: writing");
+  assert.equal(parsed.body, "body\n");
+});
+
+test("registerSkills publishes both skills when the service is present", () => {
+  const { ctx, registered } = skillContext(true);
+  const names = registerSkills(ctx, true, () => {});
+  assert.deepEqual(names.sort(), ["ofttold-memory", "ofttold-ritual"]);
+  assert.equal(registered.length, 2);
+});
+
+test("registerSkills is a no-op when the config turns it off", () => {
+  const { ctx, registered } = skillContext(true);
+  assert.deepEqual(registerSkills(ctx, false, () => {}), []);
+  assert.deepEqual(registered, []);
+});
+
+test("registerSkills survives a harness without the skill service", () => {
+  // `skills` is deliberately not in `inject`: a harness that does not mount it
+  // must get the injection and no catalog entry, not a failed plugin load.
+  const { ctx } = skillContext(false);
+  assert.deepEqual(registerSkills(ctx, true, () => {}), []);
+});
