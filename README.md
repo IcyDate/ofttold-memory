@@ -100,9 +100,21 @@ of spending tokens on a block that says only "nothing".
 npm test
 ```
 
-Covers heading parsing (including fenced code blocks that contain `#`), exact-match
-section extraction, line-boundary truncation, `~` expansion, missing files, and
-the mixed success/failure rendering path.
+Three files, in increasing order of realism:
+
+- `test/sections.test.mjs` — heading parsing (including fenced blocks that contain
+  `#`, and a four-backtick fence that must not be closed by a three-backtick line
+  inside it), exact-match extraction, line-boundary truncation, `~` expansion,
+  missing files, and the mixed success/failure rendering path.
+- `test/plugin.test.mjs` — the decision logic against a faked harness: inject
+  once, re-inject on the configured triggers, never mid-turn, stay silent when
+  nothing loads.
+- `test/contract.test.mjs` — the same projection driven by events taken from a
+  real `Session` and a real `createUserMessage`, so a change to the `user/message`
+  or `MessageSource` contract fails here instead of passing against a fake.
+- `test/registry.test.mjs` — the plugin mounted on a real Cordis `Context` with
+  the real `SessionProjectionRegistry`. This is the one that proves the projection
+  key, state schema, and reducer actually register and get driven.
 
 ## License
 
