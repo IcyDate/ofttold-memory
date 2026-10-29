@@ -38,6 +38,13 @@ id, which is how every other DSH plugin is configured:
         maxChars: 300
 ```
 
+`heading` is matched **exactly**, against the heading text with its `#` markers
+and any trailing closing sequence removed. If your file says
+`## 常被提起（手动维护，上限 8 条）`, then that whole string is the heading — a
+shorter `常被提起` will not resolve, and the block will report
+`heading_not_found` instead of guessing. Copy the title as written, minus the
+hashes.
+
 Nothing is hardcoded in the bundle patch on purpose: a patch pointing at one
 machine's notes would make the plugin fail to start for everyone else.
 

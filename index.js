@@ -188,16 +188,27 @@ export function apply(ctx, config) {
     if (step !== 1) return decision;
 
     const state = ctx.sessionProjections.stateOf(agent.session, name);
+    // `stateOf` is typed `| undefined`: it returns undefined when this key is not
+    // registered for that session. That should not happen here — the key is
+    // registered above and the listener is added after — but a throw inside
+    // pre-step fails the whole session, so an absent state falls back to "never
+    // injected" instead of taking the turn down with it.
+    const bookkeeping = state ?? {
+      injectedCount: 0,
+      lastInjectedAt: null,
+      lastInjectedMessageCount: null,
+      messageCount: 0,
+    };
     const now = Date.now();
-    const neverInjected = state.injectedCount === 0;
+    const neverInjected = bookkeeping.injectedCount === 0;
     const intervalDue =
       config.refreshIntervalMs > 0 &&
-      state.lastInjectedAt !== null &&
-      now - state.lastInjectedAt >= config.refreshIntervalMs;
+      bookkeeping.lastInjectedAt !== null &&
+      now - bookkeeping.lastInjectedAt >= config.refreshIntervalMs;
     const messagesDue =
       config.refreshAfterMessages > 0 &&
-      state.lastInjectedMessageCount !== null &&
-      state.messageCount - state.lastInjectedMessageCount >= config.refreshAfterMessages;
+      bookkeeping.lastInjectedMessageCount !== null &&
+      bookkeeping.messageCount - bookkeeping.lastInjectedMessageCount >= config.refreshAfterMessages;
     if (!neverInjected && !intervalDue && !messagesDue) return decision;
 
     const rendered = renderSources(config, baseDirectory(agent, config));

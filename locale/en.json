@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Anchor Context",
+    "description": "Keeps a chosen slice of your own notes in every session's context: reads named sections from markdown files and injects them once, so long-distance recall stops depending on remembering to look."
+  }
+}

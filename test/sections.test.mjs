@@ -49,6 +49,27 @@ test("parseHeadings ignores hashes inside fenced code blocks", () => {
   assert.ok(!titles.includes("not a heading"));
 });
 
+test("a longer fence is not closed by a shorter inner one", () => {
+  // A four-backtick fence exists so a three-backtick fence can live inside it.
+  // Tracking only the first three characters would close the outer fence on the
+  // inner one and turn the rest of the block into headings.
+  const doc = ["````md", "# inside", "```", "still inside", "````", "", "## real", ""].join("\n");
+  assert.deepEqual(parseHeadings(doc).map((entry) => entry.title), ["real"]);
+});
+
+test("a tilde fence is not closed by a backtick fence", () => {
+  const doc = ["~~~", "# inside", "```", "still inside", "~~~", "", "## real", ""].join("\n");
+  assert.deepEqual(parseHeadings(doc).map((entry) => entry.title), ["real"]);
+});
+
+test("a hash glued to the title is text, a spaced closing sequence is not", () => {
+  // `## C#` names C#; stripping that hash would make the heading unreachable by
+  // the exact title the user wrote. `## Foo ##` closes, and the hashes are not
+  // part of the name.
+  assert.equal(parseHeadings("## C#\n")[0].title, "C#");
+  assert.equal(parseHeadings("## Foo ##\n")[0].title, "Foo");
+});
+
 test("extractSection returns the exact body, excluding the heading line", () => {
   const { found, body } = extractSection(DOC, "常被提起");
   assert.equal(found, true);
@@ -70,6 +91,7 @@ test("truncateBody keeps a fitting body untouched", () => {
     text: "a\nb",
     truncated: false,
     droppedLines: 0,
+    partial: false,
   });
 });
 
@@ -78,6 +100,18 @@ test("truncateBody cuts on a line boundary and counts what it dropped", () => {
   assert.equal(result.text, "aaaa\nbbbb");
   assert.equal(result.truncated, true);
   assert.equal(result.droppedLines, 1);
+  assert.equal(result.partial, false);
+});
+
+test("truncateBody marks a mid-line cut instead of reporting zero dropped lines", () => {
+  // One line longer than the whole budget: the old result was truncated with
+  // droppedLines 0, which rendered as "(0 more line(s) omitted)" over text that
+  // had in fact been cut. `partial` distinguishes the two.
+  const result = truncateBody("a".repeat(50), 10);
+  assert.equal(result.text, "a".repeat(10));
+  assert.equal(result.truncated, true);
+  assert.equal(result.droppedLines, 0);
+  assert.equal(result.partial, true);
 });
 
 test("truncateBody rejects a non-positive budget", () => {
@@ -95,15 +129,39 @@ test("loadSource renders a section and truncates it", () => {
   const dir = mkdtempSync(join(tmpdir(), "anchor-"));
   const file = join(dir, "notes.md");
   writeFileSync(file, DOC, "utf8");
-  const result = loadSource({ path: file, heading: "常被提起", maxChars: 12 }, dir, 100);
+  // The two bullets are 13 characters each; 20 fits the first and drops the
+  // second whole line, which is the line-boundary path rather than a mid-line cut.
+  const result = loadSource({ path: file, heading: "常被提起", maxChars: 20 }, dir, 100);
   assert.equal(result.ok, true);
-  assert.match(result.text, /omitted; maxChars=12/);
+  assert.match(result.text, /omitted; maxChars=20/);
 });
 
 test("loadSource reports a missing file without throwing", () => {
   const result = loadSource({ path: "/definitely/not/here.md" }, "/", 100);
   assert.equal(result.ok, false);
   assert.equal(result.reason, "missing");
+});
+
+test("loadSource falls back to the path when label is blank", () => {
+  // The Config schema defaults `label` to "", so `??` alone would keep the
+  // empty string and render a bare `### ` heading with no name.
+  const dir = mkdtempSync(join(tmpdir(), "anchor-"));
+  const file = join(dir, "notes.md");
+  writeFileSync(file, DOC, "utf8");
+  for (const label of ["", "   ", undefined]) {
+    const result = loadSource({ path: file, heading: "常被提起", label }, dir, 100);
+    assert.equal(result.ok, true);
+    assert.equal(result.label, file, `blank label ${JSON.stringify(label)} must fall back to the path`);
+  }
+});
+
+test("loadSource says a mid-line cut was a cut", () => {
+  const dir = mkdtempSync(join(tmpdir(), "anchor-"));
+  const file = join(dir, "long.md");
+  writeFileSync(file, `## one\n\n${"a".repeat(80)}\n`, "utf8");
+  const result = loadSource({ path: file, heading: "one", maxChars: 10 }, dir, 100);
+  assert.equal(result.ok, true);
+  assert.match(result.text, /cut mid-line at maxChars=10/);
 });
 
 test("renderSources joins loaded sources and names the failures", () => {
