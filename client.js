@@ -36,8 +36,6 @@ window.__ModuleLoader__.load({
       saving: "Saving…",
       saveFailed: "The deployment did not accept these values; they were left for you to correct.",
       invalidNumber: "Enter a number, or leave blank to use the default.",
-      openFile: "Open the memory file",
-      fileMissing: "Not created yet — the first session will make it.",
     };
 
     const zh = {
@@ -67,20 +65,7 @@ window.__ModuleLoader__.load({
       saving: "保存中…",
       saveFailed: "本部署没有接受这些值，已保留供你修改。",
       invalidNumber: "请填数字；留空表示使用默认值。",
-      openFile: "打开记忆文件",
-      fileMissing: "还没建——第一次开会话时会自动建。",
     };
-
-    /** Fields this page stages, in render order. */
-    const FIELDS = [
-      "memoryDir",
-      "sections",
-      "maxChars",
-      "header",
-      "refreshIntervalMs",
-      "refreshAfterMessages",
-      "workspaceRelative",
-    ];
 
     /**
      * A config scope that follows whichever namespace the Host actually serves.
