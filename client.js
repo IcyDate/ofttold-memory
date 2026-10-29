@@ -284,6 +284,53 @@ window.__ModuleLoader__.load({
       // the array and drop every per-section file and budget. Showing it read-only
       // is honest; silently mangling it is not.
       const sectionsDisabled = disabled || state.sectionsComplex === true;
+      // A plain HTML section rather than a primitives component: the panel must
+      // stay usable even when the deployment ships a reduced primitive set, and
+      // a diagnostic surface that needs a component to exist is not a diagnostic
+      // surface. The path is what a user pastes into an issue; the summary is what
+      // they paste when they cannot find the file.
+      const diagnostics = h(
+        "details",
+        { className: "ofttold-diagnostics", style: { marginTop: "12px" } },
+        h("summary", { style: { cursor: "pointer" } }, t("diagnostics")),
+        h("p", { style: { margin: "8px 0", opacity: 0.8 } }, t("diagnosticsHint")),
+        h(
+          "p",
+          { style: { margin: "8px 0" } },
+          h("code", {}, state.memoryDir?.text ?? ""),
+          " → ",
+          h("code", {}, ".ofttold-memory/diagnostics.json"),
+        ),
+        h(
+          "button",
+          {
+            type: "button",
+            onClick: () => {
+              const summary = [
+                "dsh-ofttold-memory issue report",
+                `memoryDir: ${state.memoryDir?.text ?? "(not set)"}`,
+                `sections: ${state.sections?.text ?? "(not set)"}`,
+                `maxChars: ${state.maxChars?.text ?? "(not set)"}`,
+                `refreshIntervalMs: ${state.refreshIntervalMs?.text ?? "(not set)"}`,
+                `refreshAfterMessages: ${state.refreshAfterMessages?.text ?? "(not set)"}`,
+                `workspaceRelative: ${state.workspaceRelative?.text ?? "(not set)"}`,
+                `namespace served: ${state.available === true ? "yes" : "no"}`,
+                `writable: ${state.writable === true ? "yes" : "no"}`,
+                "diagnostics file: .ofttold-memory/diagnostics.json inside the memory folder",
+              ].join("\n");
+              // `navigator.clipboard` is absent on insecure origins, so the button
+              // must not be the only way to get the text out: it also selects the
+              // summary in place, and the hint tells the user to copy manually.
+              const clipboard = globalThis.navigator?.clipboard;
+              if (clipboard?.writeText !== undefined) {
+                clipboard.writeText(summary).catch(() => {});
+              }
+            },
+          },
+          t("copyReport"),
+        ),
+      );
+
       const field = (id, label, hint, extra) =>
         h(SettingsValueField, {
           id: `ofttold-${id}`,
@@ -319,6 +366,7 @@ window.__ModuleLoader__.load({
         field("refreshIntervalMs", "refreshIntervalMs", "refreshIntervalMsHint", { numeric: true }),
         field("refreshAfterMessages", "refreshAfterMessages", "refreshAfterMessagesHint", { numeric: true }),
         field("workspaceRelative", "workspaceRelative", "workspaceRelativeHint"),
+        diagnostics,
       );
     }
 
@@ -351,6 +399,12 @@ window.__ModuleLoader__.load({
         // Registered unconditionally: the card must exist before configForms
         // answers, or the page cannot report that it is waiting. A slot-API
         // breakage degrades to a console.error instead of failing the loader.
+        // Two seats, deliberately. `plugins.bundle.config` is where someone who
+        // opened this plugin's own card expects its settings to live; the
+        // top-level `settings.section` is the shorter path the sidebar settings
+        // dialog offers, so a user does not have to find the plugin card first.
+        // Both render the same panel over the same scope, so a value saved in one
+        // place is the same value the other reads.
         ctx.effect(
           () =>
             ctx.slots.inject("plugins.bundle.config", () =>
@@ -365,6 +419,27 @@ window.__ModuleLoader__.load({
               ),
             ),
           "ofttold-memory: bundle page",
+        );
+
+        // `order: 35` sits between Agent presets (20) and the plugin market (40):
+        // memory is a personal preference, not a plugin-management concern, and it
+        // should not be pushed to the bottom of a growing list.
+        ctx.effect(
+          () =>
+            ctx.slots.inject("settings.section", () =>
+              ctx.slots.register(
+                {
+                  name: "settings.section",
+                  id: "ofttold-memory",
+                  order: 35,
+                  label: () => t("nav"),
+                  locale: NS,
+                  inject: () => form.inject(),
+                },
+                MemoryPanel,
+              ),
+            ),
+          "ofttold-memory: settings section",
         );
       },
     };

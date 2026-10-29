@@ -424,3 +424,36 @@ test("configForms arriving after apply still binds", () => {
   assert.equal(snapshot.writable, true);
   assert.equal(snapshot.memoryDir.text, "~/.dsh/memory");
 });
+
+test("the same panel also registers as a top-level settings section", () => {
+  const { plugin } = loadClientPlugin();
+  const { ctx, registered } = fakeClientContext();
+  plugin.apply(ctx);
+  // Two seats, one panel: the plugin card is where someone who found the plugin
+  // expects settings, but requiring them to find the card first was the complaint.
+  // The section is the short path from the sidebar's settings dialog.
+  const section = registered.find((entry) => entry.meta.name === "settings.section");
+  assert.ok(section !== undefined, "the page did not register as a settings section");
+  assert.equal(section.meta.id, "ofttold-memory");
+  assert.equal(typeof section.meta.order, "number");
+  // A fresh id, not a shipped one: reusing an id puts you in that cell and
+  // replaces the shipped page.
+  assert.ok(!["account", "general", "models", "plugins", "agent-presets", "memes"].includes(section.meta.id));
+  // `label` is a thunk so the nav text follows the active locale.
+  assert.equal(typeof section.meta.label, "function");
+  const props = section.meta.inject();
+  assert.equal(typeof props.hooks.memoryForm, "object");
+  assert.equal(typeof props.save, "function");
+});
+
+test("the section and the plugin card share one form, so a save in either is the same", () => {
+  const { plugin } = loadClientPlugin();
+  const { ctx, registered } = fakeClientContext();
+  plugin.apply(ctx);
+  const section = registered.find((entry) => entry.meta.name === "settings.section");
+  const card = registered.find((entry) => entry.meta.name === "plugins.bundle.config");
+  assert.ok(section !== undefined && card !== undefined);
+  // Both faces must project the same hook object; two independent forms over one
+  // scope would let the section show a stale value the card had just saved.
+  assert.equal(section.meta.inject().hooks.memoryForm, card.meta.inject().hooks.memoryForm);
+});

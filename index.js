@@ -27,6 +27,7 @@ import z from "@deepseek-ai/schemastery";
 import { z as zod } from "zod";
 
 import { configValue } from "./lib/config.js";
+import { Diagnostics } from "./lib/diagnostics.js";
 import { scaffoldMemory } from "./lib/scaffold.js";
 import { DEFAULT_SECTIONS, expandPath, renderSources } from "./lib/sources.js";
 
@@ -203,6 +204,9 @@ export function apply(ctx, config) {
   // would create the starter file in the process directory instead of where the
   // user's notes actually live. The set keeps that one stat out of every step.
   const prepared = new Set();
+  // One recorder per plugin instance: it sees every session, so a symptom that
+  // spans sessions stays in one history instead of fragmenting per session.
+  const diagnostics = new Diagnostics();
 
   ctx.sessionProjections.register({
     key: name,
@@ -278,7 +282,20 @@ export function apply(ctx, config) {
     }
 
     const rendered = renderSources(config, memoryDir);
-    if (rendered === undefined) return decision;
+    if (rendered === undefined) {
+      // The most common "it does nothing" report: the folder exists, the heading
+      // does not match. Recording it is the whole point of the diagnostic file.
+      diagnostics.record("nothing-loaded", { memoryDir, reason: "no configured section resolved" });
+      diagnostics.flush(memoryDir);
+      return decision;
+    }
+    diagnostics.record("injected", {
+      memoryDir,
+      loaded: rendered.loaded,
+      failed: rendered.failed,
+      chars: rendered.text.length,
+    });
+    diagnostics.flush(memoryDir);
 
     return {
       ...decision,

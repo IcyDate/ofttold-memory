@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import z from "@deepseek-ai/schemastery";
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -9,6 +9,7 @@ import { join } from "node:path";
 import { extractSection, parseHeadings, truncateBody } from "../lib/sections.js";
 import { scaffoldMemory } from "../lib/scaffold.js";
 import { configValue, deref } from "../lib/config.js";
+import { DIAGNOSTICS_DIR, DIAGNOSTICS_FILE, Diagnostics } from "../lib/diagnostics.js";
 import { expandPath, loadSource, renderSources, resolveSections } from "../lib/sources.js";
 
 const DOC = [
@@ -400,6 +401,66 @@ test("renderSources reads a config whose values are references", () => {
     assert.equal(rendered.loaded, 1);
     assert.match(rendered.text, /Standing context/);
     assert.match(rendered.text, /一条要记住的事/);
+  } finally {
+    rmSync(folder, { recursive: true, force: true });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Diagnostics
+//
+// The plugin never fails a session to report a problem, so a broken setup is
+// silent by design. The diagnostic file is the only surface that says why
+// nothing was injected, and someone pasting it into an issue is the reason it
+// holds paths but never file contents.
+// ---------------------------------------------------------------------------
+
+test("diagnostics records decisions and writes them beside the memory folder", () => {
+  const folder = mkdtempSync(join(tmpdir(), "ofttold-diag-"));
+  try {
+    const diagnostics = new Diagnostics();
+    diagnostics.record("injected", { loaded: 2, chars: 700 });
+    diagnostics.record("nothing-loaded", { reason: "no configured section resolved" });
+    const file = diagnostics.flush(folder);
+    assert.equal(file, join(folder, DIAGNOSTICS_DIR, DIAGNOSTICS_FILE));
+    const written = JSON.parse(readFileSync(file, "utf8"));
+    assert.equal(written.plugin, "dsh-ofttold-memory");
+    assert.equal(written.entries.length, 2);
+    assert.equal(written.entries[0].event, "injected");
+    assert.equal(written.entries[0].loaded, 2);
+    // Every entry carries a timestamp, or the file cannot order a symptom.
+    assert.match(written.entries[1].at, /^\d{4}-\d{2}-\d{2}T/);
+  } finally {
+    rmSync(folder, { recursive: true, force: true });
+  }
+});
+
+test("diagnostics keeps a bounded history rather than growing without limit", () => {
+  const diagnostics = new Diagnostics();
+  for (let index = 0; index < 80; index += 1) diagnostics.record("injected", { index });
+  // The oldest are dropped, so a user pasting the file pastes the recent story.
+  assert.equal(diagnostics.entries.length, 50);
+  assert.equal(diagnostics.entries[0].index, 30);
+  assert.equal(diagnostics.entries[49].index, 79);
+});
+
+test("diagnostics never throws when the folder cannot be written", () => {
+  const diagnostics = new Diagnostics();
+  diagnostics.record("injected", {});
+  // A read-only home is a normal deployment: the diagnostic must not become the
+  // failure it was meant to explain.
+  assert.equal(diagnostics.flush("/nonexistent-root-that-cannot-be-created/deep"), undefined);
+});
+
+test("diagnostics records no file contents, only the facts about them", () => {
+  const folder = mkdtempSync(join(tmpdir(), "ofttold-diag2-"));
+  try {
+    writeFileSync(join(folder, "MEMORY.md"), "# 常被提起\n\n这是不该出现在诊断里的正文。\n");
+    const diagnostics = new Diagnostics();
+    const rendered = renderSources({ sections: ["常被提起"] }, folder);
+    diagnostics.record("injected", { loaded: rendered.loaded, failed: rendered.failed, chars: rendered.text.length });
+    const written = readFileSync(diagnostics.flush(folder), "utf8");
+    assert.ok(!written.includes("这是不该出现在诊断里的正文"), "diagnostics leaked file contents");
   } finally {
     rmSync(folder, { recursive: true, force: true });
   }
