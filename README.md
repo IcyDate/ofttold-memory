@@ -1,127 +1,233 @@
-# dsh-anchor-context · 记忆
+# dsh-ofttold-memory · memory that keeps coming back
 
-把你的记忆放进**每一个**会话。
+**English** · [中文](README.zh-CN.md)
 
-它解决的问题不是存储，是**没有触发点的回忆**。一条笔记躺在文件里，只有在被需要的那一刻被摆到模型面前才有用。而「记得每个会话开头去读索引」本身是一个要求——要求模型在注意力最满的时候还稳定地做某件事，而那正是这类要求最容易失效的条件。这个插件把那个要求去掉了：它从你已经在维护的 markdown 里取出几节，作为常驻上下文注入一次。
+Put your memory in front of **every** session.
 
-注入之后那条消息就留在历史里，后面每一轮都看得见。这就是全部把戏。
+This is not a storage tool. A note sitting on disk only helps at the moment it is put in front of the model — and "remember to read the index at the start of every session" is itself a demand: it asks the model to reliably do a thing at the exact moment its attention is fullest, which is the condition where such demands fail most often. This plugin removes the demand. It lifts a few sections out of markdown you already maintain and injects them once as standing context.
 
-## 开箱即用
+After that the message stays in history and is visible on every later turn. That is the whole trick.
+
+The name is the mechanism: **oft-told** — the things that keep coming back because they keep being told.
+
+---
+
+## Install and you are done
 
 ```sh
-dsh plugin --profile web add /absolute/path/to/dsh-anchor-context
+dsh plugin --profile web add /absolute/path/to/dsh-ofttold-memory
 ```
 
-**装完就完了。** 第一次运行会自动在 `~/.dsh/memory/` 建好文件夹和一份起始文件 `MEMORY.md`，里面已经填好结构，你只要把内容换成自己的。
+**That is the entire setup.** The first run creates `~/.dsh/ofttold-memory/` with a starter `MEMORY.md` whose structure is already filled in; you replace the contents with your own.
 
-**它不会往你已有的笔记文件夹里塞东西。** 把 `memoryDir` 指向一个已经有 markdown 的文件夹（日记、索引、规矩文件都算），插件只读取、不添加——那份起始模板只在文件夹不存在或空着的时候才建。
+**It will not add anything to a notes folder you already have.** Point `memoryDir` at a folder that already contains markdown (a diary, an index, a rules file — all count) and the plugin only reads. The starter template is written only when the folder is missing or genuinely empty.
 
-之后每个会话开头，`MEMORY.md` 的「常被提起」那一节会自动出现在上下文里。
+From then on, the `Oft-told` section of `MEMORY.md` appears in context at the start of every session. Change that file to change what rides along. **No configuration required.**
 
-想改成自己的东西，只要改那个文件。**不用碰任何配置。**
+---
 
-## 换成你自己的记忆文件夹
+## Why "one folder, a few sections"
 
-如果你已经有一套笔记（日记、索引、规矩文件），直接把文件夹指过去：
+Most memory schemes answer "how do I store it". This one answers only "how do I keep it in view". So it does no retrieval, no embeddings, no database — **it does one injection**.
 
-```yaml
-# ~/.dsh/profiles/<名字>/cordis.patch.yml
-- id: anchor-context
-  name: dsh-anchor-context
-  config:
-    memoryDir: ~/Desktop/拾光
-    sections:
-      - 常被提起（手动维护，上限 8 条）
-      - 我是谁
-```
+The cost is a few hundred tokens per section, once per session. The benefit is that the model stops asking "where is the project" and "what must not be touched".
 
-`memoryDir` 是文件夹，`sections` 是要取的小节名——**直接写标题就行**，不需要写文件路径。默认都在 `memoryDir` 下的 `MEMORY.md` 里找。
+**There is exactly one test for what belongs: would getting this wrong without seeing it cause a mistake?** Not "important", not "mentioned often" — *"not seeing this would break the work"*. Written to that test, eight entries are plenty. Written to "important", nothing is ever enough.
 
-## 三个旋钮，没别的
+---
 
-| 配置项 | 默认 | 干什么的 |
+## Three knobs, nothing else
+
+| Option | Default | What it does |
 | --- | --- | --- |
-| `memoryDir` | `~/.dsh/memory` | 记忆文件夹。第一次运行自动创建，可以不管。 |
-| `sections` | `["常被提起"]` | 要常驻哪几节。直接写小节名。 |
-| `maxChars` | `600` | 每节字符上限。600 字符约 400 token，每个会话一次。 |
+| `memoryDir` | `~/.dsh/ofttold-memory` | Your memory folder. Created on first run; safe to ignore. |
+| `sections` | `["Oft-told", "常被提起"]` | Which sections ride along. Just the heading text. |
+| `maxChars` | `600` | Character budget per section. 600 characters is roughly 400 tokens, once per session. |
 
-其余几项（`header`、`refreshIntervalMs`、`refreshAfterMessages`、`workspaceRelative`）都有能用的默认值，正常人不用改。
+The rest (`header`, `refreshIntervalMs`, `refreshAfterMessages`, `workspaceRelative`) have working defaults that most people never touch.
 
-### 一节要特殊对待时
+### Change it in the settings page
 
-极少数情况下，某一节在别的文件里、或者要单独给个预算/显示名，用对象写法：
+Once installed, **Settings → Plugins → Memory** renders a form you can edit with mouse and keyboard. Saving writes into the profile's `cordis.patch.yml`.
+
+Prefer editing the file directly: `~/.dsh/profiles/<name>/cordis.patch.yml`.
+
+### Point it at your own notes folder
+
+If you already keep notes, just aim it there:
+
+```yaml
+- id: ofttold-memory
+  name: dsh-ofttold-memory
+  config:
+    memoryDir: ~/notes
+    sections:
+      - Oft-told
+      - Who I am
+```
+
+`memoryDir` is a folder; `sections` are heading names — **write the title itself**, no file paths. They are looked up in `MEMORY.md` inside `memoryDir` by default.
+
+### When one section needs special treatment
+
+Rarely, a section lives in another file, or needs its own budget or display name. Use the object form:
 
 ```yaml
     sections:
-      - 常被提起
-      - file: OTHER.md      # 同文件夹下的另一个文件
-        heading: 硬约定
+      - Oft-told
+      - file: OTHER.md      # another file in the same folder
+        heading: Hard rules
         maxChars: 300
-        label: 约定          # 注入块里显示的名字
+        label: Rules        # the name shown inside the injected block
 ```
 
-**只有这一种情况需要对象写法**，平常写字符串就够了。
+**This is the only case that needs the object form.** A bare string covers everything else.
 
-## 标题要一字不差
+### Headings must match exactly
 
-`heading` 是**精确匹配**：去掉 `#` 之后的原文，一个字都不能少。文件里写的是
-`## 常被提起（手动维护，上限 8 条）`，那整串就是标题——写短的 `常被提起` 找不到，注入块里会报 `heading_not_found`，而不是猜一个最像的。
+`heading` is an **exact match**: the text after the `#`s, character for character. If the file says `## Oft-told (maintained by hand, cap 8)`, that whole string is the title — the short `Oft-told` will not resolve, and the injected block reports `heading_not_found` instead of guessing the nearest neighbour.
 
-这条是有意的：**猜错了比报错更坏**。改标题就该让它停下，而不是悄悄换成邻居那一节。
+This is deliberate: **a wrong guess is worse than an error.** Renaming a heading should stop the lookup, not silently swap in the section next door.
 
-## 文件长什么样
+---
+
+## What the file looks like
 
 ```markdown
-# 我的记忆
+# My memory
 
-## 常被提起
+## Oft-told
 
-> 建议上限 8 条。满了就挤掉一条——挤掉这个动作本身就是一次排序。
+> Cap of 8 suggested. When it is full, one entry is evicted — and the eviction
+> itself is the ranking, which beats "add one whenever it comes to mind".
 
-- **示例·项目在哪** → `~/work/my-project`｜省得每次问
-- **示例·别动的东西** → 不要改 `config/prod.yml`
+- **Example · where the project is** → `~/work/my-project` | saves asking every time
+- **Example · what not to touch** → do not edit `config/prod.yml`
 
-## 我是谁
+## Who I am
 
-- （怎么称呼、说话习惯、脾气、在意什么）
+- (how you address me, speech habits, temper, what I care about)
 
-## 硬约定
+## Hard rules
 
-- （不记得就会干错活的事：谁是负责人、哪些命令不能跑）
+- (things whose absence causes wrong work: who owns what, commands never to run)
 ```
 
-**只放「不在眼前就会做错事」的东西。** 这是判断标准，也是它省 token 的原因：一次注入几百 token，换的是每个会话都不再问「项目在哪」。
+---
 
-## 为什么需要 `refreshAfterMessages`
+## For the curious: the thinking behind the mechanism
 
-上下文压缩器会把旧消息折成摘要。注入块就是一条旧消息，所以压缩激进一点的会话最终会把它折掉。一个「注入一次就相信它一直在」的插件，在没被折掉之前都很好用。
+This section explains *why* it is shaped this way. Skip it if the above is enough.
 
-`refreshAfterMessages` 在消息数超过阈值时重新注入。这是个近似——压缩会重写载荷但不增加消息数，所以消息数并不直接衡量压缩——但压缩和消息增长是相关的，而判断错的代价是多注入一次。
+### Why a cap exists
 
-## 这个插件刻意不做的事
+The cap of 8 is not arbitrary: 8 entries ≈ 283 tokens per turn. That is the **intersection of cost and headroom** — below it, the standing value is not worth the setup; above it, you pay every turn for a list you rarely use.
 
-不打分、不做衰减曲线、不打情绪标签、不猜「重要性」。这些需要判断，而判断恰恰是注意力满的时候最先失效的东西。这个插件只把一份**人写的**清单摆到眼前。什么重要，仍然是你决定的；它只负责让那份清单不再隐形。
+A cap forces a rule for *who gets evicted*. **And eviction is itself a ranking** — far more reliable than "add one whenever you think of it", because the latter never deletes anything and ends up a list nobody reads.
 
-它也不往回写。读取是只读的，每个字段都是人工配置——**模型没办法给自己加上下文**。
+### The forgetting curve (`R = exp(-t/S)`)
 
-## 出错时
+Eviction ranks by weight, not by age:
 
-文件没了、标题改了、文件夹读不了，都**不抛错**，而是在注入块里写一行 `Unavailable: <名字>: <原因>`。悄悄跳过一条提醒，比整个 harness 起不来便宜太多。
+```
+R = exp(-t/S)     t = days since
+                  n = number of distinct days it was mentioned
+                  S = 1 × 2^n
+```
 
-如果**一节都没读到**，就整个跳过不注入——不花 token 去说一句「什么都没有」。
+**Every time it is mentioned, `S` doubles** — this is spaced repetition (SM-2's one-day first interval; FSRS's retrievability form), not a guess. Example: mentioned 6 days ago on 3 distinct days → `S=8`, `R=0.47`; mentioned 1 day ago on 2 days → `S=4`, `R=0.78`.
 
-## 开发
+**Why age alone is wrong:** measured on real data, the oldest entry was the most cited one. Decaying purely by age would rank it last — which is backwards.
+
+**Weight does not sort; it only decides evictions.** In normal use it never runs: when everything fits, ordering is meaningless. It matters only at the moment the list is full and something new wants in. So the cost of getting the numbers wrong is that one anchor hangs on a few extra days — not corrupted data.
+
+Counting is the machine's job, judgement is yours: `grep -o "2026-10-[0-9][0-9]" diary/*.md`, deduplicated by source day, gives "how many days this was recalled" — **ten mentions in one day still count as one**, because "it was recalled that day" is one fact, not ten.
+
+> This plugin **does not compute weights for you**. It is the list at your elbow when the eviction decision happens. If you want to compute, the algorithm above is it.
+
+### Emotion labels
+
+Each diary entry carries one emotion name (`情绪：<word>`) drawn from a **closed vocabulary** — words can be added, never removed or renamed.
+
+Why closed: `relationship.md` keeps an "emotion cache" holding only the *current* emotion. The words in the cache must be a **subset** of the diary labels, or "matching" can never happen.
+
+- **Diary labels are fixed values**: the emotion at the time of writing, frozen afterwards.
+- **The cache is a live value**: the emotion right now, changing with the conversation.
+
+Why closure is required, measured: of 5 existing emotion memories, **5 entries had 5 different emotions, each appearing once** — that is a list, not a cache. A cache has content only when the same emotion matches twice or more. **And matching requires identical names.**
+
+**Do not grep emotion words out of the text afterwards.** Measured: 4 of 5 emotion memories had no emotion word left to match, because by the time it was written the emotion had already been translated into a judgement (the entry says "I mistook reluctance for irresponsibility", and "reluctance" no longer contains the raw feeling). The former is the present; the latter is review, and review only gets the residue.
+
+> This plugin **does not tag emotions**. You tag them while writing; the plugin only carries them into context.
+
+### Why no automatic writes
+
+Reading is read-only, every field is set by hand — **the model cannot give itself context**.
+
+This is deliberate: an agent that writes its own memory mixes "what I just thought of" with "what keeps coming back", and within a few turns the list stops being trustworthy. **The value of memory comes from the fact that someone else chose it.**
+
+---
+
+## What this plugin deliberately does not do
+
+No scoring, no decay curve, no emotion tagging, no guessing "importance". Those require judgement, and judgement is exactly what fails first when attention is full. This plugin only puts a **human-written** list in front of you.
+
+What matters is still your call; the plugin just stops that list from being invisible.
+
+---
+
+## Why `refreshAfterMessages` exists
+
+A context compactor folds old messages into summaries. The injected block is one old message, so an aggressively compacting session will eventually fold it away. A plugin that injects once and trusts it to stay is fine right up until that happens.
+
+`refreshAfterMessages` re-injects once the message count passes a threshold. It is an approximation — compaction rewrites payloads without adding messages, so message count does not measure compaction directly — but compaction correlates with message growth, and the cost of guessing wrong is one extra injection.
+
+---
+
+## Cross-platform
+
+**Windows, macOS, and Linux all work.**
+
+These are the cases that actually come up:
+
+| Situation | Handling |
+| --- | --- |
+| UTF-8 BOM (Notepad, some VS Code setups) | Stripped. Otherwise it glues itself to the first heading, exact matching fails, and the whole section silently disappears |
+| CRLF line endings | Normalized to `\n`. Otherwise `\r` survives into the injected text |
+| `~\notes` backslash paths | Expand the same as `~/notes`. Otherwise it resolves to a literal folder named `~` beside the process directory |
+| Drive-letter paths `C:\...` | Recognized by `isAbsolute`; used as-is |
+| Read-only home directory | No throw, one `warn` — an unreadable home directory must not stop a session from starting |
+
+`package.json` declares `engines.node` as `>=22.0.0`, identical on all three platforms.
+
+**What is not done:** real-hardware testing on Windows. The code paths are handled as described above, but "it runs" is reasoned from Node's cross-platform semantics, not verified by me on a Windows machine. **That is a fact, not a disclaimer.**
+
+---
+
+## When something goes wrong
+
+A missing file, a renamed heading, an unreadable folder — none of these throw. The injected block carries one line instead: `Unavailable: <name>: <reason>`. Silently skipping one reminder is far cheaper than the harness failing to start.
+
+If **not a single section** could be read, the injection is skipped entirely — no tokens spent saying "there was nothing".
+
+---
+
+## Development
 
 ```sh
 npm test
 ```
 
-四个测试文件，按真实度递增：
+Four test files, in increasing order of realism:
 
-- `test/sections.test.mjs` — 标题解析（包括含 `#` 的围栏代码块、四个反引号的围栏不能被里面三个反引号的行关掉）、精确匹配提取、行边界截断、`~` 展开、文件缺失、成功与失败的混合渲染，以及默认配置能否读到自动生成的起始文件。
-- `test/plugin.test.mjs` — 对假 harness 验证决策逻辑：只注入一次、按配置重注入、不在轮中注入、什么都没读到就沉默；另外验证首次运行会建起始文件、以及**相对文件夹不会被建到进程目录**。
-- `test/contract.test.mjs` — 同一套 projection 用真 `Session` 和真 `createUserMessage` 驱动，`user/message` 或 `MessageSource` 契约变了会在这里红。
-- `test/registry.test.mjs` — 插件挂在真 Cordis `Context` 和真 `SessionProjectionRegistry` 上，证明 key、state schema、reducer 真的注册成功并被驱动。
+- `test/sections.test.mjs` — heading parsing (including `#` inside fenced code blocks, and a four-backtick fence that must not be closed by a three-backtick line inside it), exact-match extraction, line-boundary truncation, `~` expansion, missing files, BOM/CRLF, and mixed success/failure rendering.
+- `test/plugin.test.mjs` — decision logic against a fake harness: inject once, re-inject per config, never mid-turn, stay silent when nothing loaded; also that the first run creates the starter file and that **a relative folder is not created in the process directory**.
+- `test/contract.test.mjs` — the same projection driven by a real `Session` and a real `createUserMessage`; a change to the `user/message` or `MessageSource` contract turns this red.
+- `test/registry.test.mjs` — the plugin mounted on a real Cordis `Context` and a real `SessionProjectionRegistry`, proving the key, state schema, and reducer actually register and get driven.
+
+**To judge whether a test is worth anything, ask one question: is the ctx it holds real?** A fake harness tests decision logic; it cannot test contracts.
+
+---
 
 ## License
 

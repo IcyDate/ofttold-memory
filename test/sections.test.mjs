@@ -237,6 +237,35 @@ test("renderSources with the default config loads the scaffolded template", () =
   assert.match(rendered.text, /### 常被提起/);
 });
 
+test("the fallback list is alternatives, not a set: one spelling wins", () => {
+  // DEFAULT_SECTIONS carries both language spellings of one idea. A file with
+  // both headings must not inject the same text twice, and the spelling the file
+  // does NOT use must not become a permanent `Unavailable` line -- that would
+  // train users to ignore the only diagnostic this plugin has.
+  const dir = mkdtempSync(join(tmpdir(), "ofttold-alt-"));
+  writeFileSync(
+    join(dir, "MEMORY.md"),
+    "## 常被提起\n\n- 中文那条\n\n## Oft-told\n\n- english line\n",
+    "utf8",
+  );
+  const rendered = renderSources({}, dir);
+  assert.equal(rendered.loaded, 1, "only the first resolving spelling is injected");
+  assert.equal(rendered.failed.length, 0, "the unused spelling must stay quiet");
+  assert.match(rendered.text, /中文那条/);
+  assert.equal(/english line/.test(rendered.text), false, "the second spelling must not also inject");
+});
+
+test("a heading the user named is still reported when it is missing", () => {
+  // The silence above applies only to the built-in fallback. If a user asked for
+  // a specific heading, its absence is news and must reach the injected block.
+  const dir = mkdtempSync(join(tmpdir(), "ofttold-named-"));
+  writeFileSync(join(dir, "MEMORY.md"), "## 常被提起\n\n- one\n", "utf8");
+  const rendered = renderSources({ sections: ["常被提起", "nope"] }, dir);
+  assert.equal(rendered.loaded, 1);
+  assert.equal(rendered.failed.length, 1);
+  assert.match(rendered.text, /Unavailable: nope: heading_not_found/);
+});
+
 test("scaffoldMemory leaves an existing notes folder alone", () => {
   // Pointing at a folder that already holds someone's notes must not drop a
   // starter file next to their files. The template exists to answer "what do I
