@@ -101,7 +101,8 @@ test("the reducer counts real user messages and recognises its own injection", (
   const ctx = context();
   const holder = capture(ctx);
   apply(ctx, {
-    sources: [{ path: "/tmp/notes.md" }],
+    memoryDir: "/tmp",
+    sections: ["常被提起"],
     header: "Standing",
     maxChars: 100,
   });
@@ -123,7 +124,7 @@ test("a real message from another producer is counted but not treated as an inje
   const session = realSession("/tmp");
   const ctx = context();
   const holder = capture(ctx);
-  apply(ctx, { sources: [{ path: "/tmp/notes.md" }], header: "Standing", maxChars: 100 });
+  apply(ctx, { memoryDir: "/tmp", sections: ["常被提起"], header: "Standing", maxChars: 100 });
 
   session.append("user/message", message("some-other-plugin", "their context"), { surfaceOp: "append" });
   holder.reduce(session.snapshotEvents().at(-1));
@@ -136,7 +137,7 @@ test("a real message from another producer is counted but not treated as an inje
 test("folding the same real events twice from init is idempotent", () => {
   const session = realSession("/tmp");
   const ctx = context();
-  apply(ctx, { sources: [{ path: "/tmp/notes.md" }], header: "Standing", maxChars: 100 });
+  apply(ctx, { memoryDir: "/tmp", sections: ["常被提起"], header: "Standing", maxChars: 100 });
 
   session.append("user/message", message("user", "one"), { surfaceOp: "append" });
   session.append("user/message", message(name, "two"), { surfaceOp: "append" });
@@ -165,7 +166,7 @@ function capturedInit(ctx) {
   ctx.sessionProjections.register = (definition) => {
     init = definition.init({}, 0);
   };
-  apply(ctx, { sources: [{ path: "/tmp/notes.md" }], header: "Standing", maxChars: 100 });
+  apply(ctx, { memoryDir: "/tmp", sections: ["常被提起"], header: "Standing", maxChars: 100 });
   return init;
 }
 
@@ -175,15 +176,25 @@ function capturedDefinition(ctx) {
   ctx.sessionProjections.register = (definition) => {
     apply_ = definition.apply;
   };
-  apply(ctx, { sources: [{ path: "/tmp/notes.md" }], header: "Standing", maxChars: 100 });
+  apply(ctx, { memoryDir: "/tmp", sections: ["常被提起"], header: "Standing", maxChars: 100 });
   return { apply: apply_ };
 }
 
-test("a real session's cwd is the base a relative source resolves against", async () => {
-  const session = realSession("/tmp");
+test("a real session's cwd is the base a relative memory folder resolves against", async () => {
+  // Positive proof, not a null result: the file exists only under the session's
+  // own cwd, so injection can happen only if `session.header.cwd` was actually
+  // read instead of falling back to the process directory.
+  const { mkdtempSync, writeFileSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const dir = mkdtempSync(join(tmpdir(), "anchor-cwd-"));
+  writeFileSync(join(dir, "MEMORY.md"), "## 常被提起\n\n- 会话里才有的那条\n", "utf8");
+
+  const session = realSession(dir);
   const ctx = context();
   apply(ctx, {
-    sources: [{ path: "notes.md" }],
+    memoryDir: ".",
+    sections: ["常被提起"],
     header: "Standing",
     maxChars: 100,
     workspaceRelative: true,
@@ -193,8 +204,6 @@ test("a real session's cwd is the base a relative source resolves against", asyn
     { agent, step: 1, signal: { aborted: false } },
     async () => ({ kind: "enter", messages: [] }),
   );
-  // /tmp/notes.md does not exist, so the honest outcome is "nothing loaded,
-  // nothing injected" — but it proves `session.header.cwd` was read rather than
-  // silently falling back to the process directory.
-  assert.deepEqual(decision.messages, []);
+  assert.equal(decision.messages.length, 1, "the session-cwd memory file must be found and injected");
+  assert.match(decision.messages[0].content[0].text, /会话里才有的那条/);
 });

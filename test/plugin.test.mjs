@@ -10,13 +10,13 @@
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { apply, name } from "../index.js";
 
-const DOC = "## anchors\n\n- one\n- two\n";
+const DOC = "## 常被提起\n\n- one\n- two\n";
 
 /**
  * Build a plugin context whose `agent/pre-step` chain can be driven by hand.
@@ -67,17 +67,23 @@ function harness(base) {
   };
 }
 
-/** Create a temp workspace holding one notes file. */
+/** Create a temp workspace holding one memory file. */
 function workspace() {
   const dir = mkdtempSync(join(tmpdir(), "anchor-"));
-  writeFileSync(join(dir, "notes.md"), DOC, "utf8");
+  writeFileSync(join(dir, "MEMORY.md"), DOC, "utf8");
   return dir;
 }
 
-/** Config pointing at the temp workspace's notes file. */
+/**
+ * Config pointing at the temp workspace's memory folder.
+ *
+ * `memoryDir: "."` keeps the test honest about the relative-folder path a real
+ * user takes: it must resolve against the session cwd, not the process directory.
+ */
 function config(overrides = {}) {
   return {
-    sources: [{ path: "notes.md", heading: "anchors", label: "anchors" }],
+    memoryDir: ".",
+    sections: ["常被提起"],
     header: "Standing",
     maxChars: 200,
     refreshIntervalMs: 0,
@@ -140,15 +146,45 @@ test("re-injects after the configured interval", async () => {
 test("stays silent when nothing loads", async () => {
   const dir = workspace();
   const h = harness(dir);
-  apply(h.ctx, config({ sources: [{ path: "gone.md" }] }));
+  apply(h.ctx, config({ sections: [{ heading: "gone" }] }));
   const decision = await h.drive({ step: 1 });
   assert.deepEqual(decision.messages, []);
 });
 
-test("does not register a listener when sources are empty", () => {
+test("does not register a listener when sections are empty", () => {
   const h = harness(workspace());
-  apply(h.ctx, config({ sources: [] }));
+  apply(h.ctx, config({ sections: [] }));
   assert.equal(h.state().injectedCount, 0);
+});
+
+test("scaffolds a starter memory file when the folder is empty", async () => {
+  // A fresh install must leave the user with something to edit, not an empty
+  // folder and a silent no-op. This is the whole "install and it works" claim.
+  const dir = mkdtempSync(join(tmpdir(), "anchor-"));
+  const memoryDir = join(dir, "memory");
+  const h = harness(dir);
+  apply(h.ctx, config({ memoryDir }));
+  // Scaffolding is lazy: it runs when a session actually starts, because a
+  // relative folder only means something once there is a session cwd.
+  await h.drive({ step: 1 });
+  assert.ok(existsSync(join(memoryDir, "MEMORY.md")));
+});
+
+test("a relative memory folder resolves against the session cwd, not the process", () => {
+  // Regression: scaffolding at `apply` time created the starter file in the
+  // repository root, because no session cwd existed yet. The folder a user
+  // configures must be the one their session sees.
+  const dir = mkdtempSync(join(tmpdir(), "anchor-"));
+  const h = harness(dir);
+  apply(h.ctx, config({ memoryDir: "memory" }));
+  assert.equal(existsSync(join(dir, "memory", "MEMORY.md")), false, "nothing may be created before a session exists");
+});
+
+test("never overwrites an existing memory file", () => {
+  const dir = workspace();
+  const h = harness(dir);
+  apply(h.ctx, config());
+  assert.equal(readFileSync(join(dir, "MEMORY.md"), "utf8"), DOC, "existing notes must survive");
 });
 
 test("passes through a rejected decision untouched", async () => {
@@ -168,4 +204,24 @@ test("stays silent when the step signal is already aborted", async () => {
   apply(h.ctx, config());
   const aborted = await h.drive({ step: 1, signal: { aborted: true } });
   assert.deepEqual(aborted.messages, []);
+});
+
+test("an unvalidated config still registers and still injects", () => {
+  // The Config schema supplies `sections` and `workspaceRelative` only after
+  // validation. If the code leaned on those defaults, a caller handing `apply`
+  // a raw object would get a plugin that registers nothing — silently, which is
+  // the worst kind of broken. Both defaults are stated in code for this reason.
+  const dir = workspace();
+  const h = harness(dir);
+  apply(h.ctx, { memoryDir: ".", header: "Standing" });
+  assert.equal(h.state().injectedCount, 0, "registration must not throw");
+});
+
+test("an unvalidated config with no sections still injects the default one", async () => {
+  const dir = workspace();
+  const h = harness(dir);
+  apply(h.ctx, { memoryDir: "." });
+  const decision = await h.drive({ step: 1 });
+  assert.equal(decision.messages.length, 1, "the documented default section must apply");
+  assert.match(decision.messages[0].content[0].text, /常被提起/);
 });

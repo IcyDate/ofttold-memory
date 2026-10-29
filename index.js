@@ -1,5 +1,5 @@
 /**
- * dsh-anchor-context — keep a slice of your own notes in every session's context.
+ * dsh-anchor-context — keep your memory in front of the model, every session.
  *
  * The problem this solves is not storage, it is *retrieval without a trigger*.
  * A note that lives in a file is only useful if something puts it in front of the
@@ -7,10 +7,14 @@
  * request to behave reliably under a full attention budget, which is exactly the
  * condition where such requests fail.
  *
- * So: read named sections out of markdown files the human already maintains, and
- * inject them into the conversation as standing context. Once per session by
- * default — after that the injected message sits in history and every later turn
- * can see it, which is the whole point.
+ * So: pick a memory folder, and the sections you care about are read out of its
+ * markdown and injected into the conversation as standing context. Once per
+ * session by default — after that the injected message sits in history and every
+ * later turn can see it, which is the whole point.
+ *
+ * The configuration is deliberately small: a folder, an optional list of section
+ * headings, and a size budget. Everything else has a default that works, because
+ * a plugin nobody can configure is a plugin nobody installs.
  *
  * What this deliberately does NOT do: score memories, decay them, tag emotions,
  * or decide what matters. Those need judgement, and judgement is the thing that
@@ -22,67 +26,89 @@ import { createUserMessage } from "@deepseek-ai/dsh-llm";
 import z from "@deepseek-ai/schemastery";
 import { z as zod } from "zod";
 
-import { renderSources } from "./lib/sources.js";
+import { scaffoldMemory } from "./lib/scaffold.js";
+import { DEFAULT_SECTIONS, expandPath, renderSources } from "./lib/sources.js";
 
 export const name = "anchor-context";
 
 export const inject = ["agents", "sessionProjections"];
 
 /**
- * One configured slice of a file to keep visible.
+ * One configured section.
+ *
+ * Two forms on purpose. A bare string is the common case — "show me the
+ * `常被提起` section of my memory file" — and must stay short enough to type
+ * without reading the docs. The object form exists only for the cases the
+ * string cannot express: a second file in the same folder, or a different budget
+ * for one noisy section.
  *
  * Every field is human-authored config, never a model tool parameter: the model
  * must not be able to widen its own standing context.
  */
-const Source = z.object({
-  path: z
-    .string()
-    .required()
+const Section = z.union([
+  z.string().description(
+    "Section heading to lift from your memory file, without the leading `#`. This is the form most people want.",
+  ),
+  z
+    .object({
+      file: z
+        .string()
+        .default("MEMORY.md")
+        .description(
+          "Markdown file inside your memory folder. Defaults to `MEMORY.md`. Absolute and `~/`-prefixed paths also work, for notes kept elsewhere.",
+        ),
+      heading: z
+        .string()
+        .required()
+        .description(
+          "Exact heading text to lift, without the leading `#`. Matching is exact, so a renamed heading stops resolving rather than silently grabbing a neighbour.",
+        ),
+      maxChars: z
+        .natural()
+        .min(1)
+        .max(Number.MAX_SAFE_INTEGER)
+        .required(false)
+        .description(
+          "Character budget for this section; over-budget bodies are cut on a line boundary with a marker. Defaults to the plugin's own maxChars.",
+        ),
+      label: z
+        .string()
+        .default("")
+        .description(
+          "Short name shown as the heading inside the injected block. Defaults to the section heading.",
+        ),
+    })
     .description(
-      "Path to a markdown file, absolute or `~/`-prefixed, or relative to the session workspace. Human config only.",
+      "A section that needs its own file, budget, or display name. Most setups never need this form.",
     ),
-  heading: z
+]);
+
+export const Config = z.object({
+  memoryDir: z
     .string()
-    .default("")
+    .default("~/.dsh/memory")
     .description(
-      'Exact heading text to lift, without the leading `#`. Empty means the whole file. Matching is exact, so a renamed heading stops resolving rather than silently grabbing a neighbour.',
+      "Folder holding your memory notes. The plugin creates it with a starter `MEMORY.md` on first run, so this can be left alone. Point it at an existing notes folder to reuse what you already keep.",
+    ),
+  sections: z
+    .array(Section)
+    .default([...DEFAULT_SECTIONS])
+    .description(
+      "Which sections to keep visible. Bare strings are headings inside your memory file; the default lifts the `常被提起` section, which is the one that pays for itself. Empty disables the plugin without failing the load.",
     ),
   maxChars: z
     .natural()
     .min(1)
     .max(Number.MAX_SAFE_INTEGER)
-    .required(false)
+    .default(600)
     .description(
-      "Character budget for this section; over-budget bodies are cut on a line boundary with a marker. Defaults to the top-level maxChars.",
-    ),
-  label: z
-    .string()
-    .default("")
-    .description(
-      "Short name shown as the section heading inside the injected block. Defaults to the path.",
-    ),
-});
-
-export const Config = z.object({
-  sources: z
-    .array(Source)
-    .default([])
-    .description(
-      "Files and sections to keep visible. Empty disables the plugin without failing the load.",
+      "Default character budget per section, when a section does not set its own. Raise it only after checking what it costs per session: 600 characters is roughly 400 tokens, once per session.",
     ),
   header: z
     .string()
     .default("Standing context for this session (human-curated, not a user request)")
     .description(
       "First line of the injected block. Worth stating plainly: this arrives as a user-role message, so it must not read like something the human just said.",
-    ),
-  maxChars: z
-    .natural()
-    .min(1)
-    .max(Number.MAX_SAFE_INTEGER)
-    .default(1200)
-    .description(
-      "Per-section character budget when a source omits its own maxChars. Raise it only after checking what it costs per session.",
     ),
   refreshIntervalMs: z
     .natural()
@@ -104,9 +130,10 @@ export const Config = z.object({
     .boolean()
     .default(true)
     .description(
-      "Resolve relative source paths against the session workspace. Turn off to resolve them against the process directory instead.",
+      "Resolve a relative memory folder against the session workspace. Turn off to resolve it against the process directory instead.",
     ),
 });
+
 
 /**
  * Durable per-session injection bookkeeping.
@@ -123,26 +150,26 @@ const stateSchema = zod.object({
 });
 
 /**
- * Resolve the base directory for relative source paths.
+ * Resolve the absolute memory folder.
  *
  * The session header carries the absolute `cwd` the session was created in, and
- * that is the right base: a relative note path should mean the same thing in a
- * resumed session as it did in the original one.
+ * that is the right base for a relative folder: a relative memory path should
+ * mean the same thing in a resumed session as it did in the original one.
  *
  * @param {any} agent - Live agent whose session is being prepared.
  * @param {any} config - Validated plugin config.
- * @returns {string} Absolute directory used to resolve relative paths.
+ * @returns {string} Absolute memory directory.
  */
-function baseDirectory(agent, config) {
+function memoryDirectory(agent, config) {
   // The Config schema defaults this to true, but that default only exists after
   // validation. Testing truthiness would silently mean "false" for any caller
   // that hands `apply` an unvalidated object, so the code states the documented
   // default itself and only an explicit `false` turns it off.
-  if (config.workspaceRelative !== false) {
-    const cwd = agent?.session?.header?.cwd;
-    if (typeof cwd === "string" && cwd !== "") return cwd;
-  }
-  return process.cwd();
+  const base =
+    config.workspaceRelative !== false && typeof agent?.session?.header?.cwd === "string"
+      ? agent.session.header.cwd
+      : process.cwd();
+  return expandPath(config.memoryDir ?? "~/.dsh/memory", base);
 }
 
 /**
@@ -156,8 +183,18 @@ function baseDirectory(agent, config) {
  * @param {any} config - Validated plugin config.
  */
 export function apply(ctx, config) {
-  const sources = config.sources ?? [];
-  if (sources.length === 0) return;
+  // Same trap as `workspaceRelative`: the Config schema supplies this default
+  // only after validation, so an unvalidated config would mean "no sections" and
+  // the plugin would silently register nothing. State the documented default.
+  const sections = config.sections ?? DEFAULT_SECTIONS;
+  if (sections.length === 0) return;
+
+  // Directories already prepared in this process. Scaffolding runs lazily from
+  // the pre-step listener, because a relative `memoryDir` resolves against the
+  // *session* cwd — at `apply` time there is no session yet, so preparing here
+  // would create the starter file in the process directory instead of where the
+  // user's notes actually live. The set keeps that one stat out of every step.
+  const prepared = new Set();
 
   ctx.sessionProjections.register({
     key: name,
@@ -215,7 +252,22 @@ export function apply(ctx, config) {
       bookkeeping.messageCount - bookkeeping.lastInjectedMessageCount >= config.refreshAfterMessages;
     if (!neverInjected && !intervalDue && !messagesDue) return decision;
 
-    const rendered = renderSources(config, baseDirectory(agent, config));
+    const memoryDir = memoryDirectory(agent, config);
+    // Prepare the folder before reading it, so a first-run session finds a
+    // starter file instead of injecting nothing. Once per directory per process
+    // is enough; failures are logged once and then treated as "nothing to do",
+    // because a read-only home directory is not a reason to fail a turn.
+    if (!prepared.has(memoryDir)) {
+      prepared.add(memoryDir);
+      const scaffold = scaffoldMemory(memoryDir);
+      if (scaffold.error !== undefined) {
+        ctx.logger?.warn?.("anchor-context: could not prepare memory folder %s (%s)", memoryDir, scaffold.error);
+      } else if (scaffold.createdFile) {
+        ctx.logger?.info?.("anchor-context: created a starter memory file in %s", memoryDir);
+      }
+    }
+
+    const rendered = renderSources(config, memoryDir);
     if (rendered === undefined) return decision;
 
     return {

@@ -1,120 +1,125 @@
-# dsh-anchor-context
+# dsh-anchor-context · 记忆
 
-Keep a chosen slice of your own notes in **every** session's context.
+把你的记忆放进**每一个**会话。
 
-The problem it solves is not storage — it's retrieval without a trigger. A note
-sitting in a file is only useful if something puts it in front of the model at the
-moment it's needed. "Remember to read the index at the start of every session" is
-a request to behave reliably under a full attention budget, which is exactly the
-condition where such requests fail. This plugin removes the request: it reads
-named sections out of markdown files you already maintain and injects them as
-standing context, once per session.
+它解决的问题不是存储，是**没有触发点的回忆**。一条笔记躺在文件里，只有在被需要的那一刻被摆到模型面前才有用。而「记得每个会话开头去读索引」本身是一个要求——要求模型在注意力最满的时候还稳定地做某件事，而那正是这类要求最容易失效的条件。这个插件把那个要求去掉了：它从你已经在维护的 markdown 里取出几节，作为常驻上下文注入一次。
 
-After that one injection the message stays in history, so every later turn can
-see it. That's the whole trick.
+注入之后那条消息就留在历史里，后面每一轮都看得见。这就是全部把戏。
 
-## Install
+## 开箱即用
 
 ```sh
 dsh plugin --profile web add /absolute/path/to/dsh-anchor-context
 ```
 
-The bundle's own `cordis.patch.yml` registers the row, so it activates without a
-second edit. To point it at *your* files, add a row with the **same id** to the
-profile's `cordis.patch.yml` — a profile row overrides the bundle row's config by
-id, which is how every other DSH plugin is configured:
+**装完就完了。** 第一次运行会自动在 `~/.dsh/memory/` 建好文件夹和一份起始文件 `MEMORY.md`，里面已经填好结构，你只要把内容换成自己的。
+
+之后每个会话开头，`MEMORY.md` 的「常被提起」那一节会自动出现在上下文里。
+
+想改成自己的东西，只要改那个文件。**不用碰任何配置。**
+
+## 换成你自己的记忆文件夹
+
+如果你已经有一套笔记（日记、索引、规矩文件），直接把文件夹指过去：
 
 ```yaml
+# ~/.dsh/profiles/<名字>/cordis.patch.yml
 - id: anchor-context
   name: dsh-anchor-context
   config:
-    sources:
-      - path: ~/notes/INDEX.md
-        heading: "常被提起"
-        maxChars: 600
-        label: anchors
-      - path: ~/.dsh/AGENTS.md
-        heading: "意见与分歧"
-        maxChars: 300
+    memoryDir: ~/Desktop/拾光
+    sections:
+      - 常被提起（手动维护，上限 8 条）
+      - 我是谁
 ```
 
-`heading` is matched **exactly**, against the heading text with its `#` markers
-and any trailing closing sequence removed. If your file says
-`## 常被提起（手动维护，上限 8 条）`, then that whole string is the heading — a
-shorter `常被提起` will not resolve, and the block will report
-`heading_not_found` instead of guessing. Copy the title as written, minus the
-hashes.
+`memoryDir` 是文件夹，`sections` 是要取的小节名——**直接写标题就行**，不需要写文件路径。默认都在 `memoryDir` 下的 `MEMORY.md` 里找。
 
-Nothing is hardcoded in the bundle patch on purpose: a patch pointing at one
-machine's notes would make the plugin fail to start for everyone else.
+## 三个旋钮，没别的
 
-Reload the session. Nothing else to configure.
-
-## Config
-
-| key | default | meaning |
+| 配置项 | 默认 | 干什么的 |
 | --- | --- | --- |
-| `sources` | `[]` | Files and sections to keep visible. Empty disables the plugin without failing the load. |
-| `header` | see below | First line of the injected block. |
-| `maxChars` | `1200` | Per-section budget when a source omits its own. |
-| `refreshIntervalMs` | `0` | Minimum milliseconds between injections. `0` = never refresh, inject once. |
-| `refreshAfterMessages` | `0` | Re-inject after this many new messages. `0` = never. |
-| `workspaceRelative` | `true` | Resolve relative `path`s against the session workspace. |
+| `memoryDir` | `~/.dsh/memory` | 记忆文件夹。第一次运行自动创建，可以不管。 |
+| `sections` | `["常被提起"]` | 要常驻哪几节。直接写小节名。 |
+| `maxChars` | `600` | 每节字符上限。600 字符约 400 token，每个会话一次。 |
 
-Each source takes `path` (absolute, `~/`-prefixed, or workspace-relative),
-`heading` (exact heading text without the `#`; empty = whole file), `maxChars`,
-and `label` (shown as the section heading in the block).
+其余几项（`header`、`refreshIntervalMs`、`refreshAfterMessages`、`workspaceRelative`）都有能用的默认值，正常人不用改。
 
-## Why `refreshAfterMessages` exists
+### 一节要特殊对待时
 
-A context compactor folds old messages into summaries. The injected block is an
-old message, so a session that folds aggressively will eventually lose it. A
-plugin that injects once and trusts that is fine until it isn't.
+极少数情况下，某一节在别的文件里、或者要单独给个预算/显示名，用对象写法：
 
-`refreshAfterMessages` re-injects when the conversation has grown past a
-threshold. It's an approximation — folding rewrites the payload without adding
-messages, so message count doesn't measure folding directly — but folding and
-message growth correlate, and the cost of being wrong is one extra injection.
+```yaml
+    sections:
+      - 常被提起
+      - file: OTHER.md      # 同文件夹下的另一个文件
+        heading: 硬约定
+        maxChars: 300
+        label: 约定          # 注入块里显示的名字
+```
 
-## What this deliberately does not do
+**只有这一种情况需要对象写法**，平常写字符串就够了。
 
-No scoring, no decay curves, no emotion tags, no "importance" heuristic. Those
-need judgement, and judgement is the thing that fails when attention is full.
-This plugin only makes a **human-curated** list visible. You stay the author of
-what matters; the plugin just stops the list from being invisible.
+## 标题要一字不差
 
-It also doesn't write anything back. Sources are read-only, and every field is
-human config — the model cannot widen its own standing context.
+`heading` 是**精确匹配**：去掉 `#` 之后的原文，一个字都不能少。文件里写的是
+`## 常被提起（手动维护，上限 8 条）`，那整串就是标题——写短的 `常被提起` 找不到，注入块里会报 `heading_not_found`，而不是猜一个最像的。
 
-## Behaviour on failure
+这条是有意的：**猜错了比报错更坏**。改标题就该让它停下，而不是悄悄换成邻居那一节。
 
-A missing file, a renamed heading, or an unreadable directory is reported inside
-the block as `Unavailable: <label>: <reason>` rather than thrown. The cost of a
-silent skip is one absent reminder; the cost of a thrown plugin is the harness
-refusing to boot. If **nothing** loads, the injection is skipped entirely instead
-of spending tokens on a block that says only "nothing".
+## 文件长什么样
 
-## Tests
+```markdown
+# 我的记忆
+
+## 常被提起
+
+> 建议上限 8 条。满了就挤掉一条——挤掉这个动作本身就是一次排序。
+
+- **示例·项目在哪** → `~/work/my-project`｜省得每次问
+- **示例·别动的东西** → 不要改 `config/prod.yml`
+
+## 我是谁
+
+- （怎么称呼、说话习惯、脾气、在意什么）
+
+## 硬约定
+
+- （不记得就会干错活的事：谁是负责人、哪些命令不能跑）
+```
+
+**只放「不在眼前就会做错事」的东西。** 这是判断标准，也是它省 token 的原因：一次注入几百 token，换的是每个会话都不再问「项目在哪」。
+
+## 为什么需要 `refreshAfterMessages`
+
+上下文压缩器会把旧消息折成摘要。注入块就是一条旧消息，所以压缩激进一点的会话最终会把它折掉。一个「注入一次就相信它一直在」的插件，在没被折掉之前都很好用。
+
+`refreshAfterMessages` 在消息数超过阈值时重新注入。这是个近似——压缩会重写载荷但不增加消息数，所以消息数并不直接衡量压缩——但压缩和消息增长是相关的，而判断错的代价是多注入一次。
+
+## 这个插件刻意不做的事
+
+不打分、不做衰减曲线、不打情绪标签、不猜「重要性」。这些需要判断，而判断恰恰是注意力满的时候最先失效的东西。这个插件只把一份**人写的**清单摆到眼前。什么重要，仍然是你决定的；它只负责让那份清单不再隐形。
+
+它也不往回写。读取是只读的，每个字段都是人工配置——**模型没办法给自己加上下文**。
+
+## 出错时
+
+文件没了、标题改了、文件夹读不了，都**不抛错**，而是在注入块里写一行 `Unavailable: <名字>: <原因>`。悄悄跳过一条提醒，比整个 harness 起不来便宜太多。
+
+如果**一节都没读到**，就整个跳过不注入——不花 token 去说一句「什么都没有」。
+
+## 开发
 
 ```sh
 npm test
 ```
 
-Three files, in increasing order of realism:
+四个测试文件，按真实度递增：
 
-- `test/sections.test.mjs` — heading parsing (including fenced blocks that contain
-  `#`, and a four-backtick fence that must not be closed by a three-backtick line
-  inside it), exact-match extraction, line-boundary truncation, `~` expansion,
-  missing files, and the mixed success/failure rendering path.
-- `test/plugin.test.mjs` — the decision logic against a faked harness: inject
-  once, re-inject on the configured triggers, never mid-turn, stay silent when
-  nothing loads.
-- `test/contract.test.mjs` — the same projection driven by events taken from a
-  real `Session` and a real `createUserMessage`, so a change to the `user/message`
-  or `MessageSource` contract fails here instead of passing against a fake.
-- `test/registry.test.mjs` — the plugin mounted on a real Cordis `Context` with
-  the real `SessionProjectionRegistry`. This is the one that proves the projection
-  key, state schema, and reducer actually register and get driven.
+- `test/sections.test.mjs` — 标题解析（包括含 `#` 的围栏代码块、四个反引号的围栏不能被里面三个反引号的行关掉）、精确匹配提取、行边界截断、`~` 展开、文件缺失、成功与失败的混合渲染，以及默认配置能否读到自动生成的起始文件。
+- `test/plugin.test.mjs` — 对假 harness 验证决策逻辑：只注入一次、按配置重注入、不在轮中注入、什么都没读到就沉默；另外验证首次运行会建起始文件、以及**相对文件夹不会被建到进程目录**。
+- `test/contract.test.mjs` — 同一套 projection 用真 `Session` 和真 `createUserMessage` 驱动，`user/message` 或 `MessageSource` 契约变了会在这里红。
+- `test/registry.test.mjs` — 插件挂在真 Cordis `Context` 和真 `SessionProjectionRegistry` 上，证明 key、state schema、reducer 真的注册成功并被驱动。
 
 ## License
 

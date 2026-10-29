@@ -5,7 +5,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { extractSection, parseHeadings, truncateBody } from "../lib/sections.js";
-import { expandPath, loadSource, renderSources } from "../lib/sources.js";
+import { scaffoldMemory } from "../lib/scaffold.js";
+import { expandPath, loadSource, renderSources, resolveSections } from "../lib/sources.js";
 
 const DOC = [
   "# 索引",
@@ -125,57 +126,90 @@ test("expandPath expands a bare tilde and leaves ~user alone", () => {
   assert.equal(expandPath("/abs.md", "/base"), "/abs.md");
 });
 
+test("resolveSections turns a bare heading into a file-backed section", () => {
+  // The whole point of the string form: someone who has never read the docs
+  // types a heading and it resolves inside the default memory file.
+  const [section] = resolveSections(["常被提起"], 600);
+  assert.equal(section.file, "MEMORY.md");
+  assert.equal(section.heading, "常被提起");
+  assert.equal(section.maxChars, 600);
+  assert.equal(section.label, "常被提起");
+});
+
+test("resolveSections accepts the object form and fills in its blanks", () => {
+  const [section] = resolveSections([{ heading: "我是谁" }], 600);
+  assert.equal(section.file, "MEMORY.md");
+  assert.equal(section.label, "我是谁", "label must fall back to the heading");
+  const [custom] = resolveSections([{ file: "OTHER.md", heading: "硬约定", maxChars: 50, label: "约定" }], 600);
+  assert.equal(custom.file, "OTHER.md");
+  assert.equal(custom.maxChars, 50);
+  assert.equal(custom.label, "约定");
+});
+
+test("resolveSections skips entries that cannot resolve", () => {
+  // A stray blank string or a heading-less object is a typo, not a section: it
+  // must not become a source that can never load and only adds noise.
+  assert.deepEqual(resolveSections(["", "   "], 600), []);
+  assert.deepEqual(resolveSections([{ file: "MEMORY.md" }], 600), []);
+  assert.deepEqual(resolveSections([{ heading: "  " }], 600), []);
+});
+
+test("resolveSections keeps a blank label from rendering a bare heading", () => {
+  // The schema defaults `label` to "", so `??` alone would keep the empty string
+  // and render `### ` with no name.
+  for (const label of ["", "   "]) {
+    const [section] = resolveSections([{ heading: "常被提起", label }], 600);
+    assert.equal(section.label, "常被提起");
+  }
+});
+
 test("loadSource renders a section and truncates it", () => {
   const dir = mkdtempSync(join(tmpdir(), "anchor-"));
-  const file = join(dir, "notes.md");
-  writeFileSync(file, DOC, "utf8");
+  writeFileSync(join(dir, "notes.md"), DOC, "utf8");
   // The two bullets are 13 characters each; 20 fits the first and drops the
   // second whole line, which is the line-boundary path rather than a mid-line cut.
-  const result = loadSource({ path: file, heading: "常被提起", maxChars: 20 }, dir, 100);
+  const result = loadSource(
+    { file: "notes.md", heading: "常被提起", maxChars: 20, label: "常被提起" },
+    dir,
+  );
   assert.equal(result.ok, true);
   assert.match(result.text, /omitted; maxChars=20/);
 });
 
+test("loadSource resolves a relative file inside the memory folder", () => {
+  // This is the contract the string form depends on: `MEMORY.md` means the one
+  // in the configured folder, not one next to the process.
+  const dir = mkdtempSync(join(tmpdir(), "anchor-"));
+  writeFileSync(join(dir, "MEMORY.md"), DOC, "utf8");
+  const result = loadSource({ file: "MEMORY.md", heading: "常被提起", maxChars: 100, label: "x" }, dir);
+  assert.equal(result.ok, true);
+});
+
 test("loadSource reports a missing file without throwing", () => {
-  const result = loadSource({ path: "/definitely/not/here.md" }, "/", 100);
+  const result = loadSource(
+    { file: "/definitely/not/here.md", heading: "x", maxChars: 100, label: "x" },
+    "/",
+  );
   assert.equal(result.ok, false);
   assert.equal(result.reason, "missing");
 });
 
-test("loadSource falls back to the path when label is blank", () => {
-  // The Config schema defaults `label` to "", so `??` alone would keep the
-  // empty string and render a bare `### ` heading with no name.
-  const dir = mkdtempSync(join(tmpdir(), "anchor-"));
-  const file = join(dir, "notes.md");
-  writeFileSync(file, DOC, "utf8");
-  for (const label of ["", "   ", undefined]) {
-    const result = loadSource({ path: file, heading: "常被提起", label }, dir, 100);
-    assert.equal(result.ok, true);
-    assert.equal(result.label, file, `blank label ${JSON.stringify(label)} must fall back to the path`);
-  }
-});
-
 test("loadSource says a mid-line cut was a cut", () => {
   const dir = mkdtempSync(join(tmpdir(), "anchor-"));
-  const file = join(dir, "long.md");
-  writeFileSync(file, `## one\n\n${"a".repeat(80)}\n`, "utf8");
-  const result = loadSource({ path: file, heading: "one", maxChars: 10 }, dir, 100);
+  writeFileSync(join(dir, "long.md"), `## one\n\n${"a".repeat(80)}\n`, "utf8");
+  const result = loadSource({ file: "long.md", heading: "one", maxChars: 10, label: "one" }, dir);
   assert.equal(result.ok, true);
   assert.match(result.text, /cut mid-line at maxChars=10/);
 });
 
-test("renderSources joins loaded sources and names the failures", () => {
+test("renderSources joins loaded sections and names the failures", () => {
   const dir = mkdtempSync(join(tmpdir(), "anchor-"));
-  const file = join(dir, "notes.md");
-  writeFileSync(file, DOC, "utf8");
+  writeFileSync(join(dir, "MEMORY.md"), DOC, "utf8");
   const rendered = renderSources(
     {
       header: "Standing",
       maxChars: 200,
-      sources: [
-        { path: file, heading: "常被提起", label: "anchors" },
-        { path: file, heading: "nope", label: "stale" },
-      ],
+      sections: ["常被提起", { heading: "nope", label: "stale" }],
     },
     dir,
   );
@@ -183,13 +217,21 @@ test("renderSources joins loaded sources and names the failures", () => {
   assert.equal(rendered.loaded, 1);
   assert.deepEqual(rendered.failed, ["stale: heading_not_found"]);
   assert.match(rendered.text, /^Standing/);
-  assert.match(rendered.text, /### anchors/);
+  assert.match(rendered.text, /### 常被提起/);
   assert.match(rendered.text, /Unavailable: stale: heading_not_found/);
 });
 
 test("renderSources returns undefined when nothing loads", () => {
-  assert.equal(
-    renderSources({ sources: [{ path: "/nope.md" }] }, "/"),
-    undefined,
-  );
+  assert.equal(renderSources({ sections: ["x"] }, "/nonexistent-folder"), undefined);
+});
+
+test("renderSources with the default config loads the scaffolded template", () => {
+  // The out-of-the-box path a new user actually walks: install, do nothing else,
+  // and the default section must resolve against the starter file.
+  const dir = mkdtempSync(join(tmpdir(), "anchor-"));
+  scaffoldMemory(dir);
+  const rendered = renderSources({}, dir);
+  assert.ok(rendered !== undefined, "default config must load the scaffolded MEMORY.md");
+  assert.equal(rendered.loaded, 1);
+  assert.match(rendered.text, /### 常被提起/);
 });

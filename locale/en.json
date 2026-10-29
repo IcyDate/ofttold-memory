@@ -1,6 +1,15 @@
 {
   "meta": {
-    "title": "Anchor Context",
-    "description": "Keeps a chosen slice of your own notes in every session's context: reads named sections from markdown files and injects them once, so long-distance recall stops depending on remembering to look."
+    "title": "Memory",
+    "description": "Keep your memory in every session: point it at a memory folder and it reads a few sections out of your markdown, injecting them once so they stay in context. Ships with a starter folder and file."
+  },
+  "config": {
+    "memoryDir": "Your memory folder. Created with a starter file on first run, so this can be left alone; point it at notes you already keep to reuse them.",
+    "sections": "Which sections to keep visible. A bare heading is enough; the default lifts the `常被提起` section.",
+    "maxChars": "Default character budget per section. 600 characters is roughly 400 tokens, once per session.",
+    "header": "First line of the injected block. It arrives as a user message, so it must not read like something the human just said.",
+    "refreshIntervalMs": "Minimum milliseconds between injections in one session. 0 injects once.",
+    "refreshAfterMessages": "Re-inject after this many new messages. 0 never re-injects.",
+    "workspaceRelative": "Resolve a relative memory folder against the session workspace. Off means the process directory."
   }
 }

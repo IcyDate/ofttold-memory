@@ -59,7 +59,7 @@ test("the real registry accepts the projection and drives it from real events", 
   const dir = mkdtempSync(join(tmpdir(), "anchor-e2e-"));
   writeFileSync(join(dir, "notes.md"), "## anchors\n\n- one\n", "utf8");
 
-  apply(ctx, { sources: [{ path: "notes.md", heading: "anchors" }], header: "Standing", maxChars: 100 });
+  apply(ctx, { memoryDir: ".", sections: [{ file: "notes.md", heading: "anchors" }], header: "Standing", maxChars: 100 });
 
   const session = realSession(dir);
   // `stateOf` folds lazily from the log, so it is valid before any drive.
@@ -78,7 +78,7 @@ test("the real registry accepts the projection and drives it from real events", 
 
 test("the registered state schema accepts what init produces", async () => {
   const ctx = await mounted();
-  apply(ctx, { sources: [{ path: "/tmp/x.md" }], header: "Standing", maxChars: 100 });
+  apply(ctx, { memoryDir: "/tmp", sections: ["常被提起"], header: "Standing", maxChars: 100 });
   const session = realSession("/tmp");
   // Reading the state runs it through the registered schema; a schema that
   // disagreed with `init` would throw here instead of at some later restart.
@@ -100,7 +100,7 @@ test("the injected message the listener returns is what the reducer later recogn
   const ctx = await mounted();
   const dir = mkdtempSync(join(tmpdir(), "anchor-loop-"));
   writeFileSync(join(dir, "notes.md"), "## anchors\n\n- one\n", "utf8");
-  apply(ctx, { sources: [{ path: "notes.md", heading: "anchors" }], header: "Standing", maxChars: 100 });
+  apply(ctx, { memoryDir: ".", sections: [{ file: "notes.md", heading: "anchors" }], header: "Standing", maxChars: 100 });
 
   // Capture the listener the plugin registered on this context.
   let listener;
@@ -109,7 +109,7 @@ test("the injected message the listener returns is what the reducer later recogn
     if (event === "agent/pre-step") listener = handler;
     return original(event, handler, options);
   };
-  apply(ctx, { sources: [{ path: "notes.md", heading: "anchors" }], header: "Standing", maxChars: 100 });
+  apply(ctx, { memoryDir: ".", sections: [{ file: "notes.md", heading: "anchors" }], header: "Standing", maxChars: 100 });
   assert.ok(listener, "the pre-step listener must be registered");
 
   const session = realSession(dir);
