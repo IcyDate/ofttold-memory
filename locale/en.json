@@ -1,18 +1,18 @@
 {
   "meta": {
     "title": "Oft-told",
-    "description": "Carry a piece of your memory into every session: point it at a folder, and it lifts a few markdown sections into the context once, so recall stops depending on remembering to look. The name is the idea — what is told often enough stops needing to be remembered."
+    "description": "Keep your notes in the room in every session: point it at a folder, and it lifts a few sections in at the start. Ships with a starter folder and file, so it works out of the box."
   },
   "config": {
-    "memoryDir": "Your memory folder. Created with a starter file on first run, so this can be left alone; point it at notes you already keep to reuse them.",
-    "sections": "Which sections to keep visible. A bare heading is enough; the default lifts the `常被提起` section.",
-    "maxChars": "Default character budget per section. 600 characters is roughly 400 tokens, once per session.",
-    "header": "First line of the injected block. It arrives as a user message, so it must not read like something the human just said.",
-    "refreshIntervalMs": "Minimum milliseconds between injections in one session. 0 injects once.",
-    "refreshAfterMessages": "Re-inject after this many new messages. 0 never re-injects.",
-    "workspaceRelative": "Resolve a relative memory folder against the session workspace. Off means the process directory."
+    "memoryDir": "Where your notes live. Created with a starter file on first run, so you can leave this alone; point it at a folder you already keep and the plugin only reads it.",
+    "sections": "Which parts it should remember. Write the headings as they appear in your notes, one per line — you can list several.",
+    "maxChars": "How much of each section to read. Longer text is cut. 600 characters is about 400 tokens, charged once per session.",
+    "header": "The line that opens the block. It tells the model this is background, not something you said. Usually no need to change it.",
+    "refreshIntervalMs": "How often to inject again within one session, in milliseconds. 0 means once; 60000 means at most once a minute.",
+    "refreshAfterMessages": "Re-inject after this many messages. 0 means never. Only needed in long sessions where the block gets compacted away.",
+    "workspaceRelative": "What a relative path is resolved against. On: this session's folder. Off: the folder the process started in. Usually no need to change it."
   },
   "diagnostics": "Troubleshooting",
-  "diagnosticsHint": "The plugin never fails a session to report a problem, so 'nothing was injected' stays silent by design — it only leaves a record here. The file holds paths and per-injection outcomes, never the text of your notes, so it is safe to paste into an issue.",
+  "diagnosticsHint": "The plugin never interrupts a session to report a problem, so 'nothing was injected' has no warning of its own — it only leaves a record here. The file holds paths and per-injection outcomes, never the text of your notes, so it is safe to paste into an issue.",
   "copyReport": "Copy issue summary"
 }

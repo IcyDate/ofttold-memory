@@ -1,168 +1,154 @@
-# dsh-ofttold-memory
+# dsh-ofttold-memory · 拾光
 
-**English** · [中文](README.zh-CN.md)
+<p align="center"><a href="./README.md">中文</a> | <a href="./README.en.md">English</a></p>
 
-Carry your memory into every session.
+<p align="center"><strong>记忆注入插件</strong> — <em>把记忆带进每一个会话。</em></p>
 
-A note on disk helps only when it is in front of the model. "Read the index at the
-start of every session" is a request to do that at the moment attention is
-fullest — which is where such requests fail. This plugin removes the request: it
-lifts a few sections out of markdown you already maintain and adds them to the
-context once, as a message.
+<p align="center"><sub>一条笔记只在被摆到眼前时才有用 · <em>一次注入，全程在场</em> · 不用再依赖「记得去看」 · 开箱即用</sub></p>
 
-```mermaid
-flowchart LR
-    A[Your notes<br/>MEMORY.md] -->|pick sections<br/>by heading| B[Read + truncate]
-    B --> C[Inject once<br/>as a user message]
-    C --> D[Session context]
-    D -->|stays in history| E[Every later turn]
-    D -.->|optional<br/>refreshAfterMessages| C
-```
+<p align="center">
+<a href="https://www.npmjs.com/package/dsh-ofttold-memory"><img src="https://img.shields.io/npm/v/dsh-ofttold-memory.svg?style=flat-square" alt="npm"></a>
+<a href="https://github.com/IcyDate/dsh-ofttold-memory/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/dsh-ofttold-memory.svg?style=flat-square" alt="license"></a>
+<a href="https://github.com/IcyDate/dsh-ofttold-memory"><img src="https://img.shields.io/badge/GitHub-IcyDate%2Fdsh--ofttold--memory-181717?style=flat-square&logo=github" alt="GitHub"></a>
+</p>
 
-One read, one injection. No index, no embeddings, no database, no second pass.
+<p align="center">
+<code>dsh plugin --profile web add /absolute/path/to/dsh-ofttold-memory</code>
+</p>
+
+<p align="center">
+<a href="https://www.deepseek.com" title="deepseek-harness (dsh)"><img src="https://cdn.simpleicons.org/deepseek/5786FE" height="26" alt="deepseek-harness"></a>&nbsp;
+<a href="https://nodejs.org" title="Node.js 22+"><img src="https://cdn.simpleicons.org/nodedotjs/5FA04E" height="26" alt="Node.js"></a>&nbsp;
+<a href="https://www.apple.com/macos" title="macOS"><img src="https://cdn.simpleicons.org/apple/000000" height="26" alt="macOS"></a>&nbsp;
+<a href="https://www.microsoft.com/windows" title="Windows"><img src="https://cdn.simpleicons.org/windows/0078D4" height="26" alt="Windows"></a>&nbsp;
+<a href="https://www.linux.org" title="Linux"><img src="https://cdn.simpleicons.org/linux/FCC624" height="26" alt="Linux"></a>
+</p>
 
 ---
 
-## Quick start
+> **一眼看清：** 你的笔记读一次、注入一次，之后每一轮都在上下文里，**第一轮之后成本为 0**。600 字符约 400 token，一个会话只算一次。装完基本不用再动配置。
+
+```mermaid
+flowchart LR
+    A[你的笔记<br/>MEMORY.md] -->|按小节名取| B[读取 + 截断]
+    B --> C[注入一次<br/>作为用户消息]
+    C --> D[会话上下文]
+    D -->|留在历史里| E[之后每一轮]
+    D -.->|可选<br/>refreshAfterMessages| C
+```
+
+一次读取，一次注入。没有索引、没有向量、没有数据库，也没有第二次检索。
+
+---
+
+## 快速开始
 
 ```sh
 dsh plugin --profile web add /absolute/path/to/dsh-ofttold-memory
 ```
 
-**That is the whole setup.** The first run creates `~/.dsh/ofttold-memory/` with a
-`MEMORY.md` whose structure is already filled in; replace the contents with your
-own. Point `memoryDir` at a folder you already use — a diary, an index, a rules
-file — and the plugin only reads: **it never writes into a notes folder that
-already has content.**
+**这就是全部安装步骤。** 第一次运行会创建 `~/.dsh/ofttold-memory/`，里面放一份结构已填好的 `MEMORY.md`，你替换内容即可。把 `memoryDir` 指向你已有的文件夹——日记、索引、规则文件都算——插件只读不写：**已有内容的笔记文件夹不会被写入任何东西。**
 
-Then open **Settings → 拾光 / Oft-told** to adjust it with a mouse, or edit the
-profile's `cordis.patch.yml` by hand.
+然后打开 **设置 → 拾光** 用鼠标调整，或者直接改 profile 的 `cordis.patch.yml`。
 
 ---
 
-## What goes in the file
+## 文件长什么样
 
 ```markdown
-# My memory
+# 我的记忆
 
-## Oft-told
+## 常被提起
 
-> Cap of 8 suggested. When it is full, one entry is evicted — and the eviction
-> itself is the ranking, which beats "add one whenever it comes to mind".
+> 建议上限 8 条。满了就挤掉一条——挤掉这个动作本身就是一次排序，
+> 比「想起就随手加一条」可靠。
 
-- **Where the project is** → `~/work/my-project` | saves asking every time
-- **What not to touch** → do not edit `config/prod.yml`
+- **项目在哪** → `~/work/my-project`｜省掉每次都要问
+- **什么不能动** → 不要改 `config/prod.yml`
 
-## Who I am
+## 我是谁
 
-- (how you address me, speech habits, temper, what I care about)
+- （怎么称呼我、说话习惯、脾气、在意什么）
 
-## Hard rules
+## 硬约定
 
-- (things whose absence causes wrong work: who owns what, commands never to run)
+- （不写就会干错活的：谁归谁管、哪些命令不能跑）
 ```
 
-**One test for what belongs:** would getting this wrong without seeing it cause a
-mistake? Not "important", not "mentioned often" — *"not seeing this would break
-the work"*. Written to that test, eight entries are plenty; written to "important",
-nothing is ever enough.
+**判断什么该进来，只有一个标准：** 不看见它会不会干错活？不是「重要」，不是「经常提到」，而是**「不看见就会出错」**。按这个标准写，八条足够；按「重要」写，永远不够。
 
 ---
 
-## The three settings that matter
+## 真正要调的只有三个
 
-| Setting | Default | Meaning |
+| 配置项 | 默认值 | 含义 |
 | --- | --- | --- |
-| `memoryDir` | `~/.dsh/ofttold-memory` | Your memory folder. Created on first run. |
-| `sections` | `["Oft-told", "常被提起"]` | Which headings ride along. Just the heading text. |
-| `maxChars` | `600` | Character budget per section. 600 characters ≈ 400 tokens. |
+| `memoryDir` | `~/.dsh/ofttold-memory` | 记忆文件夹。第一次运行自动创建。 |
+| `sections` | `["Oft-told", "常被提起"]` | 取哪几节。直接写小节名。 |
+| `maxChars` | `600` | 每节字符上限。600 字符约 400 token。 |
 
-Everything else has a working default. The full field list, the object form of
-`sections` for the rare per-section case, exact heading matching, and cross-platform
-behaviour are in **[Configuration](docs/config.md)**.
+其余字段都有可用默认值。完整字段表、`sections` 的对象写法（某节单独在别的文件里时才需要）、小节名精确匹配、跨平台行为，都在 **[配置说明](docs/config.md)**。
 
 ---
 
-## Where the name comes from
+## 名字从哪来
 
-This plugin was extracted from a working arrangement between one person and one
-agent, and it kept the name they gave it.
+这个插件是从一个人和一个 AI 之间真实跑通的一套办法里长出来的，名字也是那套办法给的。
 
-**拾光** (*shí guāng*) — to pick up the light, and a homophone of 时光, *time*. The
-idea sits in **拾**: to gather back up, one piece at a time, what has scattered.
+**拾光** —— 也是**时光**的谐音。意思落在「拾」这个字上：把散落的东西，一件一件捡回来。
 
-The arrangement was a folder of diaries, an index holding a short list of things
-that keep coming back, and one instruction at the top of the agent's notes: *read
-these two files before every session.* The instruction held until it did not — and
-it failed exactly where it was meant to hold, at the start of a session, when the
-new message is the only thing that matters.
+那套办法是：一个日记文件夹、一份索引（顶上列着几条常被提起的事）、还有一条写在 AI 指令最前面的要求——*每次开工先读这两个文件*。这条要求一直管用，直到它不再管用；而它失效的位置，恰恰是它本该守住的地方——会话开头，新消息最要紧的那一刻。
 
-So the instruction became a mechanism. That is the whole change: **the list moved
-out of something the model had to remember into context it cannot miss.**
+于是要求换成了机制。**那份清单从「模型得记得去读的东西」变成了「它不可能错过的上下文」。** 整个改动就这一句话。
 
-The package stays `dsh-ofttold-memory`; the Chinese display name lives in
-`locale/zh.json`. Two names, two jobs, no migration. The icon is the agent this was
-built with, drawn for [dsh-meme](https://github.com/yyh-001/dsh-meme) (MIT).
+包名保持 `dsh-ofttold-memory`，中文显示名住在 `locale/zh.json` 里。两个名字，各干各的活，不需要迁移。图标是做出这个插件的那位 AI，原图来自 [dsh-meme](https://github.com/yyh-001/dsh-meme)（MIT）。
 
 ---
 
-## Why not just put it in `AGENTS.md`?
+## 为什么不用写进 `AGENTS.md`？
 
-Because an instruction and an injected message are not paid for the same way.
+因为一条指令和一条注入的消息，付钱的方式不一样。
 
-| | Cost per turn | Can it be skipped |
+| | 每轮成本 | 会不会被跳过 |
 |---|---|---|
-| A rule in `AGENTS.md` | every turn, the rule's full length | yes — silently |
-| This plugin | **0 after the first turn** | no — already in history |
+| `AGENTS.md` 里一条规矩 | 每轮都付，整条规矩的长度 | 会——而且是不声不响地 |
+| 这个插件 | **第一轮之后是 0** | 不会——已经在历史里了 |
 
-A system instruction rides along with every request. An injected message is paid
-once: after the first turn it is history, and later turns read it as context they
-already have. A measured injection is **735 characters ≈ 660 tokens, once per
-session**; a rule costs its length on every turn, forever. The rule loses as soon
-as the rule is longer than the injected block.
+系统指令跟着每一个请求走；注入的消息只付一次——第一轮之后它就是历史，后面的轮次当已有上下文读。实测一次注入是 **735 字符 ≈ 660 token，每会话一次**；一条规矩则是每轮、永远，付它整条的长度。**只要规矩比注入块长，规矩就输了**，而它几乎立刻就输了。
 
-**Put the content in a memory file, not the instruction in `AGENTS.md`.**
+**所以：内容放进记忆文件，别把指令塞进 `AGENTS.md`。**
 
 ---
 
-## What it deliberately does not do
+## 这个插件刻意不做的事
 
-No scoring, no decay curve, no emotion tagging, no guessing at importance. Those
-need judgement, and judgement is what fails first when attention is full. The plugin
-puts a **human-written** list in front of you and stops there.
+不做打分、不做衰减曲线、不做情绪打标、不猜「重要性」。这些都需要判断，而判断恰恰是注意力满的时候最先失效的东西。插件只把一份**由人写好的**清单摆到模型眼前，到此为止。
 
-The reasoning behind the cap, the eviction weight, and the emotion vocabulary is in
-**[Design notes](docs/design.md)** — worth reading once, not needed to use it.
+关于上限、挤人权重、情绪词表的推导过程在 **[设计说明](docs/design.md)** ——值得读一次，但不是使用所必需。
 
 ---
 
-## When nothing appears
+## 什么都没注入时
 
-A missing file or a renamed heading never throws. The block carries one line
-instead: `Unavailable: <name>: <reason>`.
+文件不存在、小节名改了，都不会抛错，注入块里会写一行 `Unavailable: <名字>: <原因>`。
 
-If no section loads at all, the injection is skipped entirely and nothing appears
-anywhere — which looks like the plugin is dead. **The record is the answer:**
+如果一节都没读到，就整个跳过——于是哪里都不会显示，看起来像插件死了。**记录就是答案：**
 
 ```sh
 cat ~/.dsh/ofttold-memory/diagnostics.json
 ```
 
-Every injection decision, with the folder, how many sections loaded, which failed
-and why. **It never records the text of your notes**, so it is safe to paste into
-an issue. The settings page has a **Copy issue summary** button for the same
-information.
+每一次注入决策都在里面：文件夹、读到几节、哪几节失败以及为什么。**它从不记录你笔记的正文**，所以可以直接贴进 issue。设置页里有「复制问题摘要」按钮，取的是同一份信息。
 
-| `event` | Meaning |
+| `event` | 意思 |
 |---|---|
-| `injected` | Worked. `loaded` = sections, `chars` = block size. |
-| `nothing-loaded` | Folder found, no configured heading matched — usually a renamed heading. |
+| `injected` | 成功。`loaded` 是节数，`chars` 是注入块大小。 |
+| `nothing-loaded` | 文件夹找到了，但没有配置的小节名对上——通常是改了标题。 |
 
-An absent file means the plugin never reached a decision, which points at the
-install rather than the content.
+文件不存在，说明插件根本没走到决策那一步，问题在安装而不在内容。
 
 ---
 
 ## License
 
-MIT.
+MIT。

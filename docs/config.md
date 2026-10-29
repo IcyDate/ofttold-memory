@@ -1,50 +1,45 @@
-# Configuration reference
+# 配置说明
 
-The three fields most people use are on the main page. This page covers the rest.
+<p align="center"><a href="./config.md">中文</a> | <a href="./config.en.md">English</a></p>
 
-## Every field
+主页面上的三个字段够大多数人用。这一页讲其余的。
 
-| Field | Default | Purpose |
+## 全部字段
+
+| 字段 | 默认值 | 作用 |
 |---|---|---|
-| `memoryDir` | `~/.dsh/ofttold-memory` | Folder holding the markdown. Created with a starter file on first run. |
-| `sections` | `["Oft-told", "常被提起"]` | Which sections to lift. Strings or objects (see below). |
-| `maxChars` | `600` | Per-section character budget. 600 characters ≈ 400 tokens. |
-| `header` | `Standing context for this session (human-curated, not a user request)` | First line of the injected block. |
-| `refreshIntervalMs` | `0` | Minimum milliseconds between injections in one session. `0` injects once. |
-| `refreshAfterMessages` | `0` | Re-inject after this many messages. `0` never. See [design](design.md#refreshaftermessages). |
-| `workspaceRelative` | `true` | Resolve a relative `memoryDir` against the session working directory. `false` resolves against the process directory. |
+| `memoryDir` | `~/.dsh/ofttold-memory` | 放 markdown 的文件夹。第一次运行自动创建并放起始文件。 |
+| `sections` | `["Oft-told", "常被提起"]` | 取哪几节。字符串或对象（见下）。 |
+| `maxChars` | `600` | 每节字符上限。600 字符约 400 token。 |
+| `header` | `Standing context for this session (human-curated, not a user request)` | 注入块的第一行。 |
+| `refreshIntervalMs` | `0` | 同一会话内两次注入的最小间隔毫秒数。`0` 表示只注入一次。 |
+| `refreshAfterMessages` | `0` | 新增多少条消息后重新注入。`0` 表示从不。见[设计说明](design.md#refreshaftermessages)。 |
+| `workspaceRelative` | `true` | 相对 `memoryDir` 按会话工作目录解析。`false` 按进程目录。 |
 
-## The object form of `sections`
+## `sections` 的对象写法
 
-A bare string names a heading in `MEMORY.md`, which covers almost every case. Use
-the object form when a section lives in another file, needs its own budget, or
-should display under a different name:
+裸字符串表示 `MEMORY.md` 里的一个小节名，几乎覆盖所有情况。当某一节在别的文件里、需要单独预算、或想换个显示名时，用对象写法：
 
 ```yaml
 sections:
   - Oft-told
-  - file: OTHER.md      # another file in the same folder
+  - file: OTHER.md      # 同一文件夹里的另一个文件
     heading: Hard rules
     maxChars: 300
-    label: Rules        # the name shown inside the injected block
+    label: Rules        # 注入块里显示的名字
 ```
 
-`heading` is required and is an **exact match** against the text after the `#`s.
-`file`, `maxChars`, and `label` are optional.
+`heading` 必填，且是**精确匹配**——与 `#` 后面的文字逐字符相同。`file`、`maxChars`、`label` 可选。
 
-### Exact matching is deliberate
+### 精确匹配是故意的
 
-If the file says `## Oft-told (maintained by hand, cap 8)`, that entire string is
-the heading. The short `Oft-told` will not resolve, and the injected block reports
-`heading_not_found` rather than guessing the nearest neighbour.
+如果文件写的是 `## 常被提起（手动维护，上限 8 条）`，那一整串就是小节名。短写「常被提起」不会解析成功，注入块里会报 `heading_not_found`，而不是去猜最近的邻居。
 
-A wrong guess is worse than an error. A renamed heading should stop the lookup, not
-silently swap in the section next door.
+**猜错比报错更糟。** 改了名字就该停住，而不是悄悄换成旁边那一节。
 
-## Editing the profile directly
+## 直接改 profile
 
-The settings page writes to the profile's patch file. Editing it by hand is
-equivalent:
+设置页写的是 profile 的 patch 文件，手改等价：
 
 ```yaml
 # ~/.dsh/profiles/<name>/cordis.patch.yml
@@ -53,44 +48,39 @@ equivalent:
   config:
     memoryDir: ~/notes
     sections:
-      - Oft-told
-      - Who I am
+      - 常被提起
+      - 我是谁
 ```
 
-The settings page reflects whatever the Host serves, so a hand edit shows up there
-after a restart.
+设置页显示的是 Host 实际提供的内容，手改之后重启即可看到。
 
-## Cross-platform notes
+## 跨平台
 
-| Situation | Handling |
+| 情况 | 处理 |
 |---|---|
-| UTF-8 BOM (Notepad, some VS Code setups) | Stripped. Otherwise it glues to the first heading, exact matching fails, and the section disappears |
-| CRLF line endings | Normalized to `\n`; otherwise `\r` survives into the injected text |
-| `~\notes` backslash paths | Expand like `~/notes`; otherwise they resolve to a literal folder named `~` beside the process directory |
-| Drive-letter paths `C:\...` | Recognized as absolute; used as-is |
-| Read-only home directory | No throw, one warning — an unreadable home must not stop a session |
+| UTF-8 BOM（记事本、部分 VS Code 配置） | 剥掉。否则它会粘在第一个标题上，精确匹配失败，整节消失 |
+| CRLF 行尾 | 归一成 `\n`；否则 `\r` 会留进注入文本 |
+| `~\notes` 反斜杠路径 | 和 `~/notes` 一样展开；否则会解析成进程目录旁一个名为 `~` 的字面文件夹 |
+| 盘符路径 `C:\...` | 识别为绝对路径，原样使用 |
+| 只读的 home 目录 | 不抛错，只记一条 warn——读不了的 home 不该让会话起不来 |
 
-`package.json` declares `engines.node` as `>=22.0.0` on all platforms.
+上面是三个平台真正有差异的地方，每一处都有测试覆盖。`package.json` 在三个平台声明同一个 Node 版本下限。
 
-These are the cases where the three platforms genuinely differ. Each one is
-covered by a test, and `package.json` pins the same Node floor everywhere.
-
-## How it is tested
+## 测试怎么跑
 
 ```sh
 npm test
 ```
 
-Four suites, in increasing order of realism:
+六个套件，按真实度递增：
 
-| File | What it proves |
+| 文件 | 证明什么 |
 |---|---|
-| `test/sections.test.mjs` | Heading parsing (including `#` inside fenced code blocks and a four-backtick fence that a three-backtick line must not close), exact-match extraction, line-boundary truncation, `~` expansion, missing files, BOM/CRLF, mixed success and failure rendering, volatile config references, diagnostics |
-| `test/plugin.test.mjs` | Decision logic against a fake harness: inject once, re-inject per config, never mid-turn, stay silent when nothing loaded; the first run creates the starter file, and **a relative folder is not created in the process directory** |
-| `test/contract.test.mjs` | The same projection driven by a real `Session` and a real `createUserMessage`; a change to the `user/message` or `MessageSource` contract turns it red |
-| `test/registry.test.mjs` | The plugin mounted on a real Cordis `Context` and a real `SessionProjectionRegistry` |
-| `test/client.test.mjs` | The browser half loaded the way the module loader does: what it registers, that it does not hard-depend on `configForms`, that the settings section and the plugin card share one form, and that every key the panel asks for exists in both inline dictionaries |
-| `test/form-model.test.mjs` | The real `SettingsFormModel` from the shipped frontend bundle, driven by the real `client.js` |
+| `test/sections.test.mjs` | 标题解析（含围栏代码块里的 `#`、四反引号围栏不被内部三反引号关闭）、精确匹配取节、按行截断、`~` 展开、文件缺失、BOM/CRLF、部分成功与部分失败的渲染、volatile 配置引用、诊断 |
+| `test/plugin.test.mjs` | 对假 harness 的决策逻辑：只注入一次、按配置重注入、不在轮次中途注入、什么都没读到就不注入；首次运行建起始文件，且**相对文件夹不会建到进程目录** |
+| `test/contract.test.mjs` | 同一投影由真 `Session` 和真 `createUserMessage` 驱动；`user/message` 或 `MessageSource` 契约一变就红 |
+| `test/registry.test.mjs` | 插件挂在真 Cordis `Context` 和真 `SessionProjectionRegistry` 上 |
+| `test/client.test.mjs` | 浏览器半侧按模块加载器的方式加载：注册了什么、没有硬依赖 `configForms`、设置节与插件卡片共用一份表单、面板用到的每个键在两份内联词典里都存在 |
+| `test/form-model.test.mjs` | 从发布的前端产物里取的真 `SettingsFormModel`，驱动真 `client.js` |
 
-**To judge a test, ask one question: is the ctx it holds real?** A fake harness
-tests decision logic; it cannot test contracts.
+**判断一条测试有没有价值，只问一句：它手里那个 ctx 是真的吗？** 假 harness 测得了决策逻辑，测不了契约。

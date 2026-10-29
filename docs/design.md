@@ -1,92 +1,61 @@
-# Design notes
+# 设计说明
 
-Why the plugin is shaped the way it is. None of this is required to use it — it
-answers the questions that come up after the first week.
+<p align="center"><a href="./design.md">中文</a> | <a href="./design.en.md">English</a></p>
 
-## One injection, not a retrieval system
+为什么插件是这个形状。使用它不需要读这一页——这一页回答的是用了一周之后才会有的问题。
 
-Most memory schemes answer "how do I store it". This one answers only "how do I
-keep it in view". There is no index, no embedding, no database: the plugin reads
-markdown you already maintain and adds it to the context once per session.
+## 一次注入，不是检索系统
 
-The reasoning is mechanical, not philosophical. Retrieval helps only if something
-triggers a retrieval, and the moment a trigger is most needed — the start of a
-session, with a new message on screen — is the moment a model is least likely to
-fire one. An injected message has no trigger to miss.
+大多数记忆方案回答的是「怎么存」。这个只回答「怎么一直摆在眼前」。没有索引、没有向量、没有数据库：插件读你已经在维护的 markdown，每个会话加进上下文一次。
 
-## The cap
+理由是机械的，不是哲学的。检索只有被触发才有用，而触发最被需要的那一刻——会话开头、屏幕上只有一条新消息——恰恰是模型最不会主动发起检索的时刻。注入的消息没有触发器可以错过。
 
-Eight entries is roughly 283 tokens per turn. That is the intersection of cost and
-headroom: below it the standing value does not repay the setup, above it you pay
-every turn for a list you rarely consult.
+## 上限
 
-A cap also forces a rule for who leaves. **Eviction is a ranking** — more reliable
-than "add one whenever it comes to mind", because the latter never removes
-anything and ends as a list nobody reads.
+八条约 283 token/轮。这是成本与余量的交点：低于它，常驻价值抵不上配置成本；高于它，你每轮都在为一份很少看的清单付钱。
 
-## The forgetting curve
+上限还会逼出一条「谁出去」的规则。**挤人本身就是一次排序**——比「想起就随手加一条」可靠，因为后者从不删任何东西，最后变成一份没人读的清单。
 
-Eviction ranks by weight rather than age:
+## 遗忘曲线
+
+挤人按权重而不是按年龄：
 
 ```
-R = exp(-t/S)     t = days since last recall
-                  n = number of distinct days it was mentioned
+R = exp(-t/S)     t = 距上次被想起的天数
+                  n = 被提起过的不同天数
                   S = 1 × 2^n
 ```
 
-`S` doubles each time an entry is recalled — spaced repetition (SM-2's one-day
-first interval; FSRS's retrievability form). Worked example: recalled 6 days ago
-on 3 distinct days → `S = 8`, `R = 0.47`; recalled 1 day ago on 2 days → `S = 4`,
-`R = 0.78`.
+每被想起一次 `S` 翻倍——间隔重复（SM-2 的首间隔 1 天；FSRS 的可提取性形式）。举例：6 天前、被 3 天提起 → `S = 8`、`R = 0.47`；1 天前、被 2 天提起 → `S = 4`、`R = 0.78`。
 
-Age alone is wrong. Measured on real data, the oldest entry was the most cited one;
-decaying purely by age would have ranked it last.
+只看年龄是错的。实测最老的那一条恰恰被引用最多；纯按年龄衰减会把它排到最后。
 
-**Weight never sorts.** When everything fits, ordering is meaningless. It decides
-only the moment the list is full and something new wants in, so a wrong parameter
-costs one anchor a few extra days — not corrupted data.
+**权重从不负责排序。** 装得下的时候排序没有意义。它只在「满了、新的要进来」那一刻决定谁出去，所以参数算错只是某条多挂几天，不是数据损坏。
 
-Counting is mechanical, judgement is not: `grep -o "2026-10-[0-9][0-9]" diary/*.md`
-deduplicated by source day gives "how many days this was recalled". Ten mentions in
-one day still count as one, because "it was recalled that day" is one fact.
+计数是机器活，判断不是：`grep -o "2026-10-[0-9][0-9]" diary/*.md` 按来源天去重，就是「这天被想起过」。同一天提十次也只算一次，因为「那天被想起过」是一次事实。
 
-The plugin does not compute weights. It is the list at your elbow when the eviction
-decision happens.
+插件不替你算权重。它只是挤人那一刻放在你手边的清单。
 
-## Emotion labels
+## 情绪标签
 
-If you tag entries with an emotion, use a closed vocabulary — words may be added,
-never removed or renamed.
+如果你给条目打情绪，用封闭词表——可以加词，不能删词或改名。
 
-The reason is a subset constraint. A "current emotion" cache must draw from the same
-names as the diary labels, or matching can never occur. Diary labels are fixed
-values (the emotion at the time of writing); the cache is a live value (the emotion
-now).
+原因是一个子集约束：一个「此刻情绪」的缓存必须和日记标签用同一套名字，否则「撞上」永远不可能发生。日记标签是固化值（写那段当时的情绪），缓存是活值（此刻的情绪）。
 
-Measured: five emotion memories held five different emotions, each appearing once —
-a list, not a cache. A cache has content only when the same name matches twice.
+实测：五条情绪记忆里五种不同情绪，每种只出现一次——那是一张清单，不是缓存。缓存要有内容，得同一个名字撞到两次以上。
 
-Do not grep emotion words out of the text afterwards. In four of five measured
-memories no emotion word remained: by the time it was written the feeling had been
-translated into a judgement ("I mistook reluctance for irresponsibility" contains no
-"reluctance"). Write the label at the time; review only gets the residue.
+不要事后从文字里 grep 情绪词。实测五条里有四条已经没有情绪词可撞：写下来的时候情绪已经被翻译成判断了（「我把不忍心当成了不负责」里没有「不忍心」）。标签要当场写；回顾只拿得到残渣。
 
-The plugin does not tag emotions. You tag them; it carries them.
+插件不给你打情绪标签。你打，它负责带进上下文。
 
-## No automatic writes
+## 不做自动写入
 
-Every field is set by hand. The model cannot give itself context.
+每个字段都靠手填。模型不能给自己上下文。
 
-An agent that writes its own memory mixes "what I just thought of" with "what keeps
-coming back", and within a few turns the list stops being trustworthy. The value of
-memory comes from the fact that someone else chose it.
+一个自己写记忆的 agent 会把「我刚想到的」和「反复回来的」混在一起，几轮之后清单就不可信了。**记忆的价值来自「这是别人选的」这个事实。**
 
 ## `refreshAfterMessages`
 
-A context compactor folds old messages into summaries. The injected block is one
-old message, so an aggressively compacting session will eventually fold it away.
+上下文压缩器会把旧消息折成摘要。注入块也是一条旧消息，所以压缩激进的会话迟早会把它折掉。
 
-`refreshAfterMessages` re-injects once the message count passes a threshold. It is
-an approximation — compaction rewrites payloads without adding messages, so message
-count does not measure compaction directly — but compaction correlates with message
-growth, and the cost of guessing wrong is one extra injection.
+`refreshAfterMessages` 在消息数过阈值时重新注入。它是近似——压缩改写 payload 而不增加消息数，所以消息数并不直接度量压缩——但压缩与消息增长相关，而猜错的代价是多注入一次。
