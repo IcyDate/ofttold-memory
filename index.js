@@ -51,7 +51,7 @@ export const inject = ["agents", "sessionProjections"];
  */
 const Section = z.union([
   z.string().description(
-    "Section heading to lift from your memory file, without the leading `#`. This is the form most people want.",
+    "A heading in your notes to keep visible, written without the leading `#`. This is the form most people want.",
   ),
   z
     .object({
@@ -59,13 +59,13 @@ const Section = z.union([
         .string()
         .default("MEMORY.md")
         .description(
-          "Markdown file inside your memory folder. Defaults to `MEMORY.md`. Absolute and `~/`-prefixed paths also work, for notes kept elsewhere.",
+          "Which file inside your notes folder this section lives in. Defaults to `MEMORY.md`. Absolute and `~/` paths also work, for notes kept elsewhere.",
         ),
       heading: z
         .string()
         .required()
         .description(
-          "Exact heading text to lift, without the leading `#`. Matching is exact, so a renamed heading stops resolving rather than silently grabbing a neighbour.",
+          "The heading text exactly as it appears in your notes, without the leading `#`. Matching is exact, so renaming a heading stops it resolving rather than silently pulling in the section next door.",
         ),
       maxChars: z
         .natural()
@@ -73,17 +73,17 @@ const Section = z.union([
         .max(Number.MAX_SAFE_INTEGER)
         .required(false)
         .description(
-          "Character budget for this section; over-budget bodies are cut on a line boundary with a marker. Defaults to the plugin's own maxChars.",
+          "How much of this section to read. Longer text is cut at a line break with a marker. Defaults to the plugin-wide maxChars.",
         ),
       label: z
         .string()
         .default("")
         .description(
-          "Short name shown as the heading inside the injected block. Defaults to the section heading.",
+          "The name this section appears under inside the injected block. Defaults to the heading itself.",
         ),
     })
     .description(
-      "A section that needs its own file, budget, or display name. Most setups never need this form.",
+      "A section that needs its own file, its own length limit, or a different display name. Most setups never need this.",
     ),
 ]);
 
@@ -93,14 +93,14 @@ export const Config = z.object({
     .default("~/.dsh/ofttold-memory")
     .volatile()
     .description(
-      "Folder holding your memory notes. The plugin creates it with a starter `MEMORY.md` on first run, so this can be left alone. Point it at an existing notes folder to reuse what you already keep.",
+      "Where your notes live. Created with a starter `MEMORY.md` on first run, so you can leave this alone. Point it at a folder you already keep and the plugin only reads it.",
     ),
   sections: z
     .array(Section)
     .default([...DEFAULT_SECTIONS])
     .volatile()
     .description(
-      "Which sections to keep visible. Bare strings are headings inside your memory file. The default lifts the `Oft-told` section (or `常被提起` in a Chinese file) -- the one that pays for itself. Empty disables the plugin without failing the load.",
+      "Which parts of your notes it should remember. Bare strings are headings in your memory file. The default lifts the `Oft-told` section (or `常被提起` in a Chinese file). Leaving this empty turns the plugin off without failing the load.",
     ),
   maxChars: z
     .natural()
@@ -109,14 +109,14 @@ export const Config = z.object({
     .default(600)
     .volatile()
     .description(
-      "Default character budget per section, when a section does not set its own. Raise it only after checking what it costs per session: 600 characters is roughly 400 tokens, once per session.",
+      "How much of each section to read, when a section does not set its own. 600 characters is about 400 tokens, charged once per session, so raising this raises what every session pays.",
     ),
   header: z
     .string()
     .default("Standing context for this session (human-curated, not a user request)")
     .volatile()
     .description(
-      "First line of the injected block. Worth stating plainly: this arrives as a user-role message, so it must not read like something the human just said.",
+      "The line that opens the block. It tells the model this is background, not something you said, so it must not read like a message from the user.",
     ),
   refreshIntervalMs: z
     .natural()
@@ -125,7 +125,7 @@ export const Config = z.object({
     .default(0)
     .volatile()
     .description(
-      "Minimum milliseconds between injections in one session. 0 means never refresh, so the block is injected once. Raise it only if a compactor is dropping old messages.",
+      "How long to wait before injecting again within one session, in milliseconds. 0 means inject once and never refresh. Only worth raising if old messages are getting compacted away.",
     ),
   refreshAfterMessages: z
     .natural()
@@ -134,14 +134,14 @@ export const Config = z.object({
     .default(0)
     .volatile()
     .description(
-      "Re-inject after this many new conversation messages since the last injection. 0 means never. This is the practical defence against a compactor folding the injected message away: folding removes old messages, so a block injected once and folded is gone.",
+      "Inject again after this many new messages. 0 means never. Needed only in long sessions: when old messages are compacted into summaries, the injected block is one of them and gets folded away with them.",
     ),
   workspaceRelative: z
     .boolean()
     .default(true)
     .volatile()
     .description(
-      "Resolve a relative memory folder against the session workspace. Turn off to resolve it against the process directory instead.",
+      "What a relative folder path is resolved against. On: this session's working folder. Off: the folder the process started in. Usually no need to change it.",
     ),
 });
 
