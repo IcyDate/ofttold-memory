@@ -26,6 +26,7 @@ import { createUserMessage } from "@deepseek-ai/dsh-llm";
 import z from "@deepseek-ai/schemastery";
 import { z as zod } from "zod";
 
+import { configValue } from "./lib/config.js";
 import { scaffoldMemory } from "./lib/scaffold.js";
 import { DEFAULT_SECTIONS, expandPath, renderSources } from "./lib/sources.js";
 
@@ -173,10 +174,10 @@ function memoryDirectory(agent, config) {
   // that hands `apply` an unvalidated object, so the code states the documented
   // default itself and only an explicit `false` turns it off.
   const base =
-    config.workspaceRelative !== false && typeof agent?.session?.header?.cwd === "string"
+    configValue(config, "workspaceRelative") !== false && typeof agent?.session?.header?.cwd === "string"
       ? agent.session.header.cwd
       : process.cwd();
-  return expandPath(config.memoryDir ?? "~/.dsh/ofttold-memory", base);
+  return expandPath(configValue(config, "memoryDir") ?? "~/.dsh/ofttold-memory", base);
 }
 
 /**
@@ -193,7 +194,7 @@ export function apply(ctx, config) {
   // Same trap as `workspaceRelative`: the Config schema supplies this default
   // only after validation, so an unvalidated config would mean "no sections" and
   // the plugin would silently register nothing. State the documented default.
-  const sections = config.sections ?? DEFAULT_SECTIONS;
+  const sections = configValue(config, "sections") ?? DEFAULT_SECTIONS;
   if (sections.length === 0) return;
 
   // Directories already prepared in this process. Scaffolding runs lazily from
@@ -249,14 +250,16 @@ export function apply(ctx, config) {
     };
     const now = Date.now();
     const neverInjected = bookkeeping.injectedCount === 0;
+    const refreshIntervalMs = configValue(config, "refreshIntervalMs") ?? 0;
+    const refreshAfterMessages = configValue(config, "refreshAfterMessages") ?? 0;
     const intervalDue =
-      config.refreshIntervalMs > 0 &&
+      refreshIntervalMs > 0 &&
       bookkeeping.lastInjectedAt !== null &&
-      now - bookkeeping.lastInjectedAt >= config.refreshIntervalMs;
+      now - bookkeeping.lastInjectedAt >= refreshIntervalMs;
     const messagesDue =
-      config.refreshAfterMessages > 0 &&
+      refreshAfterMessages > 0 &&
       bookkeeping.lastInjectedMessageCount !== null &&
-      bookkeeping.messageCount - bookkeeping.lastInjectedMessageCount >= config.refreshAfterMessages;
+      bookkeeping.messageCount - bookkeeping.lastInjectedMessageCount >= refreshAfterMessages;
     if (!neverInjected && !intervalDue && !messagesDue) return decision;
 
     const memoryDir = memoryDirectory(agent, config);

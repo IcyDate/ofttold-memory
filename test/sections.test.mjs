@@ -1,12 +1,14 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { existsSync, mkdtempSync, writeFileSync } from "node:fs";
+import z from "@deepseek-ai/schemastery";
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { extractSection, parseHeadings, truncateBody } from "../lib/sections.js";
 import { scaffoldMemory } from "../lib/scaffold.js";
+import { configValue, deref } from "../lib/config.js";
 import { expandPath, loadSource, renderSources, resolveSections } from "../lib/sources.js";
 
 const DOC = [
@@ -306,4 +308,99 @@ test("a backslash tilde path expands on every platform", () => {
   const base = join(tmpdir(), "ofttold-base");
   assert.equal(expandPath("~/notes", base), join(homedir(), "notes"));
   assert.equal(expandPath("~\\notes", base), join(homedir(), "notes"));
+});
+
+// ---------------------------------------------------------------------------
+// Volatile references
+//
+// schemastery's `.volatile()` makes `Schema.resolve` wrap each marked field in a
+// reference object whose snapshot the runtime can replace. The plugin marks its
+// fields volatile so `dsh-settings` keeps them in the editable form, which means
+// the values it reads are wrappers, not strings and numbers. Reading one as if it
+// were the value failed a real session with
+// `TypeError: path.startsWith is not a function`.
+// ---------------------------------------------------------------------------
+
+/**
+ * A config whose fields are REAL volatile references.
+ *
+ * The wrappers come from schemastery's own `Schema.resolve`, not from a
+ * hand-written stand-in: the first version of this test built the wrapper by hand
+ * and would have passed against a wrapper that only resembled the real one, which
+ * is the exact mistake that let the original defect through.
+ */
+function resolvedConfig(patch) {
+  const Config = z.object({
+    memoryDir: z.string().default("~/.dsh/ofttold-memory").volatile(),
+    sections: z.array(z.any()).default(["Oft-told"]).volatile(),
+    maxChars: z.natural().default(600).volatile(),
+    header: z.string().default("Standing context").volatile(),
+    workspaceRelative: z.boolean().default(true).volatile(),
+  });
+  const [value] = z.resolve(patch, Config);
+  return value;
+}
+
+test("deref unwraps a volatile reference and leaves plain values alone", () => {
+  assert.equal(deref(resolvedConfig({ memoryDir: "~/notes" }).memoryDir), "~/notes");
+  assert.equal(deref("plain"), "plain");
+  assert.equal(deref(42), 42);
+  assert.equal(deref(undefined), undefined);
+  assert.equal(deref(null), null);
+});
+
+test("deref does not mistake a plain object with a get method for a reference", () => {
+  // Duck-typing `get` alone would unwrap this and silently lose the object.
+  const plain = { get: () => "not a reference", other: 1 };
+  assert.equal(deref(plain), plain);
+});
+
+test("deref follows the current snapshot, not the value captured at validation", () => {
+  const ref = resolvedConfig({ memoryDir: "first" }).memoryDir;
+  assert.equal(deref(ref), "first");
+  // The write symbol is what the runtime uses to swap a live value in place.
+  ref[Symbol.for("cosmokit.volatile.write")]("second");
+  assert.equal(deref(ref), "second");
+});
+
+test("configValue reads fields of a config whose values are references", () => {
+  const config = resolvedConfig({
+    memoryDir: "~/Desktop/拾光",
+    maxChars: 600,
+    sections: [{ file: "INDEX.md", heading: "常被提起", maxChars: 600, label: "L" }],
+  });
+  assert.equal(configValue(config, "memoryDir"), "~/Desktop/拾光");
+  assert.equal(configValue(config, "maxChars"), 600);
+  assert.equal(configValue(config, "sections").length, 1);
+  // A field the schema defaults is present after validation, so the value comes
+  // back rather than a wrapper's undefined.
+  assert.equal(configValue(config, "workspaceRelative"), true);
+  // A field that genuinely is absent stays absent. Plain objects are the case
+  // that matters: `apply` can be handed an unvalidated config.
+  assert.equal(configValue({}, "workspaceRelative"), undefined);
+  assert.equal(configValue({}, "memoryDir"), undefined);
+});
+
+test("expandPath accepts a volatile reference, because it is exported", () => {
+  // Callers outside the plugin can hand it a validated config's field directly.
+  assert.equal(expandPath(resolvedConfig({ memoryDir: "~/x.md" }).memoryDir, "/base"), join(homedir(), "x.md"));
+  assert.equal(expandPath(resolvedConfig({ memoryDir: "rel.md" }).memoryDir, "/base"), "/base/rel.md");
+  assert.equal(expandPath(resolvedConfig({ memoryDir: "/abs.md" }).memoryDir, "/base"), "/abs.md");
+});
+
+test("renderSources reads a config whose values are references", () => {
+  const folder = mkdtempSync(join(tmpdir(), "ofttold-volatile-"));
+  try {
+    writeFileSync(join(folder, "MEMORY.md"), "# 常被提起\n\n一条要记住的事。\n");
+    const rendered = renderSources(
+      resolvedConfig({ sections: ["常被提起"], maxChars: 600, header: "Standing context" }),
+      folder,
+    );
+    assert.ok(rendered, "a volatile config must still load its section");
+    assert.equal(rendered.loaded, 1);
+    assert.match(rendered.text, /Standing context/);
+    assert.match(rendered.text, /一条要记住的事/);
+  } finally {
+    rmSync(folder, { recursive: true, force: true });
+  }
 });
