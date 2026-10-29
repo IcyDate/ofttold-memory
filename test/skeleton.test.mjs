@@ -102,6 +102,12 @@ test("both shipped skills parse and satisfy the registry contract", () => {
     // would be silently cut, so it must fit.
     assert.ok(skill.description.length <= 500, `${skill.name} description is too long for the catalog`);
     assert.ok(skill.content.length > 200, `${skill.name} has no body worth loading`);
+    // `register()` does NOT check this; the registry's load-time
+    // `validateDefinition` does, and throws only when a model opens the skill.
+    // Asserted here because the register-time contract is the misleading one:
+    // omitting it passes every registration test and fails in a live session.
+    assert.equal(typeof skill.source, "string", `${skill.name} needs a source or it cannot be loaded`);
+    assert.ok(skill.source.length > 0, `${skill.name} source must not be empty`);
   }
 });
 
