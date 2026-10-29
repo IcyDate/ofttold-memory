@@ -69,7 +69,7 @@ function harness(base) {
 
 /** Create a temp workspace holding one memory file. */
 function workspace() {
-  const dir = mkdtempSync(join(tmpdir(), "anchor-"));
+  const dir = mkdtempSync(join(tmpdir(), "ofttold-"));
   writeFileSync(join(dir, "MEMORY.md"), DOC, "utf8");
   return dir;
 }
@@ -160,7 +160,7 @@ test("does not register a listener when sections are empty", () => {
 test("scaffolds a starter memory file when the folder is empty", async () => {
   // A fresh install must leave the user with something to edit, not an empty
   // folder and a silent no-op. This is the whole "install and it works" claim.
-  const dir = mkdtempSync(join(tmpdir(), "anchor-"));
+  const dir = mkdtempSync(join(tmpdir(), "ofttold-"));
   const memoryDir = join(dir, "memory");
   const h = harness(dir);
   apply(h.ctx, config({ memoryDir }));
@@ -174,7 +174,7 @@ test("a relative memory folder resolves against the session cwd, not the process
   // Regression: scaffolding at `apply` time created the starter file in the
   // repository root, because no session cwd existed yet. The folder a user
   // configures must be the one their session sees.
-  const dir = mkdtempSync(join(tmpdir(), "anchor-"));
+  const dir = mkdtempSync(join(tmpdir(), "ofttold-"));
   const h = harness(dir);
   apply(h.ctx, config({ memoryDir: "memory" }));
   assert.equal(existsSync(join(dir, "memory", "MEMORY.md")), false, "nothing may be created before a session exists");

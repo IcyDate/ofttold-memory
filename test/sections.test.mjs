@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { existsSync, mkdtempSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -15,8 +16,8 @@ const DOC = [
   "",
   "## 常被提起",
   "",
-  "- 枪·请杀了我这个怪物吧",
-  "- 大肥鱼·是蓝鲸只是圆润",
+  "- first note",
+  "- second note",
   "",
   "## 别的",
   "",
@@ -74,7 +75,7 @@ test("a hash glued to the title is text, a spaced closing sequence is not", () =
 test("extractSection returns the exact body, excluding the heading line", () => {
   const { found, body } = extractSection(DOC, "常被提起");
   assert.equal(found, true);
-  assert.equal(body.trim(), "- 枪·请杀了我这个怪物吧\n- 大肥鱼·是蓝鲸只是圆润");
+  assert.equal(body.trim(), "- first note\n- second note");
 });
 
 test("extractSection with an empty heading returns the whole file", () => {
@@ -164,7 +165,7 @@ test("resolveSections keeps a blank label from rendering a bare heading", () => 
 });
 
 test("loadSource renders a section and truncates it", () => {
-  const dir = mkdtempSync(join(tmpdir(), "anchor-"));
+  const dir = mkdtempSync(join(tmpdir(), "ofttold-"));
   writeFileSync(join(dir, "notes.md"), DOC, "utf8");
   // The two bullets are 13 characters each; 20 fits the first and drops the
   // second whole line, which is the line-boundary path rather than a mid-line cut.
@@ -179,7 +180,7 @@ test("loadSource renders a section and truncates it", () => {
 test("loadSource resolves a relative file inside the memory folder", () => {
   // This is the contract the string form depends on: `MEMORY.md` means the one
   // in the configured folder, not one next to the process.
-  const dir = mkdtempSync(join(tmpdir(), "anchor-"));
+  const dir = mkdtempSync(join(tmpdir(), "ofttold-"));
   writeFileSync(join(dir, "MEMORY.md"), DOC, "utf8");
   const result = loadSource({ file: "MEMORY.md", heading: "常被提起", maxChars: 100, label: "x" }, dir);
   assert.equal(result.ok, true);
@@ -195,7 +196,7 @@ test("loadSource reports a missing file without throwing", () => {
 });
 
 test("loadSource says a mid-line cut was a cut", () => {
-  const dir = mkdtempSync(join(tmpdir(), "anchor-"));
+  const dir = mkdtempSync(join(tmpdir(), "ofttold-"));
   writeFileSync(join(dir, "long.md"), `## one\n\n${"a".repeat(80)}\n`, "utf8");
   const result = loadSource({ file: "long.md", heading: "one", maxChars: 10, label: "one" }, dir);
   assert.equal(result.ok, true);
@@ -203,7 +204,7 @@ test("loadSource says a mid-line cut was a cut", () => {
 });
 
 test("renderSources joins loaded sections and names the failures", () => {
-  const dir = mkdtempSync(join(tmpdir(), "anchor-"));
+  const dir = mkdtempSync(join(tmpdir(), "ofttold-"));
   writeFileSync(join(dir, "MEMORY.md"), DOC, "utf8");
   const rendered = renderSources(
     {
@@ -228,7 +229,7 @@ test("renderSources returns undefined when nothing loads", () => {
 test("renderSources with the default config loads the scaffolded template", () => {
   // The out-of-the-box path a new user actually walks: install, do nothing else,
   // and the default section must resolve against the starter file.
-  const dir = mkdtempSync(join(tmpdir(), "anchor-"));
+  const dir = mkdtempSync(join(tmpdir(), "ofttold-"));
   scaffoldMemory(dir);
   const rendered = renderSources({}, dir);
   assert.ok(rendered !== undefined, "default config must load the scaffolded MEMORY.md");
@@ -240,7 +241,7 @@ test("scaffoldMemory leaves an existing notes folder alone", () => {
   // Pointing at a folder that already holds someone's notes must not drop a
   // starter file next to their files. The template exists to answer "what do I
   // write", and a folder with markdown in it has already answered that.
-  const dir = mkdtempSync(join(tmpdir(), "anchor-notes-"));
+  const dir = mkdtempSync(join(tmpdir(), "ofttold-notes-"));
   writeFileSync(join(dir, "INDEX.md"), "# 索引\n\n## 常被提起\n\n- 真的一条\n", "utf8");
   const result = scaffoldMemory(dir);
   assert.equal(result.skipped, true);
@@ -249,9 +250,31 @@ test("scaffoldMemory leaves an existing notes folder alone", () => {
 });
 
 test("scaffoldMemory still writes into a genuinely empty folder", () => {
-  const dir = mkdtempSync(join(tmpdir(), "anchor-empty-"));
+  const dir = mkdtempSync(join(tmpdir(), "ofttold-empty-"));
   const result = scaffoldMemory(dir);
   assert.equal(result.skipped, false);
   assert.equal(result.createdFile, true);
   assert.ok(existsSync(join(dir, "MEMORY.md")));
+});
+
+test("a Windows-editor file loads: BOM stripped, CRLF normalized", () => {
+  // Both artefacts come from the editors Windows users actually have, and both
+  // used to break a file that looks perfectly fine on screen: the BOM glues
+  // itself to the first heading so exact matching fails, and CRLF leaves `\r`
+  // in the injected text.
+  const dir = mkdtempSync(join(tmpdir(), "ofttold-win-"));
+  const file = join(dir, "MEMORY.md");
+  writeFileSync(file, "\uFEFF# 我的记忆\r\n\r\n## 常被提起\r\n\r\n- 一\r\n- 二\r\n", "utf8");
+  const loaded = loadSource({ file, heading: "常被提起", maxChars: 100, label: "x" }, dir);
+  assert.equal(loaded.ok, true, "a BOM+CRLF file must still resolve its section");
+  assert.equal(loaded.text, "- 一\n- 二");
+  assert.equal(loaded.text.includes("\r"), false, "no carriage returns may survive into the injected text");
+});
+
+test("a backslash tilde path expands on every platform", () => {
+  // `~\notes` is as natural to type on Windows as `~/notes`, and a config copied
+  // from a Windows example must not resolve to a literal directory named `~`.
+  const base = join(tmpdir(), "ofttold-base");
+  assert.equal(expandPath("~/notes", base), join(homedir(), "notes"));
+  assert.equal(expandPath("~\\notes", base), join(homedir(), "notes"));
 });

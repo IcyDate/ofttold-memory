@@ -1,11 +1,11 @@
-# dsh-anchor-context bundle patch: inject human-curated standing context once per session.
-# Activate with `dsh plugin --profile web add /absolute/path/to/dsh-anchor-context`.
+# dsh-ofttold-memory bundle patch: inject human-curated standing context once per session.
+# Activate with `dsh plugin --profile web add /absolute/path/to/dsh-ofttold-memory`.
 #
-# `name` must be the actual package name (dsh-anchor-context): cordis imports by
+# `name` must be the actual package name (dsh-ofttold-memory): cordis imports by
 # name, so a mismatch yields `Cannot find package` for anyone who installs it.
 # No paths are hardcoded here on purpose — a patch that points at one machine's
 # notes makes the plugin fail to start for everyone else. Sources belong in the
 # profile's own patch, where each user sets their own.
 - insert:
-    - id: anchor-context
-      name: dsh-anchor-context
+    - id: ofttold-memory
+      name: dsh-ofttold-memory

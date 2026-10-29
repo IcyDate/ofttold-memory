@@ -1,5 +1,5 @@
 /**
- * dsh-anchor-context — keep your memory in front of the model, every session.
+ * dsh-ofttold-memory — keep your memory in front of the model, every session.
  *
  * The problem this solves is not storage, it is *retrieval without a trigger*.
  * A note that lives in a file is only useful if something puts it in front of the
@@ -29,7 +29,7 @@ import { z as zod } from "zod";
 import { scaffoldMemory } from "./lib/scaffold.js";
 import { DEFAULT_SECTIONS, expandPath, renderSources } from "./lib/sources.js";
 
-export const name = "anchor-context";
+export const name = "ofttold-memory";
 
 export const inject = ["agents", "sessionProjections"];
 
@@ -86,7 +86,7 @@ const Section = z.union([
 export const Config = z.object({
   memoryDir: z
     .string()
-    .default("~/.dsh/memory")
+    .default("~/.dsh/ofttold-memory")
     .description(
       "Folder holding your memory notes. The plugin creates it with a starter `MEMORY.md` on first run, so this can be left alone. Point it at an existing notes folder to reuse what you already keep.",
     ),
@@ -94,7 +94,7 @@ export const Config = z.object({
     .array(Section)
     .default([...DEFAULT_SECTIONS])
     .description(
-      "Which sections to keep visible. Bare strings are headings inside your memory file; the default lifts the `常被提起` section, which is the one that pays for itself. Empty disables the plugin without failing the load.",
+      "Which sections to keep visible. Bare strings are headings inside your memory file. The default lifts the `Oft-told` section (or `常被提起` in a Chinese file) -- the one that pays for itself. Empty disables the plugin without failing the load.",
     ),
   maxChars: z
     .natural()
@@ -169,7 +169,7 @@ function memoryDirectory(agent, config) {
     config.workspaceRelative !== false && typeof agent?.session?.header?.cwd === "string"
       ? agent.session.header.cwd
       : process.cwd();
-  return expandPath(config.memoryDir ?? "~/.dsh/memory", base);
+  return expandPath(config.memoryDir ?? "~/.dsh/ofttold-memory", base);
 }
 
 /**
@@ -261,9 +261,9 @@ export function apply(ctx, config) {
       prepared.add(memoryDir);
       const scaffold = scaffoldMemory(memoryDir);
       if (scaffold.error !== undefined) {
-        ctx.logger?.warn?.("anchor-context: could not prepare memory folder %s (%s)", memoryDir, scaffold.error);
+        ctx.logger?.warn?.("ofttold-memory: could not prepare memory folder %s (%s)", memoryDir, scaffold.error);
       } else if (scaffold.createdFile) {
-        ctx.logger?.info?.("anchor-context: created a starter memory file in %s", memoryDir);
+        ctx.logger?.info?.("ofttold-memory: created a starter memory file in %s", memoryDir);
       }
     }
 

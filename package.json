@@ -1,5 +1,5 @@
 {
-  "name": "dsh-anchor-context",
+  "name": "dsh-ofttold-memory",
   "version": "0.1.0",
   "description": "Keep your memory in every session: point it at a memory folder and it injects a few markdown sections once, so recall stops depending on remembering to look. Ships with a starter folder and file.",
   "type": "module",

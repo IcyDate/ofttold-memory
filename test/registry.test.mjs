@@ -56,7 +56,7 @@ async function mounted() {
 
 test("the real registry accepts the projection and drives it from real events", async () => {
   const ctx = await mounted();
-  const dir = mkdtempSync(join(tmpdir(), "anchor-e2e-"));
+  const dir = mkdtempSync(join(tmpdir(), "ofttold-e2e-"));
   writeFileSync(join(dir, "notes.md"), "## anchors\n\n- one\n", "utf8");
 
   apply(ctx, { memoryDir: ".", sections: [{ file: "notes.md", heading: "anchors" }], header: "Standing", maxChars: 100 });
@@ -98,7 +98,7 @@ test("the injected message the listener returns is what the reducer later recogn
   // drifted apart, injection would happen once and then immediately repeat,
   // because the reducer would never see an injection to record.
   const ctx = await mounted();
-  const dir = mkdtempSync(join(tmpdir(), "anchor-loop-"));
+  const dir = mkdtempSync(join(tmpdir(), "ofttold-loop-"));
   writeFileSync(join(dir, "notes.md"), "## anchors\n\n- one\n", "utf8");
   apply(ctx, { memoryDir: ".", sections: [{ file: "notes.md", heading: "anchors" }], header: "Standing", maxChars: 100 });
 
