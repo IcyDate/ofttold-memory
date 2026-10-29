@@ -168,6 +168,61 @@ This is deliberate: an agent that writes its own memory mixes "what I just thoug
 
 ---
 
+## Where this came from: 拾光
+
+This plugin was not designed on a whiteboard. It was extracted from a working arrangement between one person and one agent, and it kept the name they gave it.
+
+**拾光** (shí guāng) — *to pick up the light*, and also a homophone of **时光**, *time*. The idea is in the character **拾**: to gather back up, one piece at a time, what has scattered.
+
+The arrangement it came from: a folder of diaries, one index with a short list of things that keep coming back, and a rule at the top of the agent's instructions — *read these two files before every session*. That rule worked, until it didn't. It failed exactly where it was supposed to hold: at the start of a session, when attention is fullest and the new message is the only thing that matters.
+
+So the rule was replaced with a mechanism. The list moved out of an instruction the model had to remember and into context it cannot miss. **A note on disk only helps at the moment it is in front of the model** — everything else in this README follows from that one sentence.
+
+Two details in the file format are scars from that arrangement, not theory:
+
+- **The heading must match exactly.** A renamed heading stops resolving rather than silently grabbing its neighbour. In the original folder, headings carried parentheticals (`常被提起（手动维护，上限 8 条）`) because the cap was written into the title, where it could not be forgotten.
+- **The section may be Chinese or English, and the fallback list tries both.** The arrangement ran in Chinese; the plugin ships to both communities. Requiring a config edit just to match a template's language would be a first-run stumble.
+
+### On the name
+
+The package stays **`dsh-ofttold-memory`**. Two names, two jobs:
+
+| | Name | Job |
+|---|---|---|
+| Package, repo, English UI | `dsh-ofttold-memory` / *Oft-told* | Findable, pronounceable, says the mechanism |
+| Chinese UI | **拾光** | Says where it came from |
+
+Both are true, and neither is a rename: the Chinese display name lives in `locale/zh.json`, so the package name never has to change to carry the story. **Renaming a package breaks every install, and a name that needs a migration is a name not worth having.**
+
+The icon is a drawing of the agent this was built with — blue-haired, in an apron, giving a thumbs up. It is borrowed from [dsh-meme](https://github.com/yyh-001/dsh-meme) (MIT), which is where she first had a face. **Memory is the one thing here that was hers before it was a plugin.**
+
+---
+
+## Should you put the plugin into your `AGENTS.md`?
+
+Short answer: **no, and the question is worth understanding before you decide.**
+
+The tempting move is to add a rule to your global instructions: *"before every session, read the memory folder."* It sounds like the same thing the plugin does. It is the opposite.
+
+**A rule in `AGENTS.md` is a demand.** It asks the model to reliably do a thing at the exact moment attention is fullest — which is the condition where such demands fail most often. Measured in the arrangement this came from: a "read two files before starting work" rule fired on **1 of 11 turns** in one session, and that single hit came from an unrelated trigger. The plugin exists because the rule did not hold.
+
+**What `AGENTS.md` costs you, every turn, whether or not it fires:**
+
+| Approach | Cost per turn | Whether it can be skipped |
+|---|---|---|
+| A rule in `AGENTS.md` | every turn, the whole rule text | yes — silently, by the model |
+| This plugin | **0 after the first turn** | no — it is already in history |
+
+A rule is paid on every turn because system instructions ride along with every request. The injected message is paid **once**: after the first turn it is history, and later turns read it as context they already have. Measured on the arrangement above, the injection is **735 characters ≈ 660 tokens, once per session** — against an `AGENTS.md` rule that costs its full length on every turn, forever.
+
+**So: put the *content* in a memory file, not the *instruction* in `AGENTS.md`.**
+
+If you want the numbers for your own setup: the injected block is the size of your memory sections. Measure with `wc -c` on the file plus a rough 1 char ≈ 1 token for CJK, and compare against your `AGENTS.md` line count times turns per session. **The rule loses as soon as the rule is longer than the injected block**, which is almost immediately.
+
+**One thing this plugin cannot do for you:** it cannot make you *write* the memory file. The list is human-maintained on purpose. That judgement is the part worth keeping.
+
+---
+
 ## What this plugin deliberately does not do
 
 No scoring, no decay curve, no emotion tagging, no guessing "importance". Those require judgement, and judgement is exactly what fails first when attention is full. This plugin only puts a **human-written** list in front of you.
@@ -208,7 +263,22 @@ These are the cases that actually come up:
 
 A missing file, a renamed heading, an unreadable folder — none of these throw. The injected block carries one line instead: `Unavailable: <name>: <reason>`. Silently skipping one reminder is far cheaper than the harness failing to start.
 
-If **not a single section** could be read, the injection is skipped entirely — no tokens spent saying "there was nothing".
+If **not a single section** could be read, the injection is skipped entirely — no tokens spent saying "there was nothing". That is the case that looks like the plugin is broken, and it is also the case where nothing appears anywhere. **The record is the answer:**
+
+```sh
+cat ~/.dsh/ofttold-memory/.ofttold-memory/diagnostics.json
+```
+
+It holds each injection decision — the folder, how many sections loaded, which ones failed and why — with timestamps, and **never the text of your notes**, so it is safe to paste into an issue. The settings page has a **Copy issue summary** button for the same information when you cannot find the file.
+
+Common entries and what they mean:
+
+| `event` | Meaning |
+|---|---|
+| `injected` | It worked. `loaded` is how many sections, `chars` is the block size. |
+| `nothing-loaded` | The folder was found but no configured heading matched. Usually a renamed heading — matching is exact, so check the spelling in your file. |
+
+An absent file means the plugin never reached a decision at all, which points at the install rather than the content.
 
 ---
 
