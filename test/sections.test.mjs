@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -234,4 +234,24 @@ test("renderSources with the default config loads the scaffolded template", () =
   assert.ok(rendered !== undefined, "default config must load the scaffolded MEMORY.md");
   assert.equal(rendered.loaded, 1);
   assert.match(rendered.text, /### 常被提起/);
+});
+
+test("scaffoldMemory leaves an existing notes folder alone", () => {
+  // Pointing at a folder that already holds someone's notes must not drop a
+  // starter file next to their files. The template exists to answer "what do I
+  // write", and a folder with markdown in it has already answered that.
+  const dir = mkdtempSync(join(tmpdir(), "anchor-notes-"));
+  writeFileSync(join(dir, "INDEX.md"), "# 索引\n\n## 常被提起\n\n- 真的一条\n", "utf8");
+  const result = scaffoldMemory(dir);
+  assert.equal(result.skipped, true);
+  assert.equal(result.createdFile, false);
+  assert.equal(existsSync(join(dir, "MEMORY.md")), false, "must not add a file to a notes folder");
+});
+
+test("scaffoldMemory still writes into a genuinely empty folder", () => {
+  const dir = mkdtempSync(join(tmpdir(), "anchor-empty-"));
+  const result = scaffoldMemory(dir);
+  assert.equal(result.skipped, false);
+  assert.equal(result.createdFile, true);
+  assert.ok(existsSync(join(dir, "MEMORY.md")));
 });
