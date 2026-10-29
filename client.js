@@ -1,5 +1,5 @@
 window.__ModuleLoader__.load({
-  id: "dsh-ofttold-memory",
+  id: "ofttold-memory",
   factory(require) {
     const React = require("react");
     const h = React.createElement;
@@ -313,7 +313,7 @@ window.__ModuleLoader__.load({
             type: "button",
             onClick: () => {
               const summary = [
-                "dsh-ofttold-memory issue report",
+                "ofttold-memory issue report",
                 `memoryDir: ${state.memoryDir?.text ?? "(not set)"}`,
                 `sections: ${state.sections?.text ?? "(not set)"}`,
                 `maxChars: ${state.maxChars?.text ?? "(not set)"}`,
@@ -417,7 +417,7 @@ window.__ModuleLoader__.load({
               ctx.slots.register(
                 {
                   name: "plugins.bundle.config",
-                  key: "dsh-ofttold-memory",
+                  key: "ofttold-memory",
                   locale: NS,
                   inject: () => form.inject(),
                 },

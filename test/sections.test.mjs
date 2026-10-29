@@ -424,7 +424,7 @@ test("diagnostics records decisions and writes them under the plugin storage roo
     const file = diagnostics.flush(storage);
     assert.equal(file, join(storage, DIAGNOSTICS_DIR, DIAGNOSTICS_FILE));
     const written = JSON.parse(readFileSync(file, "utf8"));
-    assert.equal(written.plugin, "dsh-ofttold-memory");
+    assert.equal(written.plugin, "ofttold-memory");
     assert.equal(written.entries.length, 2);
     assert.equal(written.entries[0].event, "injected");
     assert.equal(written.entries[0].loaded, 2);

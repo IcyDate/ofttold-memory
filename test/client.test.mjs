@@ -331,7 +331,7 @@ test("the page registers before configForms is served", () => {
   plugin.apply(ctx);
   const page = registered.find((entry) => entry.meta.name === "plugins.bundle.config");
   assert.ok(page !== undefined, "the settings page did not register without configForms");
-  assert.equal(page.meta.key, "dsh-ofttold-memory");
+  assert.equal(page.meta.key, "ofttold-memory");
   assert.equal(typeof page.meta.inject, "function");
   // The injected props must be complete enough to render: a missing hook would
   // throw inside the component, not here.
