@@ -10,7 +10,7 @@
 
 ## 常被提起
 
-> 建议上限 8 条。满了就挤掉一条——挤掉这个动作本身就是一次排序，比「想起就随手加一条」可靠。
+> 建议上限 8 条。满了按权重沉底（`exp(-t / 2^n)`）——沉底这个动作本身就是一次排序，比「想起就随手加一条」可靠。没写日期的条目，第一次运行时会就地补一个「起算日」。
 > 默认配置同时认 `常被提起` 和 `Oft-told` 两个小节名，用哪个都行，另一个留空会被跳过。
 
 - **示例·项目在哪** → `~/work/my-project`｜省得每次问
@@ -19,8 +19,9 @@
 
 ## Oft-told
 
-> Cap of 8 suggested. When it is full, one entry is evicted — and the eviction is
-> itself the ranking, which beats "add one whenever it comes to mind".
+> Cap of 8 suggested. When it is full, the lowest weight sinks (`exp(-t / 2^n)`) — and
+> the sinking is itself the ranking, which beats "add one whenever it comes to mind".
+> A line with no date gets a "counted from" stamp the first time it is seen.
 > The default config accepts both `Oft-told` and `常被提起`; an empty one is skipped.
 
 - **Example · where the project is** → `~/work/my-project` | saves asking every time

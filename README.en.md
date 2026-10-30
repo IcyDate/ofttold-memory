@@ -93,6 +93,23 @@ mistake? Not "important", not "mentioned often" — *"not seeing this would brea
 the work"*. Written to that test, eight entries are plenty; written to "important",
 nothing is ever enough.
 
+## What sinks when the list is full
+
+Past eight anchors nothing asks a person to delete a line — it is ranked:
+
+```
+R = exp(-t / 2^n)     t = days since the anchor's own date
+                      n = distinct days that recalled it (ten mentions in a day are one)
+```
+
+- A dated anchor uses its own date; one pointing at `relationship.md` or a folder gets a
+  `` `date` 起 `` stamp the first time it is seen.
+- **Age alone never evicts.** Each recall doubles the interval, so an old line everyone
+  keeps reaching for outranks a fresh one nobody touches.
+- What sinks **stays in the file** and simply stops being injected; a diary day mentioning
+  it again floats it back. The view forgets, the record does not.
+- `anchorCap` of `0` turns it off.
+
 ## The line at the end
 
 If the folder has a `diary/`, the injected block closes with one more sentence: today's
@@ -104,13 +121,14 @@ the layout answers the question.
 
 ---
 
-## The three settings that matter
+## The four settings that matter
 
 | Setting | Default | Meaning |
 | --- | --- | --- |
-| `memoryDir` | `~/.dsh/ofttold-memory` | Your memory folder. Created on first run with the four-file skeleton. |
+| `memoryDir` | `~/.dsh/ofttold-memory` | Your memory folder. Missing files are filled in on first run; existing ones are never rewritten. |
 | `sections` | `["Oft-told", "常被提起"]` | Which headings ride along. Just the heading text. |
 | `maxChars` | `600` | Character budget per section. 600 characters ≈ 400 tokens. |
+| `anchorCap` | `8` | How many bold bullets a section keeps in view; the rest sink without being deleted. `0` turns it off. |
 
 Everything else has a working default. The full field list, the object form of
 `sections` for the rare per-section case, exact heading matching, and cross-platform
@@ -156,24 +174,42 @@ as the rule is longer than the injected block.
 
 ---
 
-## What it deliberately does not do
+## What it does, and what it leaves alone
 
-No scoring, no decay curve, no emotion tagging, no guessing at importance. Those
-need judgement, and judgement is what fails first when attention is full. The plugin
-puts a **human-written** list in front of you and stops there.
+**It does** the things that should happen every time and reliably get skipped:
 
-The reasoning behind the cap, the eviction weight, and the emotion vocabulary is in
-**[Design notes](docs/design.en.md)** — worth reading once, not needed to use it.
+- puts the list in front of the model, once per session
+- when the list is full, computes which line sinks: `exp(-t / 2^n)`
+- stamps a start date on anchors that have no date of their own
+- fills in missing files, names an unwritten day, says what it tried when nothing loads
+
+**It does not** do the half that needs judgement:
+
+- **It does not decide what is worth remembering.** What goes on the list, and whether a
+  sinking line deserves rescuing, is the writer's call. The plugin only does the arithmetic.
+- **It does not tag emotions.** The vocabulary lives in `relationship.md`; only the writer
+  can supply the value.
+- **It does not write the diary.** It names an unwritten day and stops there.
+
+The line between the two is **"would the failure be visible?"** — invisible failures go to
+code, visible ones stay with the writer. Reasoning is in
+**[Design notes](docs/design.en.md)**.
 
 ---
 
 ## When nothing appears
 
-A missing file or a renamed heading never throws. The block carries one line
-instead: `Unavailable: <name>: <reason>`.
+A missing file or a renamed heading never throws. **When no section loads at all, the block
+says what it tried:**
 
-If no section loads at all, the injection is skipped entirely and nothing appears
-anywhere — which looks like the plugin is dead. **The record is the answer:**
+```
+Could not load any section. Tried: INDEX.md → 常被提起 (heading_not_found)
+```
+
+`heading_not_found` is exact: `常被提起` does not match `常被提起（手动维护）`. An empty
+folder gets a different sentence — *this is the first day, not a fault*.
+
+**The record is still the answer:**
 
 ```sh
 cat ~/.dsh/ofttold-memory/diagnostics.json
@@ -187,7 +223,7 @@ information.
 | `event` | Meaning |
 |---|---|
 | `injected` | Worked. `loaded` = sections, `chars` = block size. |
-| `nothing-loaded` | Folder found, no configured heading matched — usually a renamed heading. The session also gets a line saying which file and heading were tried. |
+| `nothing-loaded` | Folder found, no configured heading matched — usually a renamed heading. The session gets a line naming each file and heading that was tried. |
 
 An absent file means the plugin never reached a decision, which points at the
 install rather than the content.

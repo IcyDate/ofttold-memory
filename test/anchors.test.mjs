@@ -75,6 +75,17 @@ test("a line with no date of its own gets stamped in the line, not in a sidecar"
   assert.deepEqual(stampUndated(stamped, "2026-10-31").stamped, [], "stamping is idempotent");
 });
 
+test("the skeleton's sample lines are illustrations, not memories", () => {
+  const text = [
+    "- **示例·项目在哪** → `~/work/my-project`｜省得每次问",
+    "- **Example · where the project is** → `~/work/my-project` | saves asking",
+    "- **真的一条** → `relationship.md`",
+  ].join("\n");
+  const { stamped, text: out } = stampUndated(text, "2026-10-30");
+  assert.deepEqual(stamped, ["真的一条"], "only the real line is stamped");
+  assert.match(out, /- \*\*示例·项目在哪\*\* → `~\/work\/my-project`/);
+});
+
 test("a stamped line is scored from its stamp, and ages from there", () => {
   const { text: stamped } = stampUndated("- **甲** → `relationship.md`", "2026-10-01");
   const { anchors } = scoreAnchors({ text: stamped, diaries: {}, nowDay: NOW_DAY });
