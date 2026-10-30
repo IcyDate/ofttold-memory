@@ -471,6 +471,9 @@ window.__ModuleLoader__.load({
 
       // 自绘 tooltip，不用原生的 title：title 在宿主页面里不一定弹得出来（实测 hover 无反应），
       // 而这块地方只有我们自己知道长什么样。CSS 用 .ofttold- 前缀，和宿主的原子类不冲突。
+      // 自绘 tooltip，不用原生的 title：title 在宿主页面里 hover 不弹（实测）。
+      // 位置用 fixed 并在 hover 时按视口夹一次——面板容器不知道哪里设了 overflow，
+      // 绝对定位的提示会被卡片边缘切掉（实测：右边那列的文字被截断）。
       const TIP_CSS = `
         .ofttold-tip { position: relative; display: inline-flex; }
         .ofttold-dot {
@@ -481,15 +484,27 @@ window.__ModuleLoader__.load({
         }
         .ofttold-tip:hover .ofttold-dot, .ofttold-tip:focus-within .ofttold-dot { opacity: 1; }
         .ofttold-body {
-          display: none; position: absolute; left: -6px; top: 20px; z-index: 40;
-          width: max-content; max-width: min(280px, 60vw);
+          display: none; position: fixed; left: 0; top: 0; z-index: 4000;
+          width: 240px; max-width: calc(100vw - 16px);
           padding: 8px 10px; border-radius: 8px;
           background: #2b2b2b; color: #fff; font-size: 12px; line-height: 1.55;
-          font-weight: 400; text-align: left; white-space: normal;
+          font-weight: 400; text-align: left; white-space: normal; overflow-wrap: anywhere;
           box-shadow: 0 8px 22px rgba(0,0,0,0.28);
         }
         .ofttold-tip:hover .ofttold-body, .ofttold-tip:focus-within .ofttold-body { display: block; }
       `;
+
+      // 贴着问号下方展开，再按视口宽度夹一次：靠右的那一列不会再把文字推到屏幕外。
+      const placeTip = (event) => {
+        const wrap = event.currentTarget;
+        const body = wrap?.querySelector?.(".ofttold-body");
+        if (body === null || body === undefined) return;
+        const box = wrap.getBoundingClientRect();
+        const width = Math.min(240, (globalThis.innerWidth ?? 1024) - 16);
+        body.style.width = `${width}px`;
+        body.style.left = `${Math.max(8, Math.min(box.left, (globalThis.innerWidth ?? 1024) - width - 8))}px`;
+        body.style.top = `${box.bottom + 8}px`;
+      };
 
       const helpDot = (id) => {
         const why = t(`${id}Why`);
@@ -497,7 +512,7 @@ window.__ModuleLoader__.load({
         if (typeof why !== "string" || why === "" || why === `${id}Why`) return null;
         return h(
           "span",
-          { className: "ofttold-tip", tabIndex: 0, "aria-label": why },
+          { className: "ofttold-tip", tabIndex: 0, "aria-label": why, onMouseEnter: placeTip, onFocus: placeTip },
           h("span", { className: "ofttold-dot", "aria-hidden": "true" }, "?"),
           h("span", { className: "ofttold-body", role: "tooltip" }, why),
         );

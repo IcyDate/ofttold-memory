@@ -589,3 +589,32 @@ test("the tooltip is drawn, not left to the native title attribute", () => {
   // 样式表必须真的挂进树里，否则那几条 CSS 规则等于没写。
   assert.match(CLIENT_SOURCE, /h\("style", \{\}, TIP_CSS\)/);
 });
+
+test("the tooltip is clamped to the viewport, because the panel clips overflow", () => {
+  // 绝对定位的提示会被卡片边缘切掉（截图：右边那列文字被截断）。所以 hover 时按视口
+  // 夹一次坐标，用 fixed 定位逃出容器的 overflow。
+  assert.match(CLIENT_SOURCE, /position: fixed/);
+  assert.match(CLIENT_SOURCE, /Math\.max\(8, Math\.min\(box\.left/);
+  assert.match(CLIENT_SOURCE, /onMouseEnter: placeTip/);
+  assert.match(CLIENT_SOURCE, /onFocus: placeTip/);
+});
+
+test("placeTip keeps the tooltip inside the window", () => {
+  // 直接执行那段逻辑，确认两种情况都不越界：贴着屏幕右边缘、以及贴着左边缘。
+  const source = CLIENT_SOURCE.slice(CLIENT_SOURCE.indexOf("const placeTip ="), CLIENT_SOURCE.indexOf("const helpDot ="));
+  const placeTip = new Function(`${source}; return placeTip;`)();
+  const make = (left) => {
+    const style = {};
+    const body = { style };
+    const wrap = { getBoundingClientRect: () => ({ left, bottom: 100 }), querySelector: () => body };
+    return { wrap, style };
+  };
+  globalThis.innerWidth = 1000;
+  const right = make(950);
+  placeTip({ currentTarget: right.wrap });
+  assert.equal(right.style.width, "240px");
+  assert.equal(right.style.left, "752px", "1000 - 240 - 8, not 950");
+  const left = make(2);
+  placeTip({ currentTarget: left.wrap });
+  assert.equal(left.style.left, "8px", "never closer than 8px to the edge");
+});
