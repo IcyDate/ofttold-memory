@@ -16,7 +16,7 @@
 | `diaryCadence` | `"daily"` | 多久写一次：`daily` 每天催 / `weekly` 最近 7 天有写过就不催 / `off` 永不提醒。没有 `diary/` 目录时三种都闭嘴。 |
 | `diarySections` | `8` | 一天最多几节，超过体检会点名。 |
 | `diaryCheck` | `true` | 日记体检：节数、缺 `情绪：` 行、摘要缺失或落后。**只报不改**——整理会删掉权重数的证据。 |
-| `header` | `Standing context for this session: human-curated sections of a memory folder. Writing and maintaining it — index, self-description, diary — is the `ofttold-ritual` skill.` | 注入块的第一行。 |
+| `header` | `Standing context for this session: notes you wrote, for the person you work with. Read them as your own memory, not as background documentation. Maintaining the folder — index, self-description, diary — is the `ofttold-ritual` skill.` | 注入块的第一行。 |
 | `refreshIntervalMs` | `0` | 同一会话内两次注入的最小间隔毫秒数。`0` 表示只注入一次。 |
 | `refreshAfterMessages` | `0` | 新增多少条消息后重新注入。`0` 表示从不。见[设计说明](design.md#refreshaftermessages)。 |
 | `workspaceRelative` | `true` | 相对 `memoryDir` 按会话工作目录解析。`false` 按进程目录。 |

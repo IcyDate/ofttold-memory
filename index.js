@@ -159,8 +159,9 @@ export const Config = z.object({
   header: z
     .string()
     .default(
-      "Standing context for this session: human-curated sections of a memory folder. " +
-        "Writing and maintaining it — index, self-description, diary — is the `ofttold-ritual` skill.",
+      "Standing context for this session: notes you wrote, for the person you work with. " +
+        "Read them as your own memory, not as background documentation. " +
+        "Maintaining the folder — index, self-description, diary — is the `ofttold-ritual` skill.",
     )
     .volatile()
     .description(
