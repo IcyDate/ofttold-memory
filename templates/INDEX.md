@@ -10,18 +10,15 @@
 > re-reading, each with one sentence on why. It is a door, not a summary of the
 > diary. Add the line after writing the diary entry.
 
-## 常被提起（手动维护，上限 8 条）
+<!-- 这里不放锚点。
 
-> 上限是算出来的（8 条 ≈ 283 token/轮），不是拍的。满了就挤掉一条——
-> **挤掉这个动作本身就是一次排序**，比「想起就随手加一条」可靠。
-> 这一节是插件的默认注入源，所以它必须写在这个文件里、这个名字下。
->
-> The cap is derived, not arbitrary. Eviction is itself the ranking.
-> This section is what the plugin injects by default, so keep the heading exactly
-> as written above.
+   插件的默认注入源是 MEMORY.md 的「常被提起」和「Oft-told」两节，不是本文件。
+   索引负责「找得到」，锚点负责「一开场就想起来」，两件事分开放。
+   如果确实想把某一节写在 INDEX.md，得在 profile 的 `sections` 里把 `file`
+   指到 INDEX.md——否则写了不会生效，而且不会有任何报错。
 
-- **示例·项目在哪** → `~/work/my-project`｜省得每次问
-- 把这几行换成你自己反复被提起的事，然后删掉这行示例
+   The default injection source is MEMORY.md. A section written here only works
+   if `sections` points `file` at INDEX.md. -->
 
 ## 月份
 

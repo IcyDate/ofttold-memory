@@ -13,9 +13,13 @@
 > 建议上限 8 条。满了按权重沉底（`exp(-t / 2^n)`）——沉底这个动作本身就是一次排序，比「想起就随手加一条」可靠。没写日期的条目，第一次运行时会就地补一个「起算日」。
 > 默认配置同时认 `常被提起` 和 `Oft-told` 两个小节名，用哪个都行，另一个留空会被跳过。
 
-- **示例·项目在哪** → `~/work/my-project`｜省得每次问
-- **示例·别动的东西** → 不要改 `config/prod.yml`
-- 把这几行换成你自己反复被提起的事，然后删掉这两条示例
+<!-- 这一节留空，等你真的有「反复被提起」的事再写。格式一行一条：
+
+- **项目的规矩** → `docs/rules.md`｜省得每次重讲
+- **别动配置** → 不要改 `config/prod.yml`｜上次直接把它改崩了
+
+示例写在这里而不是写在正文里，是因为正文里每一行都会被注入——
+我们编的假锚点不该出现在你的开场上下文里。 -->
 
 ## Oft-told
 
@@ -24,9 +28,13 @@
 > A line with no date gets a "counted from" stamp the first time it is seen.
 > The default config accepts both `Oft-told` and `常被提起`; an empty one is skipped.
 
-- **Example · where the project is** → `~/work/my-project` | saves asking every time
-- **Example · what not to touch** → do not edit `config/prod.yml`
-- Replace these with what keeps coming back for you, then delete the two samples
+<!-- Leave this empty until something genuinely keeps coming back. One line each:
+
+- **Project rules** → `docs/rules.md` | saves re-explaining every time
+- **Do not touch** → never edit `config/prod.yml` | broke it once
+
+The examples live in a comment, not in the body, because every body line is
+injected — our fake anchors should not show up in your opening context. -->
 
 ## 我是谁
 

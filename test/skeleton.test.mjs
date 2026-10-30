@@ -60,10 +60,12 @@ test("the skeleton pre-fills no memory, only empty shells", () => {
   const index = readFileSync(join(dir, "INDEX.md"), "utf8");
   // The emotion cache exists but holds no value: `未填` is a placeholder, not a tag.
   assert.match(relationship, /\*\*现在\*\*：`（未填）`/);
-  // The index has the section the plugin reads, and no dated line yet. The
-  // example format lives inside an HTML comment on purpose, so a real entry is
-  // recognizable as a line that starts with a dated bullet.
-  assert.match(index, /## 常被提起/);
+  // The index carries no anchor section on purpose: the default injection source
+  // is MEMORY.md, and a section here would only work with a `file:` override —
+  // shipping one taught users to write into a place nothing reads.
+  assert.equal(/^## 常被提起/m.test(index), false);
+  // The example format lives inside an HTML comment on purpose, so a real entry
+  // is recognizable as a line that starts with a dated bullet.
   // Comments are stripped first: the format example lives inside one, and a
   // commented-out sample is documentation, not a memory the user has to delete.
   const visible = index.replace(/<!--[\s\S]*?-->/g, "");

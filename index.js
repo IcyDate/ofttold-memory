@@ -430,7 +430,7 @@ function localStamp(now = new Date()) {
     const rendered = renderSources(config, memoryDir);
     // 先给没有自己日期的锚点盖一个「从这天起算」——写进文件而不是藏在 sidecar 里，
     // 因为一个事实有两个家就会漂。
-    stampSourceDates(configValue(config, "sections"), memoryDir, localDay());
+    stampSourceDates(config, memoryDir, localDay());
 
     if (rendered.loaded === 0) {
       // The most common "it does nothing" report: the folder exists, the heading
