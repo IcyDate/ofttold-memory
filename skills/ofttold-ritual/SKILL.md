@@ -184,6 +184,17 @@ The trigger is a count, not a feeling. Before that, leave it flat.
 - **Keep the folder in version control** and push it. A memory folder that exists on one
   machine with one copy is one disk failure from never having existed.
 
+## Three things the folder is easy to get wrong about
+
+- **Do not rank topics.** A day of writing code, of wiring an API, of running a build counts
+  as output exactly like a day of talking does. The measured version of this mistake: 1
+  section across 28 turns of engineering work, 21 sections across 58 turns of conversation.
+  One ruler, or the diary quietly becomes a record of the pleasant days.
+- **If the user asks for an entry, write it.** Asking was never the gate; the request is.
+- **When the user says they are done for the day, add the closing section before replying.**
+  This is the gap that keeps recurring: they said "收工" and the last part of the day went
+  unwritten because the conversation ended inside the work.
+
 ## What not to do
 
 - Do not write a memory entry because something seemed important. The list is
