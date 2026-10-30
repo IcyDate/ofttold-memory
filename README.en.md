@@ -55,9 +55,11 @@ so no build approval is needed. To track the repository instead, use
 four-file skeleton: `MEMORY.md` (the injected source), `INDEX.md` (the diary index),
 `relationship.md` (who the assistant is, plus the live emotion value), and `diary/`
 (one file per day). **All of it is empty shells and comments — not one memory is
-pre-filled**, because what to remember is the one thing nobody can decide for you. Point `memoryDir` at a folder you already use — a diary, an index, a rules
-file — and the plugin only reads: **it never writes into a notes folder that
-already has content.**
+pre-filled**, because what to remember is the one thing nobody can decide for you. Point `memoryDir` at a folder you already use — a diary, an index, a rules file — and it
+**fills in only the files that are missing, never rewriting one that exists**. That
+typically means adding `relationship.md` (where the emotion vocabulary and cache live)
+and `diary/` (which the end-of-block nudge depends on); without them the writing half
+of the scheme is absent.
 
 Then open **Settings → 拾光 / Oft-told** to adjust it with a mouse, or edit the
 profile's `cordis.patch.yml` by hand.

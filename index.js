@@ -323,7 +323,15 @@ export function apply(ctx, config) {
       if (scaffold.error !== undefined) {
         ctx.logger?.warn?.("ofttold-memory: could not prepare memory folder %s (%s)", memoryDir, scaffold.error);
       } else if (scaffold.createdFile) {
-        ctx.logger?.info?.("ofttold-memory: created a starter memory file in %s", memoryDir);
+        // 用户在自己的文件夹里被写入了东西，就该能看见是哪些——「只补缺的」这件事
+        // 只有说清楚才让人放心。
+        ctx.logger?.info?.(
+          "ofttold-memory: filled in %s in %s (existing files untouched)",
+          scaffold.createdFiles.join(", "),
+          memoryDir,
+        );
+      } else if (scaffold.error !== undefined) {
+        ctx.logger?.warn?.("ofttold-memory: could not prepare %s (%s)", memoryDir, scaffold.error);
       }
     }
 

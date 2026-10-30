@@ -70,14 +70,34 @@ test("the skeleton pre-fills no memory, only empty shells", () => {
   assert.equal(/^- \*\*\d{2}-\d{2}\*\*/m.test(visible), false, "no dated entry may be pre-filled");
 });
 
-test("the skeleton does not add anything to a folder that already has notes", () => {
+test("an existing notes folder gains only the files it is missing", () => {
+  // 「已经有笔记就不动」曾经意味着这种文件夹永远长不出 relationship.md 和 diary/，
+  // 于是写的那一半没有家、块尾的提醒也永远不会出现。把 memoryDir 指过来本身就是
+  // 邀请；文件夹里「我已经有笔记」不是让机制缺一半的理由。已有的那个文件不动。
   const dir = mkdtempSync(join(tmpdir(), "ofttold-hasnotes-"));
-  writeFileSync(join(dir, "INDEX.md"), "# 索引\n\n- 真的一条\n", "utf8");
-  const before = readdirSync(dir).sort();
+  const mine = "# 索引\n\n- 真的一条\n";
+  writeFileSync(join(dir, "INDEX.md"), mine, "utf8");
   const result = scaffoldMemory(dir);
-  assert.equal(result.skipped, true);
+  assert.equal(result.skipped, false);
+  assert.deepEqual(result.createdFiles, ["MEMORY.md", "relationship.md", "diary/README.md"]);
+  assert.equal(readFileSync(join(dir, "INDEX.md"), "utf8"), mine, "the file that was already there must be untouched");
+});
+
+test("a folder that already has the whole skeleton reports nothing created", () => {
+  const dir = mkdtempSync(join(tmpdir(), "ofttold-full-"));
+  scaffoldMemory(dir);
+  const result = scaffoldMemory(dir);
   assert.deepEqual(result.createdFiles, []);
-  assert.deepEqual(readdirSync(dir).sort(), before, "an existing notes folder must not gain a single file");
+  assert.equal(result.skipped, true);
+});
+
+test("a file where the folder should be is reported, not written around", () => {
+  const dir = mkdtempSync(join(tmpdir(), "ofttold-notdir-"));
+  const file = join(dir, "memory");
+  writeFileSync(file, "not a folder\n", "utf8");
+  const result = scaffoldMemory(file);
+  assert.equal(result.error, "NOT_A_DIRECTORY");
+  assert.deepEqual(result.createdFiles, []);
 });
 
 test("the skeleton never overwrites a file that already exists", () => {

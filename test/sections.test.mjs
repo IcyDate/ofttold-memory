@@ -276,16 +276,20 @@ test("a heading the user named is still reported when it is missing", () => {
   assert.match(rendered.text, /Unavailable: nope: heading_not_found/);
 });
 
-test("scaffoldMemory leaves an existing notes folder alone", () => {
-  // Pointing at a folder that already holds someone's notes must not drop a
-  // starter file next to their files. The template exists to answer "what do I
-  // write", and a folder with markdown in it has already answered that.
+test("scaffoldMemory fills the gaps in an existing notes folder without touching it", () => {
+  // Pointing memoryDir at a folder of notes is the documented way in. It must not
+  // be a half-install: the writing side needs relationship.md and diary/ to exist,
+  // or the emotion cache and the daily nudge have nowhere to live. What stays true
+  // is that the user's own INDEX.md is never rewritten.
   const dir = mkdtempSync(join(tmpdir(), "ofttold-notes-"));
-  writeFileSync(join(dir, "INDEX.md"), "# 索引\n\n## 常被提起\n\n- 真的一条\n", "utf8");
+  const mine = "# 索引\n\n## 常被提起\n\n- 真的一条\n";
+  writeFileSync(join(dir, "INDEX.md"), mine, "utf8");
   const result = scaffoldMemory(dir);
-  assert.equal(result.skipped, true);
-  assert.equal(result.createdFile, false);
-  assert.equal(existsSync(join(dir, "MEMORY.md")), false, "must not add a file to a notes folder");
+  assert.equal(result.skipped, false);
+  assert.ok(result.createdFiles.includes("MEMORY.md"));
+  assert.ok(result.createdFiles.includes("relationship.md"));
+  assert.equal(existsSync(join(dir, "diary", "README.md")), true);
+  assert.equal(readFileSync(join(dir, "INDEX.md"), "utf8"), mine);
 });
 
 test("scaffoldMemory still writes into a genuinely empty folder", () => {

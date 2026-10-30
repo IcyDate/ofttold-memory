@@ -8,7 +8,7 @@
 
 | 字段 | 默认值 | 作用 |
 |---|---|---|
-| `memoryDir` | `~/.dsh/ofttold-memory` | 放 markdown 的文件夹。第一次运行自动创建，并铺一份四文件的骨架（`MEMORY.md` / `INDEX.md` / `relationship.md` / `diary/`）。已有笔记的文件夹一个字都不加。 |
+| `memoryDir` | `~/.dsh/ofttold-memory` | 放 markdown 的文件夹。第一次运行自动创建，并铺一份四文件的骨架（`MEMORY.md` / `INDEX.md` / `relationship.md` / `diary/`）。**只补缺的，已有的文件一个字都不动**——指向一个已有笔记的文件夹时，缺的那几个会被补上。 |
 | `sections` | `["Oft-told", "常被提起"]` | 取哪几节。字符串或对象（见下）。 |
 | `maxChars` | `600` | 每节字符上限。600 字符约 400 token。 |
 | `header` | `Standing context for this session: human-curated sections of a memory folder. Writing and maintaining it — index, self-description, diary — is the `ofttold-ritual` skill.` | 注入块的第一行。 |
