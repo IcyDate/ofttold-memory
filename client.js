@@ -4,7 +4,7 @@ window.__ModuleLoader__.load({
     const React = require("react");
     const h = React.createElement;
     const primitives = require("@deepseek-ai/dsh-client-ui-primitives");
-    const { SettingsForm, SettingsValueField, settingsTextField, settingsNumberField, SettingsFormModel } = primitives;
+    const { SettingsForm, settingsTextField, settingsNumberField, SettingsFormModel } = primitives;
 
     /** Dictionary namespace owned by this plugin. */
     const NS = "ofttold-memory";
@@ -471,7 +471,8 @@ window.__ModuleLoader__.load({
 
       const helpDot = (id) => {
         const why = t(`${id}Why`);
-        if (why === `${id}Why`) return null; // 没写说明就不画问号
+        // 没写说明就不画问号：locale 在缺键时会把键名还回来，不是返回 undefined。
+        if (typeof why !== "string" || why === "" || why === `${id}Why`) return null;
         return h(
           "span",
           {

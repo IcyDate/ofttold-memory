@@ -564,3 +564,17 @@ test("the version in the footer matches package.json", () => {
   assert.ok(found !== null, "client.js must declare VERSION");
   assert.equal(found[1], pkg.version, "bump both, or the footer lies");
 });
+
+test("related settings sit in a titled card, not as a bare list of rows", () => {
+  // 一节里十来个设置平铺，用户得滑很久才知道这页在配什么；分成卡片、每张有标题之后
+  // 一眼能看到「你的笔记」和「日记」两块。这条只守结构，不测样式。
+  for (const key of ["cardNotes", "cardDiary"]) {
+    assert.match(CLIENT_SOURCE, new RegExp(`card\\("${key}"`), `${key} must be a titled card`);
+  }
+  assert.match(CLIENT_SOURCE, /h\("h4"/);
+});
+
+test("a '?' only appears when there is something to explain", () => {
+  // locale 在缺键时会把键名还回来。不做这个判断，每个设置旁边都会挂一个空问号。
+  assert.match(CLIENT_SOURCE, /why === `\$\{id\}Why`\) return null/);
+});
