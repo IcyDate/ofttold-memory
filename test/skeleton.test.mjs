@@ -213,21 +213,14 @@ test("the injected block says what it is and where the writing protocol lives", 
   }
 });
 
-test("the sizes in the skill docs match the files they describe", () => {
-  // 这两个数字已经过期过三次（4625 → 5584 → 6475 → 7257），每次都是人肉发现。
-  // 它们描述的是仓库里真实存在的文件，那就可以让测试来盯——过期应该是一次红灯，
-  // 而不是一次「谁想起来去查一下」。
+test("the shipped skills are the only place their sizes live", () => {
+  // 这两个数字曾经散在 docs/skill.md 里，过期过三次（4625 → 5584 → 6475 → 7257），
+  // 后来靠一条测试盯着。现在那份文档挪进 drafts/ 不进仓库了，数字只住在 SKILL.md
+  // 自己身上——没有副本就没有过期。这条测试守的是「别再长出副本」。
   const { skills } = loadSkills();
-  const byName = new Map(skills.map((skill) => [skill.name, skill]));
-  for (const doc of ["docs/skill.md", "docs/skill.en.md"]) {
-    const source = readFileSync(join(PACKAGE_ROOT, doc), "utf8");
-    const rows = [...source.matchAll(/\|\s*`skills\/[^`]+`\s*\|\s*`([a-z0-9-]+)`\s*\|\s*(\d+)\s*(?:字符|chars)\s*\|\s*(\d+)\s*(?:字符|chars)\s*\|/g)];
-    assert.equal(rows.length, 2, `${doc} should describe both skills`);
-    for (const row of rows) {
-      const skill = byName.get(row[1]);
-      assert.ok(skill !== undefined, `${doc} names a skill that does not ship: ${row[1]}`);
-      assert.equal(Number(row[2]), skill.description.length, `${doc}: ${row[1]} description length is stale`);
-      assert.equal(Number(row[3]), skill.content.length, `${doc}: ${row[1]} body length is stale`);
-    }
+  assert.equal(skills.length, 2);
+  for (const skill of skills) {
+    assert.ok(skill.description.length <= 500, `${skill.name}: description over the catalog limit`);
+    assert.ok(skill.content.length > 200, `${skill.name}: body too short to teach anything`);
   }
 });

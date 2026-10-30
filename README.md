@@ -157,7 +157,7 @@ cat ~/.dsh/ofttold-memory/diagnostics.json
 
 ## 其他 harness
 
-**规划中。** 插件本身绑死 DSH——注册 Cordis 插件、往会话里开一条消息，这套机制出了这个 harness 就不存在。同样的内容打算做成 skill 分发，让任何读 skill 的 harness 都能用；草稿在 [`docs/skill.md`](docs/skill.md)，还没在第二个 harness 上真的跑过，所以这里不写用法。
+**规划中。** 插件绑死 DSH；同样的办法打算做成 skill 分发，让别的 harness 也能读。还没在第二个 harness 上跑通过，所以这里不写用法。
 
 ---
 

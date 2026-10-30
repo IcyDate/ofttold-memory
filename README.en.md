@@ -196,11 +196,8 @@ install rather than the content.
 
 ## Other harnesses
 
-**Planned.** The plugin is tied to DSH: it registers a Cordis plugin and puts a message
-into the session, a mechanism that does not exist outside this harness. The same content
-is meant to ship as a skill, so any harness that reads skills can use it. The draft is in
-[`docs/skill.en.md`](docs/skill.en.md); it has not run on a second harness yet, so no
-usage is documented here.
+**Planned.** The plugin is tied to DSH; the same idea is meant to ship as a skill that any
+harness can read. It has not run on a second harness yet, so no usage is documented here.
 
 ---
 
