@@ -469,31 +469,37 @@ window.__ModuleLoader__.load({
       const HINT = { margin: "6px 0 0", opacity: 0.65, fontSize: "0.86em", lineHeight: 1.45 };
       const CELL = { padding: "10px 0 0" };
 
+      // 自绘 tooltip，不用原生的 title：title 在宿主页面里不一定弹得出来（实测 hover 无反应），
+      // 而这块地方只有我们自己知道长什么样。CSS 用 .ofttold- 前缀，和宿主的原子类不冲突。
+      const TIP_CSS = `
+        .ofttold-tip { position: relative; display: inline-flex; }
+        .ofttold-dot {
+          margin-left: 6px; opacity: 0.55; cursor: help;
+          border: 1px solid currentColor; border-radius: 50%;
+          display: inline-block; width: 13px; height: 13px;
+          line-height: 12px; text-align: center; font-size: 10px; vertical-align: middle;
+        }
+        .ofttold-tip:hover .ofttold-dot, .ofttold-tip:focus-within .ofttold-dot { opacity: 1; }
+        .ofttold-body {
+          display: none; position: absolute; left: -6px; top: 20px; z-index: 40;
+          width: max-content; max-width: min(280px, 60vw);
+          padding: 8px 10px; border-radius: 8px;
+          background: #2b2b2b; color: #fff; font-size: 12px; line-height: 1.55;
+          font-weight: 400; text-align: left; white-space: normal;
+          box-shadow: 0 8px 22px rgba(0,0,0,0.28);
+        }
+        .ofttold-tip:hover .ofttold-body, .ofttold-tip:focus-within .ofttold-body { display: block; }
+      `;
+
       const helpDot = (id) => {
         const why = t(`${id}Why`);
         // 没写说明就不画问号：locale 在缺键时会把键名还回来，不是返回 undefined。
         if (typeof why !== "string" || why === "" || why === `${id}Why`) return null;
         return h(
           "span",
-          {
-            title: why,
-            "aria-label": why,
-            style: {
-              marginLeft: "6px",
-              opacity: 0.55,
-              cursor: "help",
-              border: "1px solid currentColor",
-              borderRadius: "50%",
-              display: "inline-block",
-              width: "13px",
-              height: "13px",
-              lineHeight: "12px",
-              textAlign: "center",
-              fontSize: "10px",
-              verticalAlign: "middle",
-            },
-          },
-          "?",
+          { className: "ofttold-tip", tabIndex: 0, "aria-label": why },
+          h("span", { className: "ofttold-dot", "aria-hidden": "true" }, "?"),
+          h("span", { className: "ofttold-body", role: "tooltip" }, why),
         );
       };
 
@@ -624,6 +630,7 @@ window.__ModuleLoader__.load({
           onSave: props.save,
           onDiscard: props.discard,
         },
+        h("style", {}, TIP_CSS),
         card("cardNotes", [
           wide(field("memoryDir")),
           wide(field("sections")),

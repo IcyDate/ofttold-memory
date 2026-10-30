@@ -578,3 +578,14 @@ test("a '?' only appears when there is something to explain", () => {
   // locale 在缺键时会把键名还回来。不做这个判断，每个设置旁边都会挂一个空问号。
   assert.match(CLIENT_SOURCE, /why === `\$\{id\}Why`\) return null/);
 });
+
+test("the tooltip is drawn, not left to the native title attribute", () => {
+  // 原生 title 在宿主页面里 hover 不出提示（实测），而且样式跟着系统走、和面板不是一个语气。
+  // 所以自己画：默认 display:none，hover 或键盘聚焦时才出现。
+  assert.match(CLIENT_SOURCE, /\.ofttold-body \{[^}]*display: none/s);
+  assert.match(CLIENT_SOURCE, /\.ofttold-tip:hover \.ofttold-body[^}]*display: block/s);
+  assert.match(CLIENT_SOURCE, /\.ofttold-tip:focus-within \.ofttold-body[^}]*display: block/s);
+  assert.equal(CLIENT_SOURCE.includes("title: why"), false, "native tooltips were replaced on purpose");
+  // 样式表必须真的挂进树里，否则那几条 CSS 规则等于没写。
+  assert.match(CLIENT_SOURCE, /h\("style", \{\}, TIP_CSS\)/);
+});
