@@ -43,6 +43,13 @@ test("a body that runs past the summary is stale, and the gap is named", () => {
   assert.equal(state.staleBy, 21 * 60 + 10 - (17 * 60 + 40));
 });
 
+test("the lesson list under the summary needs no tag either", () => {
+  const text = "## 今天\n\n摘要\n\n## 今天长了什么\n\n1. 一条\n\n## 09:00 a\n\n情绪：松\n";
+  const state = checkEntry({ text });
+  assert.equal(state.sections, 1, "only the real section counts");
+  assert.equal(state.untagged, 0);
+});
+
 test("a section without an emotion line is counted", () => {
   const text = "## 09:00 开头\n\n没有标签\n\n## 10:00 另一节\n\n情绪：松\n";
   assert.equal(checkEntry({ text }).untagged, 1);
