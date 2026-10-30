@@ -31,16 +31,23 @@ exist, say so and stop — **do not create a memory folder uninvited.**
 The skeleton writes its own rules into the files, so read them there instead of treating
 this skill as the whole story:
 
-- `relationship.md` → its `情绪词表` section holds the **closed vocabulary**. That list is
-  the authority; this skill only says the set stays closed and shared.
+- `relationship.md` → its `情绪词表` section holds the **closed vocabulary**, one line per
+  word saying *when* it applies. That section is the single authority: never keep a second
+  copy in a script or in the agent's instructions, because two copies drift and a word that
+  drifts stops matching anything.
 - `MEMORY.md` → under whichever anchor heading is in use (`常被提起` or `Oft-told`): the cap
   is 8 lines, and eviction is itself the ranking.
 - `INDEX.md` → its header: one line per day, at most three sections worth re-reading.
 - `diary/README.md` → the file naming, and how long a day's worth of sections runs.
 
 A folder that already held notes before the plugin was installed may carry none of these
-headings. Then the defaults above are the convention — and **say which convention you are
-assuming before you start**, because a convention the user never chose is worse than none.
+headings — the skeleton only writes into an empty folder, so a pre-existing folder never got
+one. Then the defaults above are the convention, and **say which convention you are assuming
+before you start**, because a convention the user never chose is worse than none.
+
+**If the vocabulary section is missing, say so and offer to add it before tagging anything.**
+Pointing at a heading nobody has is worse than no pointer: the reader learns the list exists
+and cannot find it, and the subset check silently stops being a check.
 
 ## The four rituals
 
@@ -85,10 +92,15 @@ Tag it **at the time of writing**, never by grepping the text afterwards — by 
 moment it is written, the feeling has usually been translated into a judgement and the
 word is gone.
 
-The vocabulary may be **added to, never removed from or renamed**: removing orphans
-every historical tag that used the word. Add a word at the moment you get stuck
-choosing one, not in a separate vocabulary-editing session. Keep it under about 24
-entries — past that the distinctions are no longer worth a name.
+A word is **never renamed** — renaming orphans every historical tag that used it. Adding
+is free: add one at the moment you get stuck choosing, not in a separate
+vocabulary-editing session, and give it a line saying when it applies.
+
+Deleting is allowed under one condition, and it is worth stating precisely because the
+loose version is wrong: **only a word that nothing has ever used.** An unused word has no
+orphans to create; a used one does. Unused is not by itself a reason to delete — the test is
+whether any situation exists where another word is more accurate. Keep it under about 24
+entries; past that the distinctions are no longer worth a name.
 
 After writing a section, copy its `情绪：` word into the `**现在**` line of
 `relationship.md`. That is the same act of attention, not a second task.

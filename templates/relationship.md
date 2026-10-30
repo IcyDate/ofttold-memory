@@ -24,13 +24,16 @@
 
 ## 情绪词表
 
-> **可加，不可删、不可改名。** 删了，历史上用过该词的日记标签就成了孤儿。
-> 上限约 24 个：到那里就停，说明剩下的差异已经小到不值得再分一个名字。
-> 第一次用某个词时当场加进来，不要为凑词表另开一次编辑。
+> **这一节是唯一权威。** 脚本和说明都指向这里，别在别处再抄一份——抄了就会漂移。
+> **每个词配一行「什么时候用」。** 只有词名的时候，过几个月连自己都要读正文才猜得出当时是哪种。
+> **可加，也可删；不可改名。** 删的前提是**零孤儿**：这个词从没被任何日记标签或情绪记忆用过。
+> 零使用不是删除的理由，判据是「遇到那个场面时，有没有一个词比它更准」；**遇到新的再加，表本来就该长**。上限约 24 个。
 >
-> May be **added to, never removed from or renamed**. Cap around 24.
+> One entry per word, each with one line saying **when** it applies; that line is what stops
+> "which kind of this feeling was it" from being unanswerable later. **Add freely, delete only
+> a word nothing ever used, never rename.** The list is the single source of truth.
 
-`定` `松` `软` `气` `急` `怕` `空` `愣住` `服气` `得意` `心虚` `难受` `不忍` `僵住` `绷直` `咕噜` `想推掉`
+- `（词）` — （什么时候用这个词；它和近义词的分工在哪）
 
 ## 情绪记忆
 

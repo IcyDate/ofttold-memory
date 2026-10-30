@@ -71,7 +71,7 @@ Skill 是唯一的可移植形态。任何读 `SKILL.md` 的 harness 都能用�
 | 文件 | `name` | description | 正文 |
 | --- | --- | --- | --- |
 | `skills/ofttold-memory/SKILL.md` | `ofttold-memory` | 240 字符 | 3300 字符 |
-| `skills/ofttold-ritual/SKILL.md` | `ofttold-ritual` | 196 字符 | 6475 字符 |
+| `skills/ofttold-ritual/SKILL.md` | `ofttold-ritual` | 196 字符 | 7312 字符 |
 
 两条硬约束都满足：
 

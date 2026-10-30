@@ -14,7 +14,10 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const PACKAGE_ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 
 import { scaffoldMemory } from "../lib/scaffold.js";
 import { renderSources } from "../lib/sources.js";
@@ -187,5 +190,24 @@ test("the injected block says what it is and where the writing protocol lives", 
     assert.match(firstLine, /ofttold-ritual/, "the block must name the skill that maintains it");
   } finally {
     rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("the sizes in the skill docs match the files they describe", () => {
+  // 这两个数字已经过期过三次（4625 → 5584 → 6475 → 7257），每次都是人肉发现。
+  // 它们描述的是仓库里真实存在的文件，那就可以让测试来盯——过期应该是一次红灯，
+  // 而不是一次「谁想起来去查一下」。
+  const { skills } = loadSkills();
+  const byName = new Map(skills.map((skill) => [skill.name, skill]));
+  for (const doc of ["docs/skill.md", "docs/skill.en.md"]) {
+    const source = readFileSync(join(PACKAGE_ROOT, doc), "utf8");
+    const rows = [...source.matchAll(/\|\s*`skills\/[^`]+`\s*\|\s*`([a-z0-9-]+)`\s*\|\s*(\d+)\s*(?:字符|chars)\s*\|\s*(\d+)\s*(?:字符|chars)\s*\|/g)];
+    assert.equal(rows.length, 2, `${doc} should describe both skills`);
+    for (const row of rows) {
+      const skill = byName.get(row[1]);
+      assert.ok(skill !== undefined, `${doc} names a skill that does not ship: ${row[1]}`);
+      assert.equal(Number(row[2]), skill.description.length, `${doc}: ${row[1]} description length is stale`);
+      assert.equal(Number(row[3]), skill.content.length, `${doc}: ${row[1]} body length is stale`);
+    }
   }
 });
