@@ -239,6 +239,8 @@ as the rule is longer than the injected block.
 - when the list is full, computes which line sinks: `exp(-t / 2^n)`
 - stamps a start date on anchors that have no date of their own
 - fills in missing files, names an unwritten day, says what it tried when nothing loads
+- checks today's entry: sections past the cap, sections with no `情绪：` line, a tag outside
+  the vocabulary, a summary the body has run past
 
 **It does not** do the half that needs judgement:
 
@@ -282,6 +284,7 @@ information.
 |---|---|
 | `injected` | Worked. `loaded` = sections, `chars` = block size. |
 | `nothing-loaded` | Folder found, no configured heading matched — usually a renamed heading. The session gets a line naming each file and heading that was tried. |
+| `tail` | The block-tail line: `nudged` means today's entry was missing, `checked` means the diary check spoke, and `issue` is what it said. |
 
 An absent file means the plugin never reached a decision, which points at the
 install rather than the content.

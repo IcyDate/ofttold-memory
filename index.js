@@ -464,6 +464,17 @@ function localStamp(now = new Date()) {
       enabled: configValue(config, "diaryCheck") !== false,
     });
     const tail = [nudge, issue].filter((part) => part !== undefined).join("\n\n");
+    if (tail !== "") {
+      // 块尾那句也是「注入出去的东西」，README 里写的是「每一次注入决策都在里面」——
+      // 它要算决策的一部分，否则那句话生效与否在诊断文件里查不到。
+      diagnostics.record("tail", {
+        memoryDir,
+        nudged: nudge !== undefined,
+        checked: issue !== undefined,
+        issue: issue === undefined ? undefined : issue.slice(0, 200),
+      });
+      diagnostics.flush(storageDirectory());
+    }
     const text = tail === "" ? rendered.text : `${rendered.text}\n\n${tail}`;
 
     return {
