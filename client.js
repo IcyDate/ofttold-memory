@@ -36,7 +36,7 @@ window.__ModuleLoader__.load({
       workspaceRelative: "Count relative paths from this session's folder",
       workspaceRelativeHint: "On, paths are resolved against the folder this session runs in. Off, against the folder the process started in. Usually leave it on.",
       anchorCap: "Keep how many lines in view",
-      anchorCapHint: "Past this, the extra lines sink by weight — kept in the file, no longer injected. 0 turns it off.",
+      anchorCapHint: "0 turns it off.",
       diaryCadence: "Expected to grow how often",
       diaryCadenceHint: "daily / weekly / off. Weekly stays quiet while anything was written in the last 7 days. No diary folder means silence either way.",
       summaryFrom: "Expect the day's summary from",
@@ -44,14 +44,19 @@ window.__ModuleLoader__.load({
       diarySections: "Sections a single day may hold",
       diarySectionsHint: "Past this the entry stops being a record and becomes a transcript. Three to five is the normal range.",
       diaryCheck: "Check today's entry",
-      diaryCheckHint: "Names sections over the cap, sections with no emotion line, a tag outside the vocabulary, and a stale summary. Reports only, never rewrites.",
+      diaryCheckHint: "Names what is wrong with today's entry.",
+      cardNotes: "Your notes",
+      cardDiary: "The diary",
       cadenceDaily: "Daily",
+      diaryCheckWhy: "Because a missing emotion line or a tag outside the vocabulary makes that day unreachable later — and nothing about it looks wrong at the time. The check reports these; it never edits your entry.",
+      anchorCapWhy: "Any more than about eight standing facts stops being a reminder and becomes a second document. Past the cap the oldest and least-recalled lines stop being injected but stay in the file.",
+      skillsWhy: "Two how-to documents: how to write a diary entry, and how to edit the who-I-am file. They load on demand rather than every session.",
       cadenceWeekly: "Weekly",
       cadenceOff: "Off",
       advanced: "More settings",
       advancedHint: "Refresh behaviour, path resolution, and the writing guides. Defaults are fine for most setups.",
       skills: "Ship the two writing guides",
-      skillsHint: "Every assistant keeps a list of how-to guides it can open when it needs one. These two are how to write a diary entry, and how to edit who-I-am. Off just removes them from that list; your notes keep working.",
+      skillsHint: "关掉不影响笔记，只是模型手边少两份说明书。".replace("关掉不影响笔记，只是模型手边少两份说明书。", "Two how-to documents the model can open when writing. Off leaves your notes working."),
       starLead: "Finding it useful?",
       starLink: "Star it on GitHub",
       feedbackLink: "Feedback or an issue",
@@ -88,7 +93,7 @@ window.__ModuleLoader__.load({
       workspaceRelative: "相对路径从这次会话的目录算",
       workspaceRelativeHint: "开着按这次会话的目录算，关掉按程序启动时的目录算。一般保持开着。",
       anchorCap: "一节里最多摆几条",
-      anchorCapHint: "超出的按权重沉底——留在文件里，不再注入。填 0 关掉。",
+      anchorCapHint: "填 0 关掉。",
       diaryCadence: "多久写一次",
       diaryCadenceHint: "daily 每天催 / weekly 最近 7 天有写过就不催 / off 永不提醒。没有 diary 目录时三种都闭嘴。",
       summaryFrom: "从几点开始要求当天摘要",
@@ -96,14 +101,19 @@ window.__ModuleLoader__.load({
       diarySections: "一天最多几节",
       diarySectionsHint: "超过就不像记录了，像流水账。三五节是正常量。",
       diaryCheck: "检查今天那篇日记",
-      diaryCheckHint: "点名超节数、缺情绪行、标签不在词表、摘要落后。只报告，绝不改写。",
+      diaryCheckHint: "把今天那篇的问题说出来。",
+      cardNotes: "你的笔记",
+      cardDiary: "日记",
       cadenceDaily: "每天",
+      diaryCheckWhy: "因为缺一行情绪、或者标签不在词表里，那天的记忆以后就找不回来了——而当时看着完全正常。这里只把问题说出来，不会改你写的东西。",
+      anchorCapWhy: "超过八条左右，「常被提起」就不再是提醒，而是第二份文档了。超出的会按权重沉底：不再注入，但留在文件里。",
+      skillsWhy: "两份「怎么做」的说明：日记怎么写、我是谁那份文件怎么改。需要时才打开，不是每次都带上。",
       cadenceWeekly: "每周",
       cadenceOff: "关掉",
       advanced: "更多设置",
       advancedHint: "重新注入的时机、路径从哪算、以及那两份写作说明。默认值大多数情况都够用。",
       skills: "附带那两份写作说明",
-      skillsHint: "模型手边有一排「怎么做」的说明书，需要时才打开。这两份讲的是「日记怎么写」和「我是谁那份文件怎么改」。关掉只是从说明书里拿掉，笔记照常工作。",
+      skillsHint: "两份「怎么做」的说明书，写的时候才打开。关掉不影响笔记。",
       starLead: "觉得好用？",
       starLink: "去 GitHub 点个 Star",
       feedbackLink: "反馈建议 / 提 issue",
@@ -413,36 +423,6 @@ window.__ModuleLoader__.load({
       // 勾选框而不是输入框：这个值只有开/关两种，让用户手打 true/false 是在暴露
       // 内部表示。宿主自带的表单只认文本和数字，所以这里用原生 input 自己画——
       // 与上面那个自带 DOM 的排查面板同一个理由：不依赖更高级的组件存在。
-      // 勾选框而不是输入框：这些值只有开/关两种，让用户手打 true/false 是在暴露
-      // 内部表示。宿主自带的表单只认文本和数字，所以这里用原生 input 自己画——
-      // 与上面那个自带 DOM 的排查面板同一个理由：不依赖更高级的组件存在。
-      const booleanRow = (id, gap = "16px") =>
-        h(
-          "div",
-          { style: { marginTop: gap } },
-          h(
-            "label",
-            {
-              style: {
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                cursor: disabled ? "default" : "pointer",
-              },
-            },
-            h("input", {
-              type: "checkbox",
-              checked: String(state[id]?.text ?? "").trim().toLowerCase() === "true",
-              disabled,
-              onChange: (event) => props.edit(id, event.target.checked ? "true" : "false"),
-            }),
-            h("span", {}, t(id)),
-          ),
-          h("p", { style: { margin: "4px 0 0 24px", opacity: 0.7, fontSize: "0.9em" } }, t(`${id}Hint`)),
-        );
-
-      const booleanRows = [booleanRow("diaryCheck"), booleanRow("skills"), booleanRow("workspaceRelative")];
-
       // 页脚：版本 + Star + 反馈入口。装完插件的人通常只会打开这个面板，
       // 这是他们唯一能看到「这东西去哪儿提意见」的地方。
       const footer = h(
@@ -465,55 +445,169 @@ window.__ModuleLoader__.load({
         h("a", { href: `${REPO}/issues`, target: "_blank", rel: "noreferrer noopener" }, t("feedbackLink")),
       );
 
-      const field = (id, label, hint, extra) =>
-        h(SettingsValueField, {
-          id: `ofttold-${id}`,
-          label: t(label),
-          hint: t(id === "sections" && state.sectionsComplex ? "sectionsComplexHint" : hint),
-          overriddenLabel: t("overridden"),
-          resetLabel: t("reset"),
-          invalidLabel: t("invalidNumber"),
-          disabled: id === "sections" ? sectionsDisabled : disabled,
-          ...state[id],
-          onEdit: (text) => props.edit(id, text),
-          onReset: () => props.resetField(id),
-          ...extra,
-        });
-      // 两列网格：每个设置占一整行时，十来个设置要滑很久才看得完。短的字段并排，
-      // 长的（路径、小节名）横跨两列。
-      const grid = (children) =>
-        h(
-          "div",
+      // ---- 一组控件自己画 -------------------------------------------------------
+      // 不再用宿主的 SettingsValueField：它每一块自带下边框，并排两列时那几道线会变成
+      // 断开的横线（截图里那两条）。自己画还有一个好处——「同类放一张卡片、卡片有标题」
+      // 和「? 小提示」都能做到，不用猜宿主的原子类名。
+      const CARD = {
+        border: "1px solid rgba(127,127,127,0.25)",
+        borderRadius: "10px",
+        padding: "4px 16px 14px",
+        marginTop: "12px",
+      };
+      const CARD_TITLE = { margin: "12px 0 0", fontSize: "0.95em", fontWeight: 600, opacity: 0.85 };
+      const INPUT = {
+        width: "100%",
+        boxSizing: "border-box",
+        padding: "7px 10px",
+        borderRadius: "6px",
+        border: "1px solid rgba(127,127,127,0.4)",
+        background: "transparent",
+        color: "inherit",
+        font: "inherit",
+      };
+      const HINT = { margin: "6px 0 0", opacity: 0.65, fontSize: "0.86em", lineHeight: 1.45 };
+      const CELL = { padding: "10px 0 0" };
+
+      const helpDot = (id) => {
+        const why = t(`${id}Why`);
+        if (why === `${id}Why`) return null; // 没写说明就不画问号
+        return h(
+          "span",
           {
+            title: why,
+            "aria-label": why,
             style: {
-              display: "grid",
-              gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-              gap: "0 16px",
-              alignItems: "start",
+              marginLeft: "6px",
+              opacity: 0.55,
+              cursor: "help",
+              border: "1px solid currentColor",
+              borderRadius: "50%",
+              display: "inline-block",
+              width: "13px",
+              height: "13px",
+              lineHeight: "12px",
+              textAlign: "center",
+              fontSize: "10px",
+              verticalAlign: "middle",
             },
           },
+          "?",
+        );
+      };
+
+      const labelRow = (id, reset) =>
+        h(
+          "div",
+          { style: { display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "8px" } },
+          h(
+            "label",
+            { htmlFor: `ofttold-${id}`, style: { fontSize: "0.92em", opacity: 0.9 } },
+            t(id),
+            helpDot(id),
+          ),
+          reset,
+        );
+
+      // 覆盖过才出现的两个小动作，和宿主原来的行为一致。
+      const resetFor = (id) =>
+        state[id]?.overridden === true
+          ? h(
+              "button",
+              {
+                type: "button",
+                disabled,
+                onClick: () => props.resetField(id),
+                style: {
+                  border: 0,
+                  background: "transparent",
+                  color: "inherit",
+                  opacity: 0.6,
+                  fontSize: "0.82em",
+                  cursor: disabled ? "default" : "pointer",
+                  padding: 0,
+                },
+              },
+              t("reset"),
+            )
+          : null;
+
+      const control = (id, { numeric = false } = {}) =>
+        h("input", {
+          id: `ofttold-${id}`,
+          type: "text",
+          inputMode: numeric ? "numeric" : undefined,
+          value: state[id]?.text ?? "",
+          disabled,
+          onChange: (event) => props.edit(id, event.target.value),
+          style: INPUT,
+        });
+
+      const field = (id, opts = {}) =>
+        h(
+          "div",
+          { style: CELL },
+          labelRow(id, resetFor(id)),
+          control(id, opts),
+          h("p", { style: HINT }, t(`${id}Hint`)),
+        );
+
+      const selectRow = (id, options) =>
+        h(
+          "div",
+          { style: CELL },
+          labelRow(id, resetFor(id)),
+          h(
+            "select",
+            {
+              id: `ofttold-${id}`,
+              disabled,
+              value: String(state[id]?.text ?? "").trim() === "" ? options[0][0] : String(state[id].text).trim(),
+              onChange: (event) => props.edit(id, event.target.value),
+              style: INPUT,
+            },
+            ...options.map(([value, labelKey]) => h("option", { value }, t(labelKey))),
+          ),
+          h("p", { style: HINT }, t(`${id}Hint`)),
+        );
+
+      const booleanRow = (id) =>
+        h(
+          "div",
+          { style: CELL },
+          h(
+            "label",
+            {
+              style: {
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                cursor: disabled ? "default" : "pointer",
+                fontSize: "0.92em",
+              },
+            },
+            h("input", {
+              id: `ofttold-${id}`,
+              type: "checkbox",
+              checked: String(state[id]?.text ?? "").trim().toLowerCase() === "true",
+              disabled,
+              onChange: (event) => props.edit(id, event.target.checked ? "true" : "false"),
+            }),
+            h("span", {}, t(id), helpDot(id)),
+          ),
+          h("p", { style: { ...HINT, marginLeft: "22px" } }, t(`${id}Hint`)),
+        );
+
+      const COLUMNS = (children) =>
+        h(
+          "div",
+          { style: { display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "0 18px" } },
           ...children,
         );
       const wide = (node) => h("div", { style: { gridColumn: "1 / -1" } }, node);
 
-      // 固定选项用下拉，不让人手打 daily/weekly/off——打字会拼错，拼错就是静默失效。
-      const selectRow = (id, options) =>
-        h(
-          "div",
-          { style: { padding: "12px 0" } },
-          h("label", { style: { display: "block", marginBottom: "6px" } }, t(id)),
-          h(
-            "select",
-            {
-              disabled,
-              value: String(state[id]?.text ?? "").trim() === "" ? options[0][0] : String(state[id].text).trim(),
-              onChange: (event) => props.edit(id, event.target.value),
-              style: { width: "100%", padding: "6px 8px", borderRadius: "6px", border: "1px solid rgba(127,127,127,0.4)" },
-            },
-            ...options.map(([value, labelKey]) => h("option", { value }, t(labelKey))),
-          ),
-          h("p", { style: { margin: "4px 0 0", opacity: 0.7, fontSize: "0.9em" } }, t(`${id}Hint`)),
-        );
+      const card = (titleKey, children) =>
+        h("section", { style: CARD }, h("h4", { style: CARD_TITLE }, t(titleKey)), ...children);
 
       return h(
         SettingsForm,
@@ -529,31 +623,34 @@ window.__ModuleLoader__.load({
           onSave: props.save,
           onDiscard: props.discard,
         },
-        wide(field("memoryDir", "memoryDir", "memoryDirHint")),
-        wide(field("sections", "sections", "sectionsHint")),
-        grid([
-          field("maxChars", "maxChars", "maxCharsHint", { numeric: true }),
-          field("anchorCap", "anchorCap", "anchorCapHint", { numeric: true }),
-          selectRow("diaryCadence", [
-            ["daily", "cadenceDaily"],
-            ["weekly", "cadenceWeekly"],
-            ["off", "cadenceOff"],
+        card("cardNotes", [
+          wide(field("memoryDir")),
+          wide(field("sections")),
+          COLUMNS([field("maxChars", { numeric: true }), field("anchorCap", { numeric: true })]),
+        ]),
+        card("cardDiary", [
+          COLUMNS([
+            selectRow("diaryCadence", [
+              ["daily", "cadenceDaily"],
+              ["weekly", "cadenceWeekly"],
+              ["off", "cadenceOff"],
+            ]),
+            field("summaryFrom"),
+            field("diarySections", { numeric: true }),
+            wide(booleanRow("diaryCheck")),
           ]),
-          field("summaryFrom", "summaryFrom", "summaryFromHint"),
-          field("diarySections", "diarySections", "diarySectionsHint", { numeric: true }),
-          wide(booleanRows[0]),
         ]),
         h(
           "details",
-          { className: "ofttold-advanced", style: { marginTop: "12px" } },
-          h("summary", { style: { cursor: "pointer", opacity: 0.85 } }, t("advanced")),
-          h("p", { style: { margin: "8px 0", opacity: 0.7, fontSize: "0.9em" } }, t("advancedHint")),
-          grid([
-            wide(field("header", "header", "headerHint")),
-            field("refreshIntervalMs", "refreshIntervalMs", "refreshIntervalMsHint", { numeric: true }),
-            field("refreshAfterMessages", "refreshAfterMessages", "refreshAfterMessagesHint", { numeric: true }),
-            wide(booleanRows[1]),
-            wide(booleanRows[2]),
+          { className: "ofttold-advanced", style: { ...CARD, paddingTop: "12px" } },
+          h("summary", { style: { cursor: "pointer", opacity: 0.85, fontSize: "0.95em" } }, t("advanced")),
+          h("p", { style: HINT }, t("advancedHint")),
+          COLUMNS([
+            wide(field("header")),
+            field("refreshIntervalMs", { numeric: true }),
+            field("refreshAfterMessages", { numeric: true }),
+            wide(booleanRow("workspaceRelative")),
+            wide(booleanRow("skills")),
           ]),
         ),
         diagnostics,

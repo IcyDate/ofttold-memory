@@ -235,6 +235,7 @@ test("every setting the panel draws is declared, and every declared one is drawn
     ...[...SOURCE.matchAll(/booleanRow\("([a-zA-Z]+)"/g)].map((match) => match[1]),
     ...[...SOURCE.matchAll(/selectRow\("([a-zA-Z]+)"/g)].map((match) => match[1]),
   ]);
+  assert.ok(drawn.size >= 10, `the panel scan found only ${drawn.size} fields`);
   const declared = new Set([...SOURCE.matchAll(/settings(?:Text|Number)Field\("([a-zA-Z]+)"\)/g)].map((m) => m[1]));
   assert.deepEqual([...drawn].sort(), [...declared].sort());
 });
