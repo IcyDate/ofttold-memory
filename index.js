@@ -24,6 +24,7 @@
 
 import { createUserMessage } from "@deepseek-ai/dsh-llm";
 import { buildNotice } from "./lib/notice.js";
+import { pendingDiaryNudge } from "./lib/diary.js";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import z from "@deepseek-ai/schemastery";
@@ -353,12 +354,17 @@ export function apply(ctx, config) {
     });
     diagnostics.flush(storageDirectory());
 
+    // 块尾的一句话：今天的日记还没写。别的部分都要求模型想起来去做判断，这一行
+    // 只需要它看一眼——一个 stat 的代价，换掉「靠自觉」。
+    const nudge = pendingDiaryNudge(memoryDir);
+    const text = nudge === undefined ? rendered.text : `${rendered.text}\n\n${nudge}`;
+
     return {
       ...decision,
       messages: [
         ...decision.messages,
         createUserMessage({
-          content: [{ type: "text", text: rendered.text }],
+          content: [{ type: "text", text }],
           source: {
             kind: name,
             form: "snapshot",

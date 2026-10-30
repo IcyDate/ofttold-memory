@@ -91,6 +91,15 @@ mistake? Not "important", not "mentioned often" — *"not seeing this would brea
 the work"*. Written to that test, eight entries are plenty; written to "important",
 nothing is ever enough.
 
+## The line at the end
+
+If the folder has a `diary/`, the injected block closes with one more sentence: today's
+entry is not written yet, here is the path. It costs a single `stat`, and it means
+"write today or not" stops depending on remembering.
+
+A folder without a diary never gets that line, so there is nothing to switch off —
+the layout answers the question.
+
 ---
 
 ## The three settings that matter

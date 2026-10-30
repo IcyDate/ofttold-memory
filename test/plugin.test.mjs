@@ -10,7 +10,7 @@
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -251,4 +251,17 @@ test("the settings page never renders an object section as [object Object]", asy
   assert.equal(source.includes(".value.join("), false, "the raw array must never be joined directly");
   assert.equal(source.includes("sectionsComplex"), true, "the form must detect the object form and disable that field");
   assert.equal(source.includes("entry?.heading"), true, "object entries must be displayed by their heading");
+});
+
+test("the block ends by saying the day is not written yet", async () => {
+  // 单测覆盖了 lib/diary.js 的判定，这条盯着「它真的进了注入块、排在最后」。
+  const dir = workspace();
+  mkdirSync(join(dir, "diary"));
+  const h = harness(dir);
+  apply(h.ctx, config());
+  const decision = await h.drive({ step: 1 });
+  const text = decision.messages[0].content[0].text;
+  assert.match(text, /No entry for today yet/);
+  assert.match(text, /diary\/\d{4}-\d{2}-\d{2}\.md/);
+  assert.ok(text.trimEnd().endsWith("rather than a quiet one."), "the nudge belongs at the end");
 });
