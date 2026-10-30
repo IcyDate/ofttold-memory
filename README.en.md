@@ -110,6 +110,33 @@ R = exp(-t / 2^n)     t = days since the anchor's own date
   it again floats it back. The view forgets, the record does not.
 - `anchorCap` of `0` turns it off.
 
+## The day opens with a paragraph
+
+A day's file starts with `## 今天（17:40 更新）` — two or three sentences saying what the day
+was and what it was like, grumbling included. Detail lives below it, for whoever wants it.
+
+It is **rewritten as the day is written**, not filled in at night. The plugin compares the
+`（HH:mm 更新）` stamp with the last `## HH:mm` heading, so a body that keeps growing after
+its summary is named instead of quietly going stale. `summaryFrom` (default `17:30`) holds
+the requirement back until the day is actually far enough along to summarise.
+
+## The diary check
+
+The same line reports three more things, and **reports only**:
+
+| What it sees | What it says |
+|---|---|
+| More than `diarySections` sections (default 8) | `9 sections, over the 8-per-day bar` |
+| A section with no `情绪：` line | `2 sections without an \`情绪：\` line` |
+| No summary after `summaryFrom` | `no \`## 今天\` summary at the top` |
+| A summary that lags the body | `summary stopped at 17:40, body runs to 21:10` |
+
+**Why it never repairs anything**: consolidating means compressing, and compressing deletes
+the evidence the weight counts — it counts *how many days recalled this*, so folding a day
+into a paragraph makes those days disappear and old anchors age out for no reason. The diary
+is also never injected (only one section of the index is), so it costs nothing per session:
+compressing it trades a real loss for no gain.
+
 ## Setting an emotion
 
 The `**现在**` line in `relationship.md` is the **live value**: the feeling right now, no
@@ -141,7 +168,7 @@ the layout answers the question.
 
 ---
 
-## The four settings that matter
+## The settings that matter
 
 | Setting | Default | Meaning |
 | --- | --- | --- |
@@ -149,6 +176,9 @@ the layout answers the question.
 | `sections` | `["Oft-told", "常被提起"]` | Which headings ride along. Just the heading text. |
 | `maxChars` | `600` | Character budget per section. 600 characters ≈ 400 tokens. |
 | `anchorCap` | `8` | How many bold bullets a section keeps in view; the rest sink without being deleted. `0` turns it off. |
+| `summaryFrom` | `"17:30"` | When the day's `## 今天` summary starts being expected. |
+| `diarySections` | `8` | Sections per day before the check names it. |
+| `diaryCheck` | `true` | The diary check on or off. |
 
 Everything else has a working default. The full field list, the object form of
 `sections` for the rare per-section case, exact heading matching, and cross-platform

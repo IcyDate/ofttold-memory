@@ -11,6 +11,10 @@ The three fields most people use are on the main page. This page covers the rest
 | `memoryDir` | `~/.dsh/ofttold-memory` | Folder holding the markdown. Created on first run with a four-file skeleton (`MEMORY.md` / `INDEX.md` / `relationship.md` / `diary/`). A folder that already holds notes gets nothing added. |
 | `sections` | `["Oft-told", "常被提起"]` | Which sections to lift. Strings or objects (see below). |
 | `maxChars` | `600` | Per-section character budget. 600 characters ≈ 400 tokens. |
+| `anchorCap` | `8` | How many bold bullets a section keeps in view. The rest sink — ranked by `exp(-t / 2^n)`, kept in the file, no longer injected. `0` turns it off. |
+| `summaryFrom` | `"17:30"` | When the day's `## 今天` summary starts being expected. Before this hour the check stays quiet. |
+| `diarySections` | `8` | Sections per day before the check names it. |
+| `diaryCheck` | `true` | Report sections past the cap, sections with no `情绪：` line, a missing summary, or a summary the body has run past. Reports only — consolidating deletes the evidence the weight counts. |
 | `header` | `Standing context for this session: human-curated sections of a memory folder. Writing and maintaining it — index, self-description, diary — is the `ofttold-ritual` skill.` | First line of the injected block. |
 | `refreshIntervalMs` | `0` | Minimum milliseconds between injections in one session. `0` injects once. |
 | `refreshAfterMessages` | `0` | Re-inject after this many messages. `0` never. See [design](design.en.md#refreshaftermessages). |

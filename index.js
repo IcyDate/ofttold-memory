@@ -26,6 +26,7 @@ import { defineTool } from "@deepseek-ai/dsh-tools";
 import { createUserMessage } from "@deepseek-ai/dsh-llm";
 import { buildNotice } from "./lib/notice.js";
 import { localDay, pendingDiaryNudge } from "./lib/diary.js";
+import { diaryIssueLine, minutesOf } from "./lib/diarycheck.js";
 import { rememberEmotion } from "./lib/emotion.js";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -115,6 +116,29 @@ export const Config = z.object({
     .volatile()
     .description(
       "How much of each section to read, when a section does not set its own. 600 characters is about 400 tokens, charged once per session, so raising this raises what every session pays.",
+    ),
+  summaryFrom: z
+    .string()
+    .default("17:30")
+    .volatile()
+    .description(
+      "When to start expecting the `## 今天` summary at the top of the day's entry, as HH:mm. Before this hour the check stays quiet — a summary written at 10:00 is just a stale summary. After it, an entry whose body runs past its summary is reported.",
+    ),
+  diarySections: z
+    .natural()
+    .min(1)
+    .max(Number.MAX_SAFE_INTEGER)
+    .default(8)
+    .volatile()
+    .description(
+      "How many `##` sections a single day's entry may hold before the check names it. The rule of thumb is three to five; the cap is the point where a day stops being a record and becomes a transcript.",
+    ),
+  diaryCheck: z
+    .boolean()
+    .default(true)
+    .volatile()
+    .description(
+      "Report what is wrong with today's entry: sections past the cap, sections without an `情绪：` line, a summary that is missing after summaryFrom or stale against the body. Report only — nothing is rewritten, because consolidating an entry deletes the evidence the weight counts.",
     ),
   anchorCap: z
     .natural()
@@ -429,7 +453,18 @@ function localStamp(now = new Date()) {
     // 块尾的一句话：今天的日记还没写。别的部分都要求模型想起来去做判断，这一行
     // 只需要它看一眼——一个 stat 的代价，换掉「靠自觉」。
     const nudge = pendingDiaryNudge(memoryDir);
-    const text = nudge === undefined ? rendered.text : `${rendered.text}\n\n${nudge}`;
+    // 体检跟提醒拼在一起：都在块尾，都只在「今天这一篇有问题」时才出现，都对模型说而不是
+    // 对用户说——用户没义务转告。
+    const issue = diaryIssueLine({
+      memoryDir,
+      day: localDay(),
+      nowMinute: new Date().getHours() * 60 + new Date().getMinutes(),
+      summaryFrom: minutesOf(configValue(config, "summaryFrom") ?? "17:30"),
+      cap: Number(configValue(config, "diarySections") ?? 8),
+      enabled: configValue(config, "diaryCheck") !== false,
+    });
+    const tail = [nudge, issue].filter((part) => part !== undefined).join("\n\n");
+    const text = tail === "" ? rendered.text : `${rendered.text}\n\n${tail}`;
 
     return {
       ...decision,

@@ -49,6 +49,19 @@ before you start**, because a convention the user never chose is worse than none
 Pointing at a heading nobody has is worse than no pointer: the reader learns the list exists
 and cannot find it, and the subset check silently stops being a check.
 
+## The top of the file: the day in a paragraph
+
+A day's entry opens with `## 今天（HH:mm 更新）` — two or three sentences covering what the
+day was and what it was like. Complaint and irritation belong there; that is what it is for.
+Someone opening the file wants the day, not the transcript, and nobody scrolls to the bottom
+to find out how it went.
+
+**Rewrite that block in the same breath as writing a section.** Not "at the end of the day" —
+the end of the day is the moment attention is gone, and a summary that lags the body is worse
+than none because it reads as current and is not. The `（HH:mm 更新）` stamp is what makes the
+lag visible: the plugin compares it with the last `## HH:mm` heading and says when the body has
+run past the summary.
+
 ## The four rituals
 
 ### 1. A diary entry
