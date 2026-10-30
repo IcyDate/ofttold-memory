@@ -654,3 +654,42 @@ test("the panel's memory file name matches the one the reader actually opens", (
   assert.ok(panel !== null, "the client half must declare its copy");
   assert.equal(panel[1], declared[1], "the panel would point at a file nothing reads");
 });
+
+test("every setting answers both questions: what it does, and how to change it", () => {
+  // 复核用的两条判据，落成测试：
+  //   ① 名字说的是「做什么」，不是内部字段名；
+  //   ② 底下那行说的是「怎么改」——写什么、什么格式、改了什么时候生效。
+  const dictionaries = ["const en = {", "const zh = {"].map((marker) => {
+    const from = CLIENT_SOURCE.indexOf(marker);
+    return CLIENT_SOURCE.slice(from, CLIENT_SOURCE.indexOf("\n    };", from));
+  });
+  const settings = [
+    "memoryDir",
+    "sections",
+    "maxChars",
+    "anchorCap",
+    "diaryCadence",
+    "summaryFrom",
+    "diarySections",
+    "diaryCheck",
+    "header",
+    "refreshIntervalMs",
+    "refreshAfterMessages",
+    "workspaceRelative",
+    "skills",
+  ];
+  for (const block of dictionaries) {
+    for (const key of settings) {
+      assert.ok(block.includes(`${key}:`), `missing label for ${key}`);
+      assert.ok(block.includes(`${key}Hint:`), `missing hint for ${key}`);
+    }
+    // 控件名不许是配置键本身——那是给我们看的，不是给用户看的。
+    assert.equal(new RegExp(`\\n      memoryDir: "memoryDir"`).test(block), false);
+  }
+});
+
+test("the save note and the session boundary are stated", () => {
+  // 改完不用点保存、或者不知道什么时候生效，是「不知道怎么改」的最后一段路。
+  assert.match(CLIENT_SOURCE, /saveHint: "改完点最下面的「保存」，下一个会话生效。"/);
+  assert.match(CLIENT_SOURCE, /t\("saveHint"\)/);
+});
