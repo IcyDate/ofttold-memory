@@ -185,9 +185,10 @@ one line; cold = untouched original text, still greppable.
 The cap is eight anchors. Past it, **what stays** is computed, not asked.
 
 - A dated anchor uses its own date. An anchor pointing at something that is not a diary
-  entry — `relationship.md`, a folder, a name — is dated **the day the line first
-  appeared** (`.ofttold/anchors.json` remembers that; the folder's mtime changes on every
-  edit and git is not guaranteed to be there).
+  entry — `relationship.md`, a folder, a name — is stamped **in the line**, in the same spot
+  a diary anchor keeps its date: `` → `2026-10-30` 起｜`relationship.md` ``. Not a sidecar:
+  one fact with two homes drifts, and a hidden file is where nobody looks. Stamp once and
+  the line looks like every other anchor.
 - Ten mentions on one day count as **one** day: being recalled is one fact, not ten.
 - **Age alone never evicts.** `S` doubles per recalled day, so an old line everyone keeps
   reaching for outranks a fresh one nobody touches.

@@ -24,7 +24,7 @@
 
 import { createUserMessage } from "@deepseek-ai/dsh-llm";
 import { buildNotice } from "./lib/notice.js";
-import { pendingDiaryNudge } from "./lib/diary.js";
+import { localDay, pendingDiaryNudge } from "./lib/diary.js";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import z from "@deepseek-ai/schemastery";
@@ -34,7 +34,7 @@ import { configValue } from "./lib/config.js";
 import { Diagnostics } from "./lib/diagnostics.js";
 import { scaffoldMemory } from "./lib/scaffold.js";
 import { registerSkills } from "./lib/skills.js";
-import { DEFAULT_SECTIONS, expandPath, renderSources } from "./lib/sources.js";
+import { DEFAULT_SECTIONS, expandPath, renderSources, stampSourceDates } from "./lib/sources.js";
 
 export const name = "ofttold-memory";
 
@@ -345,6 +345,10 @@ export function apply(ctx, config) {
     }
 
     const rendered = renderSources(config, memoryDir);
+    // 先给没有自己日期的锚点盖一个「从这天起算」——写进文件而不是藏在 sidecar 里，
+    // 因为一个事实有两个家就会漂。
+    stampSourceDates(configValue(config, "sections"), memoryDir, localDay());
+
     if (rendered.loaded === 0) {
       // The most common "it does nothing" report: the folder exists, the heading
       // does not match. Recording it is the whole point of the diagnostic file --
