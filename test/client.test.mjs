@@ -543,11 +543,24 @@ test("the panel renders cards, controls and a where-line for the headings", () =
   const page = registered.find((entry) => entry.meta.name === "plugins.bundle.config");
   const props = page.meta.inject();
   // 不抛就算通过第一步；要拿到真实结构得让表单模型先有一个值。
+  const fieldState = (text) => ({ text, overridden: false, invalid: false });
   const state = {
     writable: true,
     available: true,
-    memoryDir: { text: "/tmp/notes", overridden: false, invalid: false },
-    sections: { text: "常被提起", overridden: false, invalid: false },
+    dirty: true,
+    memoryDir: fieldState("/tmp/notes"),
+    sections: fieldState("常被提起"),
+    maxChars: fieldState("600"),
+    header: fieldState("h"),
+    refreshIntervalMs: fieldState("0"),
+    refreshAfterMessages: fieldState("0"),
+    workspaceRelative: fieldState("true"),
+    anchorCap: fieldState("8"),
+    diaryCadence: fieldState("daily"),
+    summaryFrom: fieldState("17:30"),
+    diarySections: fieldState("8"),
+    diaryCheck: fieldState("true"),
+    skills: fieldState("true"),
   };
   const tree = page.component({
     ...props,
@@ -571,6 +584,10 @@ test("the panel renders cards, controls and a where-line for the headings", () =
   walk(tree);
   const joined = texts.join(" | ");
   assert.match(joined, /ofttold-tip|ofttold-dot/, "the question-mark wrapper must render");
+  const inputs = nodes.filter((node) => node.tag === "input" || node.tag === "textarea");
+  const empty = inputs.filter((node) => node.props.type !== "checkbox" && (node.props.value ?? "") === "");
+  assert.deepEqual(empty, [], "an input with no value resets itself on every keystroke");
+  assert.ok(nodes.some((node) => node.props.className === "ofttold-actions"), "the top action bar must render");
   const textareas = nodes.filter((node) => node.tag === "textarea");
   assert.ok(textareas.length >= 1, "the heading list must render as a textarea");
 });

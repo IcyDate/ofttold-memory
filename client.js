@@ -13,7 +13,7 @@ window.__ModuleLoader__.load({
      * 页脚要显示版本号。浏览器里拿不到 package.json，所以只能写死一份——那就用一条
      * 测试盯着它，免得发布时忘了改：版本是唯一会「安静地过期」的东西。
      */
-    const VERSION = "0.1.2";
+    const VERSION = "0.1.3";
     const REPO = "https://github.com/IcyDate/ofttold-memory";
     const MEMORY_FILE = "MEMORY.md";
 
@@ -51,6 +51,8 @@ window.__ModuleLoader__.load({
       summaryFromWhy: "The diary keeps this to itself? No — the top of the day\'s entry is the paragraph someone reads first. If it is missing, or stops matching the body after more work, the reader sees a summary that is quietly out of date.",
       memoryDirWhy: "Everything the plugin reads and writes lives under this folder, and nothing else is touched. Point it at notes you already keep and it only fills in the files that are missing.",
       saveHint: "Changes are saved with the button at the bottom and take effect from the next session.",
+      unsaved: "Unsaved changes",
+      discard: "Discard",
       cardNotes: "Your notes",
       cardDiary: "The diary",
       cadenceDaily: "Daily",
@@ -114,6 +116,8 @@ window.__ModuleLoader__.load({
       summaryFromWhy: "日记顶上那段是别人打开文件第一眼看到的东西。到点还没有、或者写完之后又加了新的正文却忘了改它，读的人看到的是一段过期却不自知的总结——所以到点会提醒。",
       memoryDirWhy: "插件读的、补的、写的都只在这个文件夹里，别处不碰。已经有笔记的把路径指过去，它只会补上缺的那几个文件。",
       saveHint: "改完点最下面的「保存」，下一个会话生效。",
+      unsaved: "有改动还没保存",
+      discard: "撤销改动",
       cardNotes: "你的笔记",
       cardDiary: "日记",
       cadenceDaily: "每天",
@@ -349,6 +353,14 @@ window.__ModuleLoader__.load({
             refreshIntervalMs: this.form.field("refreshIntervalMs"),
             refreshAfterMessages: this.form.field("refreshAfterMessages"),
             workspaceRelative: this.form.field("workspaceRelative"),
+            // 面板上画的每一个字段都必须在这里有一份：漏掉的字段 state 里是空值，
+            // 输入框就变成「打了字马上被重置」，看起来像没反应（实测栽过一次）。
+            anchorCap: this.form.field("anchorCap"),
+            diaryCadence: this.form.field("diaryCadence"),
+            summaryFrom: this.form.field("summaryFrom"),
+            diarySections: this.form.field("diarySections"),
+            diaryCheck: this.form.field("diaryCheck"),
+            skills: this.form.field("skills"),
           };
         });
       }
@@ -658,6 +670,70 @@ window.__ModuleLoader__.load({
         );
       const wide = (node) => h("div", { style: { gridColumn: "1 / -1" } }, node);
 
+      // 顶部常驻动作条：宿主的保存按钮在整页最下面，一屏长的时候改完会以为已经存了。
+      // 有改动时才亮，并用同一份 shell 状态（dirty/saving/failed）说话。
+      const actionBar = h(
+        "div",
+        {
+          className: "ofttold-actions",
+          style: {
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            margin: "4px 0 0",
+            padding: "8px 10px",
+            borderRadius: "8px",
+            background: state.dirty === true ? "rgba(64,132,255,0.10)" : "transparent",
+            border: state.dirty === true ? "1px solid rgba(64,132,255,0.35)" : "1px solid transparent",
+            minHeight: "20px",
+          },
+        },
+        h(
+          "button",
+          {
+            type: "button",
+            className: "ofttold-save",
+            disabled: disabled || state.dirty !== true || state.saving === true,
+            onClick: () => props.save(),
+            style: {
+              padding: "6px 16px",
+              borderRadius: "6px",
+              border: "1px solid rgba(127,127,127,0.4)",
+              background: state.dirty === true ? "rgba(64,132,255,0.9)" : "transparent",
+              color: state.dirty === true ? "#fff" : "inherit",
+              cursor: disabled || state.dirty !== true ? "default" : "pointer",
+              font: "inherit",
+              opacity: disabled || state.dirty !== true ? 0.55 : 1,
+            },
+          },
+          state.saving === true ? t("saving") : t("save"),
+        ),
+        state.dirty === true
+          ? h(
+              "button",
+              {
+                type: "button",
+                disabled: disabled || state.saving === true,
+                onClick: () => props.discard(),
+                style: {
+                  border: 0,
+                  background: "transparent",
+                  color: "inherit",
+                  opacity: 0.7,
+                  fontSize: "0.86em",
+                  cursor: "pointer",
+                  padding: 0,
+                },
+              },
+              t("discard"),
+            )
+          : null,
+        state.failed === true ? h("span", { style: { color: "#d9534f", fontSize: "0.86em" } }, t("saveFailed")) : null,
+        state.dirty === true
+          ? h("span", { style: { opacity: 0.7, fontSize: "0.86em" } }, t("unsaved"))
+          : null,
+      );
+
       const card = (titleKey, children) =>
         h("section", { style: CARD }, h("h4", { style: CARD_TITLE }, t(titleKey)), ...children);
 
@@ -676,6 +752,7 @@ window.__ModuleLoader__.load({
           onDiscard: props.discard,
         },
         h("style", {}, TIP_CSS),
+        actionBar,
         card("cardNotes", [
           wide(field("memoryDir")),
           wide(field("sections", { multiline: true })),

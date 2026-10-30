@@ -239,3 +239,23 @@ test("every setting the panel draws is declared, and every declared one is drawn
   const declared = new Set([...SOURCE.matchAll(/settings(?:Text|Number)Field\("([a-zA-Z]+)"\)/g)].map((m) => m[1]));
   assert.deepEqual([...drawn].sort(), [...declared].sort());
 });
+
+test("every field the panel draws also reaches the panel's state", () => {
+  // 这条是为一个真 bug 写的：面板画了输入框，可 state 里没有这个字段，
+  // `state[id]` 就是 undefined → value 永远是空串 → 打了字立刻被 React 重置，
+  // 用户看到的是「输入没反应」。前面的测试全都喂了手写的 state，所以谁都没发现。
+  const declared = [...SOURCE.matchAll(/settings(?:Text|Number)Field\("([a-zA-Z]+)"\)/g)].map((m) => m[1]);
+  for (const key of declared) {
+    assert.ok(
+      SOURCE.includes(`this.form.field("${key}")`),
+      `${key} is drawn but never put into the panel state`,
+    );
+  }
+});
+
+test("a change with unsaved edits offers save at the top, not only at the bottom", () => {
+  // 一屏要滑很久才看到宿主的保存按钮，改完以为存上了。顶部常驻一条动作条。
+  assert.match(SOURCE, /ofttold-actions/);
+  assert.match(SOURCE, /onClick: \(\) => props\.save\(\)/);
+  assert.match(SOURCE, /state\.dirty/);
+});
