@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-<code>dsh plugin --profile web add ofttold-memory</code>
+<code>dsh plugin --profile web add ofttold-memory@latest</code>
 </p>
 
 <p align="center">
@@ -46,7 +46,7 @@ One read, one injection. No index, no embeddings, no database, no second pass.
 ## Quick start
 
 ```sh
-dsh plugin --profile web add ofttold-memory
+dsh plugin --profile web add ofttold-memory@latest
 ```
 
 **That is the whole setup.** It installs the prebuilt package from npm — no build step,
@@ -93,22 +93,13 @@ mistake? Not "important", not "mentioned often" — *"not seeing this would brea
 the work"*. Written to that test, eight entries are plenty; written to "important",
 nothing is ever enough.
 
-## What sinks when the list is full
+## A full list does not keep growing
 
-Past eight anchors nothing asks a person to delete a line — it is ranked:
+Past eight anchors the plugin **ranks which line sinks** rather than asking anyone to delete
+one: what gets reached for stays, what has gone quiet drops out of view. Sinking is **not
+deleting** — the line is still in the file, and one mention in a diary day floats it back.
 
-```
-R = exp(-t / 2^n)     t = days since the anchor's own date
-                      n = distinct days that recalled it (ten mentions in a day are one)
-```
-
-- A dated anchor uses its own date; one pointing at `relationship.md` or a folder gets a
-  `` `date` 起 `` stamp the first time it is seen.
-- **Age alone never evicts.** Each recall doubles the interval, so an old line everyone
-  keeps reaching for outranks a fresh one nobody touches.
-- What sinks **stays in the file** and simply stops being injected; a diary day mentioning
-  it again floats it back. The view forgets, the record does not.
-- `anchorCap` of `0` turns it off.
+The formula and its reasoning are in **[Design notes § the sinking mechanism](docs/design.en.md)**.
 
 ## The day opens with a paragraph
 
@@ -139,10 +130,7 @@ just stops being reachable through the emotion path. Reading fine while being an
 exactly the failure this plugin exists to remove, so the check names it.
 
 **Why it never repairs anything**: consolidating means compressing, and compressing deletes
-the evidence the weight counts — it counts *how many days recalled this*, so folding a day
-into a paragraph makes those days disappear and old anchors age out for no reason. The diary
-is also never injected (only one section of the index is), so it costs nothing per session:
-compressing it trades a real loss for no gain.
+the evidence the weight counts. Reasoning in **[Design notes](docs/design.en.md)**.
 
 ## Setting an emotion
 
