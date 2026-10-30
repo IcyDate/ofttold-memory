@@ -6,23 +6,22 @@
 
 <p align="center"><sub>a note helps only when it is in front of the model · <em>injected once, present throughout</em> · no dependence on remembering to look · works out of the box</sub></p>
 
-<p align="center"><sub><strong>A DSH plugin</strong> · skill version for other harnesses: <a href="./docs/skill.en.md">planned</a></sub></p>
+<p align="center"><sub><strong>A DSH plugin</strong> · the same skill for other harnesses: <a href="./docs/skill.en.md">spec</a></sub></p>
 
 <p align="center">
-<a href="https://www.npmjs.com/package/ofttold-memory"><img src="https://img.shields.io/npm/v/ofttold-memory.svg?style=flat-square" alt="npm"></a>
-<a href="https://github.com/IcyDate/ofttold-memory/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/ofttold-memory.svg?style=flat-square" alt="license"></a>
+<a href="https://github.com/IcyDate/ofttold-memory/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="license"></a>
 <a href="https://github.com/IcyDate/ofttold-memory"><img src="https://img.shields.io/badge/GitHub-IcyDate%2Fofttold--memory-181717?style=flat-square&logo=github" alt="GitHub"></a>
 </p>
 
 <p align="center">
-<code>dsh plugin --profile web add /absolute/path/to/ofttold-memory</code>
+<code>dsh plugin --profile web add github:IcyDate/ofttold-memory</code>
 </p>
 
 <p align="center">
 <a href="https://www.deepseek.com" title="deepseek-harness (dsh)"><img src="https://cdn.simpleicons.org/deepseek/5786FE" height="26" alt="deepseek-harness"></a>&nbsp;
 <a href="https://nodejs.org" title="Node.js 22+"><img src="https://cdn.simpleicons.org/nodedotjs/5FA04E" height="26" alt="Node.js"></a>&nbsp;
 <a href="https://www.apple.com/macos" title="macOS"><img src="https://cdn.simpleicons.org/apple/000000" height="26" alt="macOS"></a>&nbsp;
-<a href="https://www.microsoft.com/windows" title="Windows"><img src="https://cdn.simpleicons.org/windows/0078D4" height="26" alt="Windows"></a>&nbsp;
+<a href="https://www.microsoft.com/windows" title="Windows"><img src="https://api.iconify.design/logos/microsoft-windows.svg" height="26" alt="Windows"></a>&nbsp;
 <a href="https://www.linux.org" title="Linux"><img src="https://cdn.simpleicons.org/linux/FCC624" height="26" alt="Linux"></a>
 </p>
 
@@ -46,10 +45,11 @@ One read, one injection. No index, no embeddings, no database, no second pass.
 ## Quick start
 
 ```sh
-dsh plugin --profile web add /absolute/path/to/ofttold-memory
+dsh plugin --profile web add github:IcyDate/ofttold-memory
 ```
 
-**That is the whole setup.** The first run creates `~/.dsh/ofttold-memory/` with a
+**That is the whole setup.** It installs the code as it sits in the repository — no
+build step, so no build approval is needed. The first run creates `~/.dsh/ofttold-memory/` with a
 four-file skeleton: `MEMORY.md` (the injected source), `INDEX.md` (the diary index),
 `relationship.md` (who the assistant is, plus the live emotion value), and `diary/`
 (one file per day). **All of it is empty shells and comments — not one memory is

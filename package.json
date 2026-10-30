@@ -80,5 +80,19 @@
     "markdown",
     "attention"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "@deepseek-ai/cordis": "~4.0.5",
+    "@deepseek-ai/dsh-llm": "0.2.1-rc.4",
+    "@deepseek-ai/dsh-session-projection": "0.2.1-rc.4",
+    "@deepseek-ai/schemastery": "~3.18.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IcyDate/ofttold-memory.git"
+  },
+  "homepage": "https://github.com/IcyDate/ofttold-memory#readme",
+  "bugs": {
+    "url": "https://github.com/IcyDate/ofttold-memory/issues"
+  }
 }
