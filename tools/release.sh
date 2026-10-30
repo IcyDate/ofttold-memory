@@ -24,5 +24,5 @@ git tag -a "$TAG" -m "$V"
 git push -q origin main && git push -q origin "$TAG"
 
 awk -v v="$V" 'index($0,"## ["v"]"){f=1} f&&/^## \[/&&!index($0,"## ["v"]"){exit} f' CHANGELOG.md > /tmp/release-notes.md
-gh release create "$TAG" --title "$V" --notes-file /tmp/release-notes.md
+GH_TOKEN=$(cat ~/.dsh/github-token) gh release create "$TAG" --title "$V" --notes-file /tmp/release-notes.md
 echo "已发布 $TAG —— npm 那步仍要手动跑：npm publish --registry=https://registry.npmjs.org/"
