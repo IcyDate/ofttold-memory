@@ -128,8 +128,15 @@ The same line reports three more things, and **reports only**:
 |---|---|
 | More than `diarySections` sections (default 8) | `9 sections, over the 8-per-day bar` |
 | A section with no `情绪：` line | `2 sections without an \`情绪：\` line` |
+| A tag whose word is not in the vocabulary | `「烦躁」 is not in the vocabulary` |
+| Tags but no vocabulary section at all | `tags used, but relationship.md has no \`情绪词表\` section` |
 | No summary after `summaryFrom` | `no \`## 今天\` summary at the top` |
 | A summary that lags the body | `summary stopped at 17:40, body runs to 21:10` |
+
+**"A tag must come from the vocabulary" is structural, not taste.** The live value can only
+be a vocabulary word, so a tag outside it can never be matched — that day does not fail, it
+just stops being reachable through the emotion path. Reading fine while being an orphan is
+exactly the failure this plugin exists to remove, so the check names it.
 
 **Why it never repairs anything**: consolidating means compressing, and compressing deletes
 the evidence the weight counts — it counts *how many days recalled this*, so folding a day

@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { checkEntry, clockOf, diaryIssueLine, lastSectionMinute, minutesOf, summaryState } from "../lib/diarycheck.js";
+import { checkEntry, clockOf, diaryIssueLine, lastSectionMinute, minutesOf, strayTags, summaryState, tagsOf } from "../lib/diarycheck.js";
 
 const DAY = `# 2026-10-30
 
@@ -53,6 +53,32 @@ test("the lesson list under the summary needs no tag either", () => {
 test("a section without an emotion line is counted", () => {
   const text = "## 09:00 开头\n\n没有标签\n\n## 10:00 另一节\n\n情绪：松\n";
   assert.equal(checkEntry({ text }).untagged, 1);
+});
+
+test("tags are lifted out in order, and the strays are the ones the cache can never reach", () => {
+  const tags = tagsOf("## a\n\n情绪：松\n\n## b\n\n情绪：烦躁\n\n## c\n\n情绪：松\n");
+  assert.deepEqual(tags, ["松", "烦躁", "松"]);
+  assert.deepEqual(strayTags(tags, ["松", "定"]), ["烦躁"], "deduped, and only the words outside the vocabulary");
+});
+
+test("a tag outside the vocabulary is named, because that day becomes unreachable", () => {
+  const dir = mkdtempSync(join(tmpdir(), "ofttold-vocab-"));
+  mkdirSync(join(dir, "diary"), { recursive: true });
+  writeFileSync(join(dir, "relationship.md"), "## 情绪词表\n\n- `松` — 卸下来\n\n- `定` — 落定\n", "utf8");
+  writeFileSync(join(dir, "diary", "2026-10-30.md"), "## 09:00 a\n\n情绪：烦躁\n", "utf8");
+  const line = diaryIssueLine({ memoryDir: dir, day: "2026-10-30", nowMinute: 600, summaryFrom: 1050 });
+  assert.match(line, /「烦躁」 不在词表里/);
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test("tagging with no vocabulary section at all is named too", () => {
+  const dir = mkdtempSync(join(tmpdir(), "ofttold-novocab-"));
+  mkdirSync(join(dir, "diary"), { recursive: true });
+  writeFileSync(join(dir, "relationship.md"), "## 我是谁\n\n- 我是小拾\n", "utf8");
+  writeFileSync(join(dir, "diary", "2026-10-30.md"), "## 09:00 a\n\n情绪：松\n", "utf8");
+  const line = diaryIssueLine({ memoryDir: dir, day: "2026-10-30", nowMinute: 600 });
+  assert.match(line, /没有 `情绪词表` 节/);
+  rmSync(dir, { recursive: true, force: true });
 });
 
 test("the last section time ignores prose", () => {
