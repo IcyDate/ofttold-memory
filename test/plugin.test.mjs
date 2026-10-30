@@ -261,7 +261,8 @@ test("the block ends by saying the day is not written yet", async () => {
   apply(h.ctx, config());
   const decision = await h.drive({ step: 1 });
   const text = decision.messages[0].content[0].text;
-  assert.match(text, /No entry for today yet/);
+  assert.match(text, /no diary entry for today|no diary entry for \d{4}-\d{2}-\d{2} yet/);
   assert.match(text, /diary\/\d{4}-\d{2}-\d{2}\.md/);
-  assert.ok(text.trimEnd().endsWith("rather than a quiet one."), "the nudge belongs at the end");
+  // 状态行是块尾最后一行：它一句话、无句号、无指令，和上面那行体检区分得开。
+  assert.match(text.trimEnd(), /`diary\/\d{4}-\d{2}-\d{2}\.md`\)$/, "the status line stays last");
 });

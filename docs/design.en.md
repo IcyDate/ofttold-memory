@@ -132,6 +132,39 @@ An agent that writes its own memory mixes "what I just thought of" with "what ke
 coming back", and within a few turns the list stops being trustworthy. The value of
 memory comes from the fact that someone else chose it.
 
+## One structural rule
+
+An emotion tag has to come from the vocabulary in `relationship.md`. That is not style: the
+same set of names constrains both directions.
+
+- **Writing**: the live value can only be a vocabulary word — `remember_emotion` refuses
+  anything else outright.
+- **Reading**: "which days felt like this" is that word compared against the tag line.
+
+Hold on one side only and that side becomes a dead end: a tag outside the vocabulary reads
+perfectly and can never be matched — the day stops being reachable through the emotion path.
+No error, no symptom. Exactly the failure this thing exists to remove. So it is a **check**,
+not a suggestion, and a missing vocabulary section is reported too: that makes every tag an
+orphan.
+
+## Two tones in one block tail
+
+The tail carries two things that are not the same kind of message:
+
+| | says | tone |
+|---|---|---|
+| status line | "nothing for today yet" | one fact, no full stop, no instruction, no skill name |
+| the check | "this entry has problems" | `Diary check — `, followed by the list |
+
+**Why split them**: the reminder appears every day, and a repeated signal gets habituated —
+by day three it is furniture. The check lives in the same paragraph and carries the news that
+actually breaks things. If the reminder also sounds like a nag, both get skipped: not "the
+reminder stopped working" but **the check's channel was trained into silence**.
+
+That is channel hygiene, not copywriting: one place may hold one alarm. Which is also why
+`diaryCadence`'s `weekly` and `off` exist — they protect how fresh the signal is, so that the
+line still counts as information every time it appears.
+
 ## What a rule hangs on
 
 Whether a rule gets followed has little to do with how well it is written, and a lot to

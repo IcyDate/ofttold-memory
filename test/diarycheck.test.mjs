@@ -28,10 +28,10 @@ test("cadence decides how often the folder is expected to grow", () => {
   mkdirSync(join(dir, "diary"), { recursive: true });
   writeFileSync(join(dir, "diary", "2026-10-28.md"), "# 28\n", "utf8");
   const now = new Date(2026, 9, 30, 12, 0);
-  assert.match(pendingDiaryNudge(dir, now, "daily"), /No entry for today yet/);
+  assert.match(pendingDiaryNudge(dir, now, "daily"), /no diary entry for today|no diary entry for \d{4}-\d{2}-\d{2} yet/);
   assert.equal(pendingDiaryNudge(dir, now, "weekly"), undefined, "written three days ago is recent");
   const later = new Date(2026, 10, 8, 12, 0);
-  assert.match(pendingDiaryNudge(dir, later, "weekly"), /No entry in the last 7 days/);
+  assert.match(pendingDiaryNudge(dir, later, "weekly"), /no diary entry in the past 7 days/);
   assert.equal(pendingDiaryNudge(dir, now, "off"), undefined, "off never speaks");
   assert.equal(pendingDiaryNudge(join(dir, "nope"), now, "daily"), undefined, "no diary folder is silent under every cadence");
   assert.equal(latestEntryDay(dir, now), "2026-10-28");
@@ -84,7 +84,7 @@ test("a tag outside the vocabulary is named, because that day becomes unreachabl
   writeFileSync(join(dir, "relationship.md"), "## 情绪词表\n\n- `松` — 卸下来\n\n- `定` — 落定\n", "utf8");
   writeFileSync(join(dir, "diary", "2026-10-30.md"), "## 09:00 a\n\n情绪：烦躁\n", "utf8");
   const line = diaryIssueLine({ memoryDir: dir, day: "2026-10-30", nowMinute: 600, summaryFrom: 1050 });
-  assert.match(line, /「烦躁」 不在词表里/);
+  assert.match(line, /烦躁 not in the vocabulary/);
   rmSync(dir, { recursive: true, force: true });
 });
 
@@ -94,7 +94,7 @@ test("tagging with no vocabulary section at all is named too", () => {
   writeFileSync(join(dir, "relationship.md"), "## 我是谁\n\n- 我是小拾\n", "utf8");
   writeFileSync(join(dir, "diary", "2026-10-30.md"), "## 09:00 a\n\n情绪：松\n", "utf8");
   const line = diaryIssueLine({ memoryDir: dir, day: "2026-10-30", nowMinute: 600 });
-  assert.match(line, /没有 `情绪词表` 节/);
+  assert.match(line, /has no `情绪词表` section/);
   rmSync(dir, { recursive: true, force: true });
 });
 
@@ -108,9 +108,9 @@ test("nothing is reported before summaryFrom, everything after", () => {
   mkdirSync(join(dir, "diary"), { recursive: true });
   writeFileSync(join(dir, "diary", "2026-10-30.md"), "# x\n\n## 09:00 a\n\n没有标签\n", "utf8");
   const early = diaryIssueLine({ memoryDir: dir, day: "2026-10-30", nowMinute: 9 * 60, summaryFrom: 1050 });
-  assert.equal(early, "今天那篇日记：1 节没有 `情绪：` 行。", "an untagged section is reported even early");
+  assert.equal(early, "Diary check — 1 without an `情绪：` line.", "an untagged section is reported even early");
   const late = diaryIssueLine({ memoryDir: dir, day: "2026-10-30", nowMinute: 18 * 60, summaryFrom: 1050 });
-  assert.match(late, /顶部没有 `## 今天` 摘要/);
+  assert.match(late, /no `## 今天` summary at the top/);
   rmSync(dir, { recursive: true, force: true });
 });
 
@@ -119,7 +119,7 @@ test("a missing day and a disabled check say nothing at all", () => {
   assert.equal(diaryIssueLine({ memoryDir: dir, day: "2026-10-30", nowMinute: 1300 }), undefined);
   mkdirSync(join(dir, "diary"), { recursive: true });
   writeFileSync(join(dir, "diary", "2026-10-30.md"), "## 今天\n\n## 09:00 a\n\n情绪：松\n", "utf8");
-  assert.match(diaryIssueLine({ memoryDir: dir, day: "2026-10-30", nowMinute: 1300, summaryFrom: 1050 }), /摘要.*空/);
+  assert.match(diaryIssueLine({ memoryDir: dir, day: "2026-10-30", nowMinute: 1300, summaryFrom: 1050 }), /summary is empty/);
   assert.equal(diaryIssueLine({ memoryDir: dir, day: "2026-10-30", nowMinute: 1300, enabled: false }), undefined);
   rmSync(dir, { recursive: true, force: true });
 });
@@ -134,7 +134,7 @@ test("over the section cap is named with both numbers", () => {
     rmSync(dir, { recursive: true, force: true });
     return out;
   })();
-  assert.match(line, /9 节，超过每天 8 节/);
+  assert.match(line, /9 sections, over the 8-per-day bar/);
 });
 
 test("a summary with no stamp is present but never claimed stale", () => {

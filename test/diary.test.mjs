@@ -41,7 +41,9 @@ test("an unwritten day is named, with the file it expects", () => {
     const line = pendingDiaryNudge(dir, new Date(2026, 9, 30, 9, 0));
     assert.ok(line !== undefined);
     assert.match(line, /diary\/2026-10-30\.md/);
-    assert.match(line, /ofttold-ritual/, "the line must say where the protocol lives");
+    // 这一行是状态，不是指令：它只说「今天没有」，把「怎么写」留给注入块开头那句和 skill。
+    // 指令语气会和同一块尾的体检报告抢注意力，两边都变得可跳过。
+    assert.doesNotMatch(line, /ofttold-ritual|must|should/, "the status line must not read as an instruction");
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

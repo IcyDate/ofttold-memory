@@ -118,8 +118,8 @@ The same line reports three more things, and **reports only**:
 | What it sees | What it says |
 |---|---|
 | More than `diarySections` sections (default 8) | `9 sections, over the 8-per-day bar` |
-| A section with no `情绪：` line | `2 sections without an \`情绪：\` line` |
-| A tag whose word is not in the vocabulary | `「烦躁」 is not in the vocabulary` |
+| A section with no `情绪：` line | `2 without an \`情绪：\` line` |
+| A tag whose word is not in the vocabulary | `烦躁 not in the vocabulary` |
 | Tags but no vocabulary section at all | `tags used, but relationship.md has no \`情绪词表\` section` |
 | No summary after `summaryFrom` | `no \`## 今天\` summary at the top` |
 | A summary that lags the body | `summary stopped at 17:40, body runs to 21:10` |
@@ -154,12 +154,19 @@ timestamp makes the cache look fresher than it is.
 
 ## The line at the end
 
-If the folder has a `diary/`, the injected block closes with one more sentence: today's
-entry is not written yet, here is the path. It costs a single `stat`, and it means
-"write today or not" stops depending on remembering.
+If the folder has a `diary/`, the injected block closes with one status line:
 
-A folder without a diary never gets that line, so there is nothing to switch off —
-the layout answers the question.
+```
+- no diary entry for 2026-10-30 yet (`diary/2026-10-30.md`)
+```
+
+**Deliberately a status line, not an instruction** — no "write it now", no naming the skill.
+The same tail carries the diary check above, and that check is the one with bad news; a
+reminder that also sounds like a nag makes both lines skippable. It costs a single `stat`.
+
+`diaryCadence` decides how often it may appear: `daily`, `weekly` (quiet while anything was
+written in the last seven days) or `off`. A folder without `diary/` is silent under all
+three — that is the layout answering.
 
 ---
 

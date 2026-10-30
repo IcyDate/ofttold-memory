@@ -99,12 +99,14 @@ dsh plugin --profile web add ofttold-memory@latest
 
 | 看到什么 | 会说什么 |
 |---|---|
-| 一天超过 `diarySections` 节（默认 8） | `9 节，超过每天 8 节` |
-| 有节没写 `情绪：` 行 | `2 节没有 \`情绪：\` 行` |
-| 标签的词不在 `relationship.md` 的词表里 | `「烦躁」 不在词表里` |
-| 用了标签但根本没有词表节 | `用了情绪标签，但 relationship.md 里没有 \`情绪词表\` 节` |
-| 过了 `summaryFrom` 还没有摘要 | `顶部没有 \`## 今天\` 摘要` |
-| 摘要落后于正文 | `摘要停在 17:40，正文写到 21:10` |
+| 一天超过 `diarySections` 节（默认 8） | `9 sections, over the 8-per-day bar` |
+| 有节没写 `情绪：` 行 | `2 without an \`情绪：\` line` |
+| 标签的词不在词表里 | `烦躁 not in the vocabulary` |
+| 用了标签但没有词表节 | `tags used, but relationship.md has no \`情绪词表\` section` |
+| 过了 `summaryFrom` 还没有摘要 | `no \`## 今天\` summary at the top` |
+| 摘要落后于正文 | `summary stopped at 17:40, body runs to 21:10` |
+
+整句长这样：`Diary check — 9 sections, over the 8-per-day bar; …`
 
 **「标签必须来自词表」不是口味，是结构**：值只能取词表里的词，所以表外的标签永远匹配不上——不报错，只是那天从此不能被情绪找到。
 
@@ -127,7 +129,13 @@ remember_emotion(word: "定")
 
 ## 块尾那一行
 
-如果笔记文件夹里有 `diary/`，注入的末尾会多一句：今天的日记还没写，路径写上。它只花一次 `stat`，作用是让「今天写不写」不靠想起来的。
+如果笔记文件夹里有 `diary/`，注入的末尾会多一行状态：
+
+```
+- no diary entry for 2026-10-30 yet (`diary/2026-10-30.md`)
+```
+
+**它刻意写成一行状态，不是一句指令**——没有「快写」，也不点 skill 的名字。因为同一个块尾还装着上面的体检报告，那是真的会坏事的消息；提醒要是也一副催的口气，**两行都会被跳过**。它只花一次 `stat`，作用是让「今天写不写」不靠想起来的。
 
 **多久写一次由 `diaryCadence` 决定**：`daily`（默认）每天催；`weekly` 只在最近 7 天一个字都没写时才开口；`off` 永不提醒。两种情况下它都会闭嘴：**没有 `diary/` 目录**（这说明这个文件夹不走日记这套），或者 **cadence 是 `off`**（那是想停写又不想删历史）。
 
