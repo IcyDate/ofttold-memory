@@ -138,10 +138,21 @@ Whether a rule gets followed has little to do with how well it is written, and a
 do with **what is in hand at the moment it fires**.
 
 Four measured cells: a rule hung on a moment — "read two files at the start of work" —
-fired **1/11**; another on a moment — "write the diary" — fired **4/4**; one on an
-event — "update the index after writing" — **5/5**; another on an event — "also refresh
-the emotion cache" — **0/9**. Every cell has both hits and misses, so "events beat
-moments" on its own predicts nothing.
+was read within the first three actions in **4 of 9 sessions**, and at some point in **7
+of 9**; another on a moment — "write the diary" — fired **4/4**; one on an event —
+"update the index after writing" — **5/5**; another on an event — "also refresh the
+emotion cache" — **0/9**. Every cell has both hits and misses, so "events beat moments" on
+its own predicts nothing.
+
+**That first figure was wrong the first time it was published: it said 1/11.** The sample
+included three sessions opened *before* this memory mechanism existed — there was nothing
+to read, so they could only score zero. Without them it is 4/9 and 7/9. The conclusion
+(binary classes predict nothing) is unchanged; its weight is not — "this rule is basically
+never followed" became "it is followed, except in very narrow one-off sessions".
+
+The lesson is not "count more carefully". It is: **before measuring a rule, check that the
+sample sits inside the same mechanism the rule belongs to.** A denominator containing a
+different chapter of history measures a rule that never existed.
 
 Three questions instead:
 
