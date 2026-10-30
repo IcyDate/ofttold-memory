@@ -9,12 +9,13 @@
 <p align="center"><sub><strong>DSH 插件</strong> · 其他 harness 用同一份 skill：<a href="./docs/skill.md">spec</a></sub></p>
 
 <p align="center">
+<a href="https://www.npmjs.com/package/ofttold-memory"><img src="https://img.shields.io/npm/v/ofttold-memory.svg?style=flat-square" alt="npm"></a>
 <a href="https://github.com/IcyDate/ofttold-memory/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="license"></a>
 <a href="https://github.com/IcyDate/ofttold-memory"><img src="https://img.shields.io/badge/GitHub-IcyDate%2Fofttold--memory-181717?style=flat-square&logo=github" alt="GitHub"></a>
 </p>
 
 <p align="center">
-<code>dsh plugin --profile web add github:IcyDate/ofttold-memory</code>
+<code>dsh plugin --profile web add ofttold-memory</code>
 </p>
 
 <p align="center">
@@ -45,10 +46,10 @@ flowchart LR
 ## 快速开始
 
 ```sh
-dsh plugin --profile web add github:IcyDate/ofttold-memory
+dsh plugin --profile web add ofttold-memory
 ```
 
-装的是仓库里现成的代码——没有构建步骤，不需要额外授权。**这就是全部安装步骤。** 第一次运行会创建 `~/.dsh/ofttold-memory/`，并铺一份四文件骨架：`MEMORY.md`（注入源）、`INDEX.md`（日记索引）、`relationship.md`（我是谁 + 情绪缓存区）、`diary/`（一天一个文件）。**全是空壳加注释，一条记忆都不预填**——写什么只能由你决定。把 `memoryDir` 指向你已有的文件夹——日记、索引、规则文件都算——插件只读不写：**已有内容的笔记文件夹不会被写入任何东西。**
+**这就是全部安装步骤。** 装的是 npm 上的预构建产物，没有构建步骤，不需要额外授权；想跟仓库最新代码走，把包名换成 `github:IcyDate/ofttold-memory` 即可。 第一次运行会创建 `~/.dsh/ofttold-memory/`，并铺一份四文件骨架：`MEMORY.md`（注入源）、`INDEX.md`（日记索引）、`relationship.md`（我是谁 + 情绪缓存区）、`diary/`（一天一个文件）。**全是空壳加注释，一条记忆都不预填**——写什么只能由你决定。把 `memoryDir` 指向你已有的文件夹——日记、索引、规则文件都算——插件只读不写：**已有内容的笔记文件夹不会被写入任何东西。**
 
 然后打开 **设置 → 拾光** 用鼠标调整，或者直接改 profile 的 `cordis.patch.yml`。
 

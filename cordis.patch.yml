@@ -1,6 +1,6 @@
 # ofttold-memory bundle patch: inject human-curated standing context once per session.
-# Installed with `dsh plugin --profile web add github:IcyDate/ofttold-memory`; a local
-# checkout works the same way with a path in place of the github: spec.
+# Installed with `dsh plugin --profile web add ofttold-memory`. A local checkout or the
+# repository spec (github:IcyDate/ofttold-memory) works the same way.
 #
 # `name` must be the actual package name (ofttold-memory): cordis imports by
 # name, so a mismatch yields `Cannot find package` for anyone who installs it.

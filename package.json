@@ -94,5 +94,9 @@
   "homepage": "https://github.com/IcyDate/ofttold-memory#readme",
   "bugs": {
     "url": "https://github.com/IcyDate/ofttold-memory/issues"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
   }
 }

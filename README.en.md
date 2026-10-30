@@ -9,12 +9,13 @@
 <p align="center"><sub><strong>A DSH plugin</strong> · the same skill for other harnesses: <a href="./docs/skill.en.md">spec</a></sub></p>
 
 <p align="center">
+<a href="https://www.npmjs.com/package/ofttold-memory"><img src="https://img.shields.io/npm/v/ofttold-memory.svg?style=flat-square" alt="npm"></a>
 <a href="https://github.com/IcyDate/ofttold-memory/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="license"></a>
 <a href="https://github.com/IcyDate/ofttold-memory"><img src="https://img.shields.io/badge/GitHub-IcyDate%2Fofttold--memory-181717?style=flat-square&logo=github" alt="GitHub"></a>
 </p>
 
 <p align="center">
-<code>dsh plugin --profile web add github:IcyDate/ofttold-memory</code>
+<code>dsh plugin --profile web add ofttold-memory</code>
 </p>
 
 <p align="center">
@@ -45,11 +46,12 @@ One read, one injection. No index, no embeddings, no database, no second pass.
 ## Quick start
 
 ```sh
-dsh plugin --profile web add github:IcyDate/ofttold-memory
+dsh plugin --profile web add ofttold-memory
 ```
 
-**That is the whole setup.** It installs the code as it sits in the repository — no
-build step, so no build approval is needed. The first run creates `~/.dsh/ofttold-memory/` with a
+**That is the whole setup.** It installs the prebuilt package from npm — no build step,
+so no build approval is needed. To track the repository instead, use
+`github:IcyDate/ofttold-memory` in place of the package name. The first run creates `~/.dsh/ofttold-memory/` with a
 four-file skeleton: `MEMORY.md` (the injected source), `INDEX.md` (the diary index),
 `relationship.md` (who the assistant is, plus the live emotion value), and `diary/`
 (one file per day). **All of it is empty shells and comments — not one memory is
