@@ -23,6 +23,7 @@
  */
 
 import { createUserMessage } from "@deepseek-ai/dsh-llm";
+import { buildNotice } from "./lib/notice.js";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import z from "@deepseek-ai/schemastery";
@@ -326,12 +327,23 @@ export function apply(ctx, config) {
     }
 
     const rendered = renderSources(config, memoryDir);
-    if (rendered === undefined) {
+    if (rendered.loaded === 0) {
       // The most common "it does nothing" report: the folder exists, the heading
-      // does not match. Recording it is the whole point of the diagnostic file.
+      // does not match. Recording it is the whole point of the diagnostic file --
+      // but a file nobody opens cannot be the only answer, so the session gets a
+      // line saying what was looked for.
       diagnostics.record("nothing-loaded", { memoryDir, reason: "no configured section resolved" });
       diagnostics.flush(storageDirectory());
-      return decision;
+      return {
+        ...decision,
+        messages: [
+          ...decision.messages,
+          createUserMessage({
+            content: [{ type: "text", text: buildNotice({ attempts: rendered.attempts, memoryDir, header: rendered.header }) }],
+            source: { kind: name, form: "snapshot", sections: [] },
+          }),
+        ],
+      };
     }
     diagnostics.record("injected", {
       memoryDir,

@@ -78,7 +78,7 @@ npm test
 | 文件 | 证明什么 |
 |---|---|
 | `test/sections.test.mjs` | 标题解析（含围栏代码块里的 `#`、四反引号围栏不被内部三反引号关闭）、精确匹配取节、按行截断、`~` 展开、文件缺失、BOM/CRLF、部分成功与部分失败的渲染、volatile 配置引用、诊断 |
-| `test/plugin.test.mjs` | 对假 harness 的决策逻辑：只注入一次、按配置重注入、不在轮次中途注入、什么都没读到就不注入；首次运行建起始文件，且**相对文件夹不会建到进程目录** |
+| `test/plugin.test.mjs` | 对假 harness 的决策逻辑：只注入一次、按配置重注入、不在轮次中途注入、什么都没读到就注入一条说明，而不是沉默；首次运行建起始文件，且**相对文件夹不会建到进程目录** |
 | `test/contract.test.mjs` | 同一投影由真 `Session` 和真 `createUserMessage` 驱动；`user/message` 或 `MessageSource` 契约一变就红 |
 | `test/registry.test.mjs` | 插件挂在真 Cordis `Context` 和真 `SessionProjectionRegistry` 上 |
 | `test/client.test.mjs` | 浏览器半侧按模块加载器的方式加载：注册了什么、没有硬依赖 `configForms`、设置节与插件卡片共用一份表单、面板用到的每个键在两份内联词典里都存在 |

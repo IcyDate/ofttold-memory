@@ -143,12 +143,19 @@ test("re-injects after the configured interval", async () => {
   assert.equal(again.messages.length, 1, "interval trigger should re-inject");
 });
 
-test("stays silent when nothing loads", async () => {
+test("says what it looked for when nothing loads", async () => {
+  // Silence is the failure users cannot diagnose: their notes do not show up, no
+  // error appears, and the old behaviour was to inject nothing at all. The session
+  // now gets a line naming the folder and the heading that did not match.
   const dir = workspace();
   const h = harness(dir);
   apply(h.ctx, config({ sections: [{ heading: "gone" }] }));
   const decision = await h.drive({ step: 1 });
-  assert.deepEqual(decision.messages, []);
+  assert.equal(decision.messages.length, 1);
+  const notice = decision.messages[0].content[0].text;
+  assert.match(notice, /none of its headings matched/);
+  assert.match(notice, /gone/, "the heading that was looked for must be named");
+  assert.match(notice, /ofttold-ritual|settings page|cordis\.patch\.yml/);
 });
 
 test("does not register a listener when sections are empty", () => {

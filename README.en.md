@@ -176,7 +176,7 @@ information.
 | `event` | Meaning |
 |---|---|
 | `injected` | Worked. `loaded` = sections, `chars` = block size. |
-| `nothing-loaded` | Folder found, no configured heading matched — usually a renamed heading. |
+| `nothing-loaded` | Folder found, no configured heading matched — usually a renamed heading. The session also gets a line saying which file and heading were tried. |
 
 An absent file means the plugin never reached a decision, which points at the
 install rather than the content.

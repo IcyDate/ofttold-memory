@@ -225,8 +225,15 @@ test("renderSources joins loaded sections and names the failures", () => {
   assert.match(rendered.text, /Unavailable: stale: heading_not_found/);
 });
 
-test("renderSources returns undefined when nothing loads", () => {
-  assert.equal(renderSources({ sections: ["x"] }, "/nonexistent-folder"), undefined);
+test("renderSources reports what it tried when nothing loads", () => {
+  // Returning undefined here used to mean "say nothing", which is the failure mode
+  // users cannot see. The attempts are the only thing that lets a caller explain.
+  const rendered = renderSources({ sections: ["x"] }, "/nonexistent-folder");
+  assert.equal(rendered.loaded, 0);
+  assert.equal(rendered.text, "");
+  assert.ok(rendered.attempts.length > 0, "an empty result must still say what was tried");
+  assert.equal(rendered.attempts[0].reason, "missing");
+  assert.ok(typeof rendered.header === "string" && rendered.header.length > 0);
 });
 
 test("renderSources with the default config loads the scaffolded template", () => {
