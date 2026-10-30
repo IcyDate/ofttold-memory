@@ -4,6 +4,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
+import { latestEntryDay, pendingDiaryNudge } from "../lib/diary.js";
+
 import { checkEntry, clockOf, diaryIssueLine, lastSectionMinute, minutesOf, strayTags, summaryState, tagsOf } from "../lib/diarycheck.js";
 
 const DAY = `# 2026-10-30
@@ -20,6 +22,21 @@ const DAY = `# 2026-10-30
 
 情绪：定
 `;
+
+test("cadence decides how often the folder is expected to grow", () => {
+  const dir = mkdtempSync(join(tmpdir(), "ofttold-cadence-"));
+  mkdirSync(join(dir, "diary"), { recursive: true });
+  writeFileSync(join(dir, "diary", "2026-10-28.md"), "# 28\n", "utf8");
+  const now = new Date(2026, 9, 30, 12, 0);
+  assert.match(pendingDiaryNudge(dir, now, "daily"), /No entry for today yet/);
+  assert.equal(pendingDiaryNudge(dir, now, "weekly"), undefined, "written three days ago is recent");
+  const later = new Date(2026, 10, 8, 12, 0);
+  assert.match(pendingDiaryNudge(dir, later, "weekly"), /No entry in the last 7 days/);
+  assert.equal(pendingDiaryNudge(dir, now, "off"), undefined, "off never speaks");
+  assert.equal(pendingDiaryNudge(join(dir, "nope"), now, "daily"), undefined, "no diary folder is silent under every cadence");
+  assert.equal(latestEntryDay(dir, now), "2026-10-28");
+  rmSync(dir, { recursive: true, force: true });
+});
 
 test("HH:mm parses to minutes, and nonsense is undefined", () => {
   assert.equal(minutesOf("17:30"), 1050);

@@ -35,6 +35,18 @@ window.__ModuleLoader__.load({
       refreshAfterMessagesHint: "0 means never. Only needed in long sessions, where the notes get pushed out of the context.",
       workspaceRelative: "Count relative paths from this session's folder",
       workspaceRelativeHint: "On, paths are resolved against the folder this session runs in. Off, against the folder the process started in. Usually leave it on.",
+      anchorCap: "Keep how many lines in view",
+      anchorCapHint: "Past this, the extra lines sink by weight — kept in the file, no longer injected. 0 turns it off.",
+      diaryCadence: "Expected to grow how often",
+      diaryCadenceHint: "daily / weekly / off. Weekly stays quiet while anything was written in the last 7 days. No diary folder means silence either way.",
+      summaryFrom: "Expect the day's summary from",
+      summaryFromHint: "HH:mm. Before this hour the top-of-file summary is not required; after it, a summary the body has run past is named.",
+      diarySections: "Sections a single day may hold",
+      diarySectionsHint: "Past this the entry stops being a record and becomes a transcript. Three to five is the normal range.",
+      diaryCheck: "Check today's entry",
+      diaryCheckHint: "Names sections over the cap, sections with no emotion line, a tag outside the vocabulary, and a stale summary. Reports only, never rewrites.",
+      skills: "Ship the two writing skills",
+      skillsHint: "Off removes them from the session's skill list without touching injection.",
       starLead: "Finding it useful?",
       starLink: "Star it on GitHub",
       feedbackLink: "Feedback or an issue",
@@ -70,6 +82,18 @@ window.__ModuleLoader__.load({
       refreshAfterMessagesHint: "0 = 不再带。只有会话特别长、前面的笔记被挤掉时才需要。",
       workspaceRelative: "相对路径从这次会话的目录算",
       workspaceRelativeHint: "开着按这次会话的目录算，关掉按程序启动时的目录算。一般保持开着。",
+      anchorCap: "一节里最多摆几条",
+      anchorCapHint: "超出的按权重沉底——留在文件里，不再注入。填 0 关掉。",
+      diaryCadence: "多久写一次",
+      diaryCadenceHint: "daily 每天催 / weekly 最近 7 天有写过就不催 / off 永不提醒。没有 diary 目录时三种都闭嘴。",
+      summaryFrom: "从几点开始要求当天摘要",
+      summaryFromHint: "HH:mm。这个点之前不要求顶部摘要；之后摘要落后于正文就会被点名。",
+      diarySections: "一天最多几节",
+      diarySectionsHint: "超过就不像记录了，像流水账。三五节是正常量。",
+      diaryCheck: "检查今天那篇日记",
+      diaryCheckHint: "点名超节数、缺情绪行、标签不在词表、摘要落后。只报告，绝不改写。",
+      skills: "带上那两份写作 skill",
+      skillsHint: "关掉只是从会话的技能列表里拿掉，不影响注入。",
       starLead: "觉得好用？",
       starLink: "去 GitHub 点个 Star",
       feedbackLink: "反馈建议 / 提 issue",
@@ -228,6 +252,32 @@ window.__ModuleLoader__.load({
           { ...settingsTextField("header") },
           { ...settingsNumberField("refreshIntervalMs") },
           { ...settingsNumberField("refreshAfterMessages") },
+          { ...settingsNumberField("anchorCap") },
+          { ...settingsTextField("diaryCadence") },
+          { ...settingsTextField("summaryFrom") },
+          { ...settingsNumberField("diarySections") },
+          {
+            ...settingsTextField("diaryCheck"),
+            format: (value) => (typeof value === "boolean" ? String(value) : ""),
+            parse: (text) => {
+              const value = text.trim().toLowerCase();
+              if (value === "") return { kind: "clear" };
+              if (value === "true") return { kind: "set", value: true };
+              if (value === "false") return { kind: "set", value: false };
+              return undefined;
+            },
+          },
+          {
+            ...settingsTextField("skills"),
+            format: (value) => (typeof value === "boolean" ? String(value) : ""),
+            parse: (text) => {
+              const value = text.trim().toLowerCase();
+              if (value === "") return { kind: "clear" };
+              if (value === "true") return { kind: "set", value: true };
+              if (value === "false") return { kind: "set", value: false };
+              return undefined;
+            },
+          },
           {
             ...settingsTextField("workspaceRelative"),
             // Same trap in the boolean direction: `format` must round-trip the
@@ -353,32 +403,35 @@ window.__ModuleLoader__.load({
       // 勾选框而不是输入框：这个值只有开/关两种，让用户手打 true/false 是在暴露
       // 内部表示。宿主自带的表单只认文本和数字，所以这里用原生 input 自己画——
       // 与上面那个自带 DOM 的排查面板同一个理由：不依赖更高级的组件存在。
-      const workspaceRelativeOn =
-        String(state.workspaceRelative?.text ?? "").trim().toLowerCase() === "true";
-      const workspaceRelativeRow = h(
-        "div",
-        { style: { marginTop: "16px" } },
+      // 勾选框而不是输入框：这些值只有开/关两种，让用户手打 true/false 是在暴露
+      // 内部表示。宿主自带的表单只认文本和数字，所以这里用原生 input 自己画——
+      // 与上面那个自带 DOM 的排查面板同一个理由：不依赖更高级的组件存在。
+      const booleanRow = (id, gap = "16px") =>
         h(
-          "label",
-          {
-            style: {
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              cursor: disabled ? "default" : "pointer",
+          "div",
+          { style: { marginTop: gap } },
+          h(
+            "label",
+            {
+              style: {
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                cursor: disabled ? "default" : "pointer",
+              },
             },
-          },
-          h("input", {
-            type: "checkbox",
-            checked: workspaceRelativeOn,
-            disabled,
-            onChange: (event) =>
-              props.edit("workspaceRelative", event.target.checked ? "true" : "false"),
-          }),
-          h("span", {}, t("workspaceRelative")),
-        ),
-        h("p", { style: { margin: "4px 0 0 24px", opacity: 0.7, fontSize: "0.9em" } }, t("workspaceRelativeHint")),
-      );
+            h("input", {
+              type: "checkbox",
+              checked: String(state[id]?.text ?? "").trim().toLowerCase() === "true",
+              disabled,
+              onChange: (event) => props.edit(id, event.target.checked ? "true" : "false"),
+            }),
+            h("span", {}, t(id)),
+          ),
+          h("p", { style: { margin: "4px 0 0 24px", opacity: 0.7, fontSize: "0.9em" } }, t(`${id}Hint`)),
+        );
+
+      const booleanRows = [booleanRow("diaryCheck"), booleanRow("skills"), booleanRow("workspaceRelative")];
 
       // 页脚：版本 + Star + 反馈入口。装完插件的人通常只会打开这个面板，
       // 这是他们唯一能看到「这东西去哪儿提意见」的地方。
@@ -436,7 +489,13 @@ window.__ModuleLoader__.load({
         field("header", "header", "headerHint"),
         field("refreshIntervalMs", "refreshIntervalMs", "refreshIntervalMsHint", { numeric: true }),
         field("refreshAfterMessages", "refreshAfterMessages", "refreshAfterMessagesHint", { numeric: true }),
-        workspaceRelativeRow,
+        field("anchorCap", "anchorCap", "anchorCapHint", { numeric: true }),
+        field("diaryCadence", "diaryCadence", "diaryCadenceHint"),
+        field("summaryFrom", "summaryFrom", "summaryFromHint"),
+        field("diarySections", "diarySections", "diarySectionsHint", { numeric: true }),
+        booleanRows[0],
+        booleanRows[1],
+        booleanRows[2],
         diagnostics,
         footer,
       );

@@ -226,3 +226,14 @@ test("a read-only scope refuses the save without touching the Host", async () =>
   assert.equal(await props.save(), undefined);
   assert.equal(scope.writes.length, 0, "a read-only scope must never receive a write");
 });
+
+test("every setting the panel draws is declared, and every declared one is drawn", () => {
+  // 面板上画出来的字段和表单模型登记的字段必须是一套。多画一个没登记的，它永远空着；
+  // 少画一个，那个配置项就藏起来了——两次都是静默的，所以拿源码直接对。
+  const drawn = new Set([
+    ...[...SOURCE.matchAll(/field\("([a-zA-Z]+)"/g)].map((match) => match[1]),
+    ...[...SOURCE.matchAll(/booleanRow\("([a-zA-Z]+)"/g)].map((match) => match[1]),
+  ]);
+  const declared = new Set([...SOURCE.matchAll(/settings(?:Text|Number)Field\("([a-zA-Z]+)"\)/g)].map((m) => m[1]));
+  assert.deepEqual([...drawn].sort(), [...declared].sort());
+});

@@ -13,6 +13,7 @@
 | `maxChars` | `600` | 每节字符上限。600 字符约 400 token。 |
 | `anchorCap` | `8` | 一节里最多留下几条粗体列表项（锚点）。超出的**留在文件里，只是不再注入**——按 `exp(-t / 2^n)` 排，`t` 是这条自己被标日期的天数，`n` 是有几天日记提回它。没有自己日期的条目，**第一次见到时就地补一个 `\`日期\` 起` 在行里**，之后按那个日期老化。`0` 关掉上限。 |
 | `summaryFrom` | `"17:30"` | 从几点起要求顶部有 `## 今天` 摘要。之前不催——上午那半截还不是一天。 |
+| `diaryCadence` | `"daily"` | 多久写一次：`daily` 每天催 / `weekly` 最近 7 天有写过就不催 / `off` 永不提醒。没有 `diary/` 目录时三种都闭嘴。 |
 | `diarySections` | `8` | 一天最多几节，超过体检会点名。 |
 | `diaryCheck` | `true` | 日记体检：节数、缺 `情绪：` 行、摘要缺失或落后。**只报不改**——整理会删掉权重数的证据。 |
 | `header` | `Standing context for this session: human-curated sections of a memory folder. Writing and maintaining it — index, self-description, diary — is the `ofttold-ritual` skill.` | 注入块的第一行。 |

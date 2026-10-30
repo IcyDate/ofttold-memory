@@ -25,7 +25,7 @@
 import { defineTool } from "@deepseek-ai/dsh-tools";
 import { createUserMessage } from "@deepseek-ai/dsh-llm";
 import { buildNotice } from "./lib/notice.js";
-import { localDay, pendingDiaryNudge } from "./lib/diary.js";
+import { DIARY_CADENCES, localDay, pendingDiaryNudge } from "./lib/diary.js";
 import { diaryIssueLine, minutesOf } from "./lib/diarycheck.js";
 import { rememberEmotion } from "./lib/emotion.js";
 import { homedir } from "node:os";
@@ -116,6 +116,13 @@ export const Config = z.object({
     .volatile()
     .description(
       "How much of each section to read, when a section does not set its own. 600 characters is about 400 tokens, charged once per session, so raising this raises what every session pays.",
+    ),
+  diaryCadence: z
+    .string()
+    .default("daily")
+    .volatile()
+    .description(
+      "How often the folder is expected to grow. `daily` names today when it is unwritten; `weekly` stays quiet as long as something was written in the last 7 days; `off` never says anything. A folder without `diary/` is silent under every setting — that is the layout answering, not the config.",
     ),
   summaryFrom: z
     .string()
@@ -452,7 +459,12 @@ function localStamp(now = new Date()) {
 
     // 块尾的一句话：今天的日记还没写。别的部分都要求模型想起来去做判断，这一行
     // 只需要它看一眼——一个 stat 的代价，换掉「靠自觉」。
-    const nudge = pendingDiaryNudge(memoryDir);
+    // schemastery 没有 z.enum；也不是拿它当校验——写错的值当 daily 处理，宁可多提醒一次，
+    // 不要因为拼错一个词就安静下来（安静正是这套机制要消灭的失败）。
+    const cadence = DIARY_CADENCES.includes(configValue(config, "diaryCadence"))
+      ? configValue(config, "diaryCadence")
+      : "daily";
+    const nudge = pendingDiaryNudge(memoryDir, new Date(), cadence);
     // 体检跟提醒拼在一起：都在块尾，都只在「今天这一篇有问题」时才出现，都对模型说而不是
     // 对用户说——用户没义务转告。
     const issue = diaryIssueLine({

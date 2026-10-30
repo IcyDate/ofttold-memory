@@ -184,6 +184,7 @@ the layout answers the question.
 | `maxChars` | `600` | Character budget per section. 600 characters ≈ 400 tokens. |
 | `anchorCap` | `8` | How many bold bullets a section keeps in view; the rest sink without being deleted. `0` turns it off. |
 | `summaryFrom` | `"17:30"` | When the day's `## 今天` summary starts being expected. |
+| `diaryCadence` | `"daily"` | How often the folder is expected to grow: `daily` / `weekly` (quiet while anything was written in the last 7 days) / `off`. |
 | `diarySections` | `8` | Sections per day before the check names it. |
 | `diaryCheck` | `true` | The diary check on or off. |
 

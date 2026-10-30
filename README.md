@@ -137,7 +137,7 @@ remember_emotion(word: "定")
 
 如果笔记文件夹里有 `diary/`，注入的末尾会多一句：今天的日记还没写，路径写上。它只花一次 `stat`，作用是让「今天写不写」不靠想起来的。
 
-不写日记的文件夹没有 `diary/`，就永远不会有这句话——不需要开关，目录结构自己回答。
+**多久写一次由 `diaryCadence` 决定**：`daily`（默认）每天催；`weekly` 只在最近 7 天一个字都没写时才开口；`off` 永不提醒。两种情况下它都会闭嘴：**没有 `diary/` 目录**（这说明这个文件夹不走日记这套），或者 **cadence 是 `off`**（那是想停写又不想删历史）。
 
 ---
 
@@ -150,10 +150,11 @@ remember_emotion(word: "定")
 | `maxChars` | `600` | 每节字符上限。600 字符约 400 token。 |
 | `anchorCap` | `8` | 一节的粗体列表最多留几条，超出的沉底但不删。`0` 关掉。 |
 | `summaryFrom` | `"17:30"` | 从几点开始要求顶部有 `## 今天` 摘要。 |
+| `diaryCadence` | `"daily"` | 多久写一次：`daily` / `weekly`（最近 7 天有写过就不催）/ `off`（永不提醒）。 |
 | `diarySections` | `8` | 一天最多几节，超了体检会点名。 |
 | `diaryCheck` | `true` | 日记体检开关。 |
 
-其余字段都有可用默认值。完整字段表、`sections` 的对象写法（某节单独在别的文件里时才需要）、小节名精确匹配、跨平台行为，都在 **[配置说明](docs/config.md)**。
+**这 9 项在设置页里都能改**（面板把布尔项画成勾选框，不用手打 true/false）。剩下的 `header`、`workspaceRelative`、`refreshIntervalMs`、`refreshAfterMessages` 也有面板入口，只是平时不用动。完整字段表、`sections` 的对象写法、小节名精确匹配、跨平台行为在 **[配置说明](docs/config.md)**。
 
 ---
 

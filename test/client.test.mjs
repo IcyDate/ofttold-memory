@@ -537,13 +537,18 @@ test("the settings page does not say 注入 to the person configuring it", () =>
   }
 });
 
-test("the boolean setting is a checkbox, not a text box asking for true", () => {
+test("every boolean setting is a checkbox, not a text box asking for true", () => {
   assert.match(CLIENT_SOURCE, /type: "checkbox"/);
   assert.match(
     CLIENT_SOURCE,
-    /props\.edit\("workspaceRelative", event\.target\.checked \? "true" : "false"\)/,
+    /props\.edit\(id, event\.target\.checked \? "true" : "false"\)/,
     "the checkbox must stage the two values the parser understands",
   );
+  // All three go through the same helper: a new boolean added as a text field
+  // would show "true" and expect the user to type it.
+  for (const id of ["diaryCheck", "skills", "workspaceRelative"]) {
+    assert.match(CLIENT_SOURCE, new RegExp(`booleanRow\\("${id}"\\)`), `${id} must render as a checkbox`);
+  }
 });
 
 test("the panel says where to star and where to complain", () => {
