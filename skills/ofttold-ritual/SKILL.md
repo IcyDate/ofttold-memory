@@ -51,10 +51,16 @@ and cannot find it, and the subset check silently stops being a check.
 
 ## The top of the file: the day in a paragraph
 
-A day's entry opens with `## 今天（HH:mm 更新）` — two or three sentences covering what the
-day was and what it was like. Complaint and irritation belong there; that is what it is for.
-Someone opening the file wants the day, not the transcript, and nobody scrolls to the bottom
-to find out how it went.
+A day's entry opens with `## 今天（HH:mm 更新）` — **roughly one line per section**, so a
+normal ten-section day runs four to six hundred characters. Two or three sentences is a
+stub: it covers the mood and drops every decision the day made.
+
+The unit is coverage, not length. The test is: **close the file and read only the summary —
+can you still say what the day settled?** A day with twelve sections and a three-sentence
+summary has thrown away nine of them.
+
+Complaint and irritation belong there; that is what it is for. Someone opening the file
+wants the day, not the transcript, and nobody scrolls to the bottom to find out how it went.
 
 **Rewrite that block in the same breath as writing a section.** Not "at the end of the day" —
 the end of the day is the moment attention is gone, and a summary that lags the body is worse

@@ -16,7 +16,8 @@ A normal day is three to five sections. Past eight, the bar has slipped.
 
 ## 今天（17:40 更新）
 
-Two or three sentences: what the day was, what it was like. Grumbling belongs here.
+One line per section — a normal day is 400–600 characters. What the day
+settled, not just how it felt. Grumbling belongs here too.
 
 ## 09:50 what got done
 
