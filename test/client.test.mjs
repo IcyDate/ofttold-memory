@@ -637,3 +637,20 @@ test("the heading field shows what an entry looks like, not just 'write the head
   assert.ok(CLIENT_SOURCE.includes("`## 常被提起` becomes"), "the English hint must show the transformation");
   assert.ok(CLIENT_SOURCE.includes("就填 `常被提起`"), "the Chinese hint must show the transformation");
 });
+
+test("the panel names the file the headings are read from", () => {
+  // 「读哪几段」悬空着，用户不知道读的是哪个文件的段落——标题那串字看着像在让人猜。
+  assert.ok(CLIENT_SOURCE.includes("sectionsWhere"), "the where-line key must exist");
+  assert.match(CLIENT_SOURCE, /t\("sectionsWhere"\)\.replace\("\{path\}"/);
+  assert.match(CLIENT_SOURCE, /labelRow[\s\S]{0,400}replace\("\{file\}", MEMORY_FILE\)/);
+});
+
+test("the panel's memory file name matches the one the reader actually opens", () => {
+  // 两处写死同一个名字：面板说 MEMORY.md，注入端读的也必须是 MEMORY.md。
+  const sources = readFileSync(join(PACKAGE_ROOT, "lib", "sources.js"), "utf8");
+  const declared = /export const DEFAULT_MEMORY_FILE = "([^"]+)"/.exec(sources);
+  assert.ok(declared !== null, "DEFAULT_MEMORY_FILE must be declared");
+  const panel = /const MEMORY_FILE = "([^"]+)"/.exec(CLIENT_SOURCE);
+  assert.ok(panel !== null, "the client half must declare its copy");
+  assert.equal(panel[1], declared[1], "the panel would point at a file nothing reads");
+});

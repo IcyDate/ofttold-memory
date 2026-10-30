@@ -15,6 +15,7 @@ window.__ModuleLoader__.load({
      */
     const VERSION = "0.1.2";
     const REPO = "https://github.com/IcyDate/ofttold-memory";
+    const MEMORY_FILE = "MEMORY.md";
 
     const en = {
       nav: "Oft-told",
@@ -22,8 +23,9 @@ window.__ModuleLoader__.load({
       description: "Your notes stay in the room in every session, so you stop depending on remembering to look. The name is the idea: what is told often enough stops needing to be remembered.",
       memoryDir: "Where your notes live",
       memoryDirHint: "Created with a starter file on first run, so you can leave this alone. Point it at a folder you already keep and the plugin only reads it.",
-      sections: "Which parts of your notes to read",
+      sections: "Which sections of `{file}` to read",
       sectionsHint: "Copy the heading text exactly, one per line. `## 常被提起` becomes `常被提起`.",
+      sectionsWhere: "Read from {path} — those sections, and nothing else in the file.",
       sectionsComplexHint: "Each section here names its own file or budget, so this field is read-only — edit the profile file instead.",
       maxChars: "How much of each section to read",
       maxCharsHint: "Longer text is cut. 600 characters is about 400 tokens, charged once per session.",
@@ -80,8 +82,9 @@ window.__ModuleLoader__.load({
       description: "你的笔记在每个会话里都在场，不用再依赖「记得去看」。它叫拾光——把散落在字里行间的自己，一次一次拾回来。",
       memoryDir: "你的笔记文件夹在哪",
       memoryDirHint: "第一次使用会自动建好并放一份起始文件，所以这里可以不管。已经有笔记文件夹的话，把路径指过去就行，插件只读不写。",
-      sections: "从笔记里读哪几段",
+      sections: "从 `{file}` 里读哪几段",
       sectionsHint: "照抄标题原文，一行一个。`## 常被提起` 这种就填 `常被提起`。",
+      sectionsWhere: "读的就是 {path} 里的这几段，文件其余部分不读。",
       sectionsComplexHint: "这份配置给每段单独指定了文件或字数，所以这里只读——要改请编辑 profile 文件。",
       maxChars: "每段最多读多少字",
       maxCharsHint: "太长会被截断。600 字大约 400 token，一个会话只算一次。",
@@ -527,7 +530,7 @@ window.__ModuleLoader__.load({
           h(
             "label",
             { htmlFor: `ofttold-${id}`, style: { fontSize: "0.92em", opacity: 0.9 } },
-            t(id),
+            t(id).replace("{file}", MEMORY_FILE),
             helpDot(id),
           ),
           reset,
@@ -568,6 +571,21 @@ window.__ModuleLoader__.load({
           style: multiline ? { ...INPUT, resize: "vertical", lineHeight: 1.5 } : INPUT,
         });
 
+      // 面板上写「读哪几段」不够：得让人看见**读的是哪个文件的**那几段，
+      // 否则标题那串字悬空着，像在让人猜。
+      const memoryRoot = () => {
+        const configured = String(state.memoryDir?.text ?? "").trim();
+        return configured === "" ? "~/.dsh/ofttold-memory" : configured.replace(/\/+$/, "");
+      };
+      const whereLine = (id) => {
+        if (id !== "sections" || state.sectionsComplex === true) return null;
+        return h(
+          "p",
+          { style: { ...HINT, opacity: 0.85 } },
+          t("sectionsWhere").replace("{path}", `${memoryRoot()}/${MEMORY_FILE}`),
+        );
+      };
+
       const field = (id, opts = {}) =>
         h(
           "div",
@@ -575,6 +593,7 @@ window.__ModuleLoader__.load({
           labelRow(id, resetFor(id)),
           control(id, opts),
           h("p", { style: HINT }, t(`${id}Hint`)),
+          whereLine(id),
         );
 
       const selectRow = (id, options) =>
