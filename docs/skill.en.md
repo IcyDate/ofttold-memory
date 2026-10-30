@@ -93,7 +93,7 @@ Both are in the repo and both were checked against the real frontmatter contract
 | File | `name` | description | body |
 | --- | --- | --- | --- |
 | `skills/ofttold-memory/SKILL.md` | `ofttold-memory` | 240 chars | 3300 chars |
-| `skills/ofttold-ritual/SKILL.md` | `ofttold-ritual` | 196 chars | 4625 chars |
+| `skills/ofttold-ritual/SKILL.md` | `ofttold-ritual` | 196 chars | 6475 chars |
 
 Both hard constraints hold:
 

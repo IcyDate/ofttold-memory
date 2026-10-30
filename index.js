@@ -114,7 +114,10 @@ export const Config = z.object({
     ),
   header: z
     .string()
-    .default("Standing context for this session (human-curated, not a user request)")
+    .default(
+      "Standing context for this session: human-curated sections of a memory folder. " +
+        "Writing and maintaining it — index, self-description, diary — is the `ofttold-ritual` skill.",
+    )
     .volatile()
     .description(
       "The line that opens the block. It tells the model this is background, not something you said, so it must not read like a message from the user.",

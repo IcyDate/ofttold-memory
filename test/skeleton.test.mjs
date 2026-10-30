@@ -12,11 +12,12 @@
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { scaffoldMemory } from "../lib/scaffold.js";
+import { renderSources } from "../lib/sources.js";
 import { loadSkills, parseFrontmatter, registerSkills } from "../lib/skills.js";
 
 /** A fake plugin context whose `get("skills")` returns a recording registry. */
@@ -116,6 +117,11 @@ test("the ritual skill covers the four things injection cannot teach", () => {
   const ritual = skills.find((skill) => skill.name === "ofttold-ritual");
   assert.ok(ritual !== undefined, "the writing side must ship");
   const body = ritual.content;
+  // 指路：词表和上限写在骨架文件里，skill 必须说清去哪儿读，否则读者只会
+  // 知道「有个封闭词表」而不知道它在哪。
+  for (const pointer of ["情绪词表", "常被提起", "INDEX.md", "diary/README.md"]) {
+    assert.ok(body.includes(pointer), `ritual skill must point at ${pointer}`);
+  }
   for (const topic of ["diary", "index", "emotion", "relationship.md"]) {
     assert.ok(body.toLowerCase().includes(topic), `ritual skill must cover ${topic}`);
   }
@@ -165,4 +171,21 @@ test("registerSkills survives a harness without the skill service", () => {
   // must get the injection and no catalog entry, not a failed plugin load.
   const { ctx } = skillContext(false);
   assert.deepEqual(registerSkills(ctx, true, () => {}), []);
+});
+
+test("the injected block says what it is and where the writing protocol lives", async () => {
+  // 默认 header 是唯一一处「每会话都会出现在模型眼前」的说明。它必须同时交代
+  // 两件事：这些字是背景资料，以及维护方法去哪找。少了后半句，「装完就能写」
+  // 就退化成靠自觉。
+  const dir = mkdtempSync(join(tmpdir(), "header-"));
+  try {
+    writeFileSync(join(dir, "MEMORY.md"), "## 常被提起\n\n- one\n", "utf8");
+    const rendered = renderSources({}, dir);
+    assert.ok(rendered !== undefined, "a section with content must render");
+    const firstLine = rendered.text.split("\n")[0];
+    assert.match(firstLine, /^Standing context/, "the block still opens by naming itself");
+    assert.match(firstLine, /ofttold-ritual/, "the block must name the skill that maintains it");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

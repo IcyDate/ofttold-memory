@@ -26,6 +26,22 @@ memoryDir/
 Ask which folder it is before writing. If the user has not said and none of these
 exist, say so and stop — **do not create a memory folder uninvited.**
 
+## Where the conventions live
+
+The skeleton writes its own rules into the files, so read them there instead of treating
+this skill as the whole story:
+
+- `relationship.md` → its `情绪词表` section holds the **closed vocabulary**. That list is
+  the authority; this skill only says the set stays closed and shared.
+- `MEMORY.md` → under whichever anchor heading is in use (`常被提起` or `Oft-told`): the cap
+  is 8 lines, and eviction is itself the ranking.
+- `INDEX.md` → its header: one line per day, at most three sections worth re-reading.
+- `diary/README.md` → the file naming, and how long a day's worth of sections runs.
+
+A folder that already held notes before the plugin was installed may carry none of these
+headings. Then the defaults above are the convention — and **say which convention you are
+assuming before you start**, because a convention the user never chose is worse than none.
+
 ## The four rituals
 
 ### 1. A diary entry
