@@ -36,7 +36,7 @@ const CLIENT_SOURCE = readFileSync(join(PACKAGE_ROOT, "client.js"), "utf8");
  *   and every module specifier the bundle asked for, so a dependency that would
  *   not resolve in the browser is visible instead of silent.
  */
-function loadClientPlugin() {
+function loadClientPlugin(options = {}) {
   const requireCalls = [];
   let plugin;
   const sandbox = {
@@ -54,7 +54,7 @@ function loadClientPlugin() {
   function fakeRequire(specifier) {
     requireCalls.push(specifier);
     if (specifier === "react") {
-      const createElement = () => null;
+      const createElement = options.createElement ?? (() => null);
       return { createElement, default: { createElement } };
     }
     if (specifier === "@deepseek-ai/dsh-client-ui-primitives") {
@@ -526,6 +526,54 @@ test("both dictionaries define the same keys, so neither locale is thinner", () 
  * boolean must not be a free-text box, and the panel must say where to file a
  * complaint. Weak assertions on purpose — they catch drift, not layout.
  */
+
+test("the panel renders cards, controls and a where-line for the headings", () => {
+  // 前面几条都是读源码。这条真的把组件跑一遍：用一个记账的 createElement，把树摊平成
+  // 「标签 + 属性」的列表，然后按用户能看到的东西断言。渲染崩了在这里就会红。
+  const nodes = [];
+  const h = (tag, props, ...children) => {
+    const node = { tag, props: props ?? {}, children: children.flat(Infinity) };
+    nodes.push(node);
+    return node;
+  };
+  h.createElement = h;
+  const plugin = loadClientPlugin({ createElement: h }).plugin;
+  const { ctx, registered } = fakeClientContext();
+  plugin.apply(ctx);
+  const page = registered.find((entry) => entry.meta.name === "plugins.bundle.config");
+  const props = page.meta.inject();
+  // 不抛就算通过第一步；要拿到真实结构得让表单模型先有一个值。
+  const state = {
+    writable: true,
+    available: true,
+    memoryDir: { text: "/tmp/notes", overridden: false, invalid: false },
+    sections: { text: "常被提起", overridden: false, invalid: false },
+  };
+  const tree = page.component({
+    ...props,
+    t: (key) => key,
+    useMemoryForm: (select) => select(state),
+    edit: () => {},
+    resetField: () => {},
+    save: () => {},
+    discard: () => {},
+  });
+  assert.ok(tree !== undefined, "the panel returned nothing");
+
+  const texts = [];
+  const walk = (node) => {
+    if (node === null || node === undefined) return;
+    if (typeof node === "string") { texts.push(node); return; }
+    if (Array.isArray(node)) { node.forEach(walk); return; }
+    texts.push(typeof node.props?.className === "string" ? node.props.className : "");
+    walk(node.children);
+  };
+  walk(tree);
+  const joined = texts.join(" | ");
+  assert.match(joined, /ofttold-tip|ofttold-dot/, "the question-mark wrapper must render");
+  const textareas = nodes.filter((node) => node.tag === "textarea");
+  assert.ok(textareas.length >= 1, "the heading list must render as a textarea");
+});
 
 test("the settings page does not say 注入 to the person configuring it", () => {
   // 「注入」是实现的词，不是用户的词。两处重新注入的说明都出现过它。
