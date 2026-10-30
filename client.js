@@ -22,9 +22,9 @@ window.__ModuleLoader__.load({
       description: "Your notes stay in the room in every session, so you stop depending on remembering to look. The name is the idea: what is told often enough stops needing to be remembered.",
       memoryDir: "Where your notes live",
       memoryDirHint: "Created with a starter file on first run, so you can leave this alone. Point it at a folder you already keep and the plugin only reads it.",
-      sections: "Which parts it should remember",
-      sectionsHint: "Write the headings as they appear in your notes, one per line.",
-      sectionsComplexHint: "This config names a separate file or budget per section, so edit it in the profile file rather than here.",
+      sections: "Which parts of your notes to read",
+      sectionsHint: "Copy the heading text exactly, one per line. `## 常被提起` becomes `常被提起`.",
+      sectionsComplexHint: "Each section here names its own file or budget, so this field is read-only — edit the profile file instead.",
       maxChars: "How much of each section to read",
       maxCharsHint: "Longer text is cut. 600 characters is about 400 tokens, charged once per session.",
       header: "The line that opens the block",
@@ -45,6 +45,7 @@ window.__ModuleLoader__.load({
       diarySectionsHint: "Past this the entry stops being a record and becomes a transcript. Three to five is the normal range.",
       diaryCheck: "Check today's entry",
       diaryCheckHint: "Names what is wrong with today's entry.",
+      sectionsWhy: "Only the sections you name are read — never the whole file — so the headings have to match what you wrote, exactly. One extra character (a note in brackets, for instance) and it will not match; when that happens the plugin says what it looked for instead of staying silent.",
       cardNotes: "Your notes",
       cardDiary: "The diary",
       cadenceDaily: "Daily",
@@ -79,9 +80,9 @@ window.__ModuleLoader__.load({
       description: "你的笔记在每个会话里都在场，不用再依赖「记得去看」。它叫拾光——把散落在字里行间的自己，一次一次拾回来。",
       memoryDir: "你的笔记文件夹在哪",
       memoryDirHint: "第一次使用会自动建好并放一份起始文件，所以这里可以不管。已经有笔记文件夹的话，把路径指过去就行，插件只读不写。",
-      sections: "想让它记住哪几段",
-      sectionsHint: "写笔记里的小标题原文，一行一个，可以写好几段。",
-      sectionsComplexHint: "这份配置给每段单独指定了文件或字数，请在 profile 文件里改，这里只读。",
+      sections: "从笔记里读哪几段",
+      sectionsHint: "照抄标题原文，一行一个。`## 常被提起` 这种就填 `常被提起`。",
+      sectionsComplexHint: "这份配置给每段单独指定了文件或字数，所以这里只读——要改请编辑 profile 文件。",
       maxChars: "每段最多读多少字",
       maxCharsHint: "太长会被截断。600 字大约 400 token，一个会话只算一次。",
       header: "这段记忆开头的说明",
@@ -102,6 +103,7 @@ window.__ModuleLoader__.load({
       diarySectionsHint: "超过就不像记录了，像流水账。三五节是正常量。",
       diaryCheck: "检查今天那篇日记",
       diaryCheckHint: "把今天那篇的问题说出来。",
+      sectionsWhy: "插件只读你点名的这几段，不整篇读；所以标题要和你写的一字不差。多一个字（比如括号里那句说明）就算对不上——对不上时插件会说明它找过什么，不会静默。",
       cardNotes: "你的笔记",
       cardDiary: "日记",
       cadenceDaily: "每天",
@@ -554,15 +556,16 @@ window.__ModuleLoader__.load({
             )
           : null;
 
-      const control = (id, { numeric = false } = {}) =>
-        h("input", {
+      const control = (id, { numeric = false, multiline = false } = {}) =>
+        h(multiline ? "textarea" : "input", {
           id: `ofttold-${id}`,
-          type: "text",
+          type: multiline ? undefined : "text",
+          rows: multiline ? 3 : undefined,
           inputMode: numeric ? "numeric" : undefined,
           value: state[id]?.text ?? "",
           disabled,
           onChange: (event) => props.edit(id, event.target.value),
-          style: INPUT,
+          style: multiline ? { ...INPUT, resize: "vertical", lineHeight: 1.5 } : INPUT,
         });
 
       const field = (id, opts = {}) =>
@@ -648,7 +651,7 @@ window.__ModuleLoader__.load({
         h("style", {}, TIP_CSS),
         card("cardNotes", [
           wide(field("memoryDir")),
-          wide(field("sections")),
+          wide(field("sections", { multiline: true })),
           COLUMNS([field("maxChars", { numeric: true }), field("anchorCap", { numeric: true })]),
         ]),
         card("cardDiary", [

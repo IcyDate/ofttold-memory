@@ -618,3 +618,22 @@ test("placeTip keeps the tooltip inside the window", () => {
   placeTip({ currentTarget: left.wrap });
   assert.equal(left.style.left, "8px", "never closer than 8px to the edge");
 });
+
+test("the heading list is a textarea, because it holds one heading per line", () => {
+  // 用单行 input 时，parse 按换行拆——可用户根本敲不进换行，多段就只能靠粘贴。
+  assert.match(CLIENT_SOURCE, /wide\(field\("sections", \{ multiline: true \}\)\)/);
+  assert.match(CLIENT_SOURCE, /multiline \? "textarea" : "input"/);
+});
+
+test("the heading field shows what an entry looks like, not just 'write the headings'", () => {
+  // 「想让它记住哪几段」看不出要填什么。原文里的例子必须两语都在。
+  for (const key of ["sectionsHint", "sectionsWhy"]) {
+    for (const marker of ["const en = {", "const zh = {"]) {
+      const from = CLIENT_SOURCE.indexOf(marker);
+      const block = CLIENT_SOURCE.slice(from, CLIENT_SOURCE.indexOf("\n    };", from));
+      assert.match(block, new RegExp(`${key}:`), `${key} missing from ${marker}`);
+    }
+  }
+  assert.ok(CLIENT_SOURCE.includes("`## 常被提起` becomes"), "the English hint must show the transformation");
+  assert.ok(CLIENT_SOURCE.includes("就填 `常被提起`"), "the Chinese hint must show the transformation");
+});
