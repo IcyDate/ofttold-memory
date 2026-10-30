@@ -13,7 +13,7 @@ window.__ModuleLoader__.load({
      * 页脚要显示版本号。浏览器里拿不到 package.json，所以只能写死一份——那就用一条
      * 测试盯着它，免得发布时忘了改：版本是唯一会「安静地过期」的东西。
      */
-    const VERSION = "0.1.1";
+    const VERSION = "0.1.2";
     const REPO = "https://github.com/IcyDate/ofttold-memory";
 
     const en = {
@@ -45,8 +45,13 @@ window.__ModuleLoader__.load({
       diarySectionsHint: "Past this the entry stops being a record and becomes a transcript. Three to five is the normal range.",
       diaryCheck: "Check today's entry",
       diaryCheckHint: "Names sections over the cap, sections with no emotion line, a tag outside the vocabulary, and a stale summary. Reports only, never rewrites.",
-      skills: "Ship the two writing skills",
-      skillsHint: "Off removes them from the session's skill list without touching injection.",
+      cadenceDaily: "Daily",
+      cadenceWeekly: "Weekly",
+      cadenceOff: "Off",
+      advanced: "More settings",
+      advancedHint: "Refresh behaviour, path resolution, and the writing guides. Defaults are fine for most setups.",
+      skills: "Ship the two writing guides",
+      skillsHint: "Every assistant keeps a list of how-to guides it can open when it needs one. These two are how to write a diary entry, and how to edit who-I-am. Off just removes them from that list; your notes keep working.",
       starLead: "Finding it useful?",
       starLink: "Star it on GitHub",
       feedbackLink: "Feedback or an issue",
@@ -92,8 +97,13 @@ window.__ModuleLoader__.load({
       diarySectionsHint: "超过就不像记录了，像流水账。三五节是正常量。",
       diaryCheck: "检查今天那篇日记",
       diaryCheckHint: "点名超节数、缺情绪行、标签不在词表、摘要落后。只报告，绝不改写。",
-      skills: "带上那两份写作 skill",
-      skillsHint: "关掉只是从会话的技能列表里拿掉，不影响注入。",
+      cadenceDaily: "每天",
+      cadenceWeekly: "每周",
+      cadenceOff: "关掉",
+      advanced: "更多设置",
+      advancedHint: "重新注入的时机、路径从哪算、以及那两份写作说明。默认值大多数情况都够用。",
+      skills: "附带那两份写作说明",
+      skillsHint: "模型手边有一排「怎么做」的说明书，需要时才打开。这两份讲的是「日记怎么写」和「我是谁那份文件怎么改」。关掉只是从说明书里拿掉，笔记照常工作。",
       starLead: "觉得好用？",
       starLink: "去 GitHub 点个 Star",
       feedbackLink: "反馈建议 / 提 issue",
@@ -469,6 +479,42 @@ window.__ModuleLoader__.load({
           onReset: () => props.resetField(id),
           ...extra,
         });
+      // 两列网格：每个设置占一整行时，十来个设置要滑很久才看得完。短的字段并排，
+      // 长的（路径、小节名）横跨两列。
+      const grid = (children) =>
+        h(
+          "div",
+          {
+            style: {
+              display: "grid",
+              gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+              gap: "0 16px",
+              alignItems: "start",
+            },
+          },
+          ...children,
+        );
+      const wide = (node) => h("div", { style: { gridColumn: "1 / -1" } }, node);
+
+      // 固定选项用下拉，不让人手打 daily/weekly/off——打字会拼错，拼错就是静默失效。
+      const selectRow = (id, options) =>
+        h(
+          "div",
+          { style: { padding: "12px 0" } },
+          h("label", { style: { display: "block", marginBottom: "6px" } }, t(id)),
+          h(
+            "select",
+            {
+              disabled,
+              value: String(state[id]?.text ?? "").trim() === "" ? options[0][0] : String(state[id].text).trim(),
+              onChange: (event) => props.edit(id, event.target.value),
+              style: { width: "100%", padding: "6px 8px", borderRadius: "6px", border: "1px solid rgba(127,127,127,0.4)" },
+            },
+            ...options.map(([value, labelKey]) => h("option", { value }, t(labelKey))),
+          ),
+          h("p", { style: { margin: "4px 0 0", opacity: 0.7, fontSize: "0.9em" } }, t(`${id}Hint`)),
+        );
+
       return h(
         SettingsForm,
         {
@@ -483,19 +529,33 @@ window.__ModuleLoader__.load({
           onSave: props.save,
           onDiscard: props.discard,
         },
-        field("memoryDir", "memoryDir", "memoryDirHint"),
-        field("sections", "sections", "sectionsHint"),
-        field("maxChars", "maxChars", "maxCharsHint", { numeric: true }),
-        field("header", "header", "headerHint"),
-        field("refreshIntervalMs", "refreshIntervalMs", "refreshIntervalMsHint", { numeric: true }),
-        field("refreshAfterMessages", "refreshAfterMessages", "refreshAfterMessagesHint", { numeric: true }),
-        field("anchorCap", "anchorCap", "anchorCapHint", { numeric: true }),
-        field("diaryCadence", "diaryCadence", "diaryCadenceHint"),
-        field("summaryFrom", "summaryFrom", "summaryFromHint"),
-        field("diarySections", "diarySections", "diarySectionsHint", { numeric: true }),
-        booleanRows[0],
-        booleanRows[1],
-        booleanRows[2],
+        wide(field("memoryDir", "memoryDir", "memoryDirHint")),
+        wide(field("sections", "sections", "sectionsHint")),
+        grid([
+          field("maxChars", "maxChars", "maxCharsHint", { numeric: true }),
+          field("anchorCap", "anchorCap", "anchorCapHint", { numeric: true }),
+          selectRow("diaryCadence", [
+            ["daily", "cadenceDaily"],
+            ["weekly", "cadenceWeekly"],
+            ["off", "cadenceOff"],
+          ]),
+          field("summaryFrom", "summaryFrom", "summaryFromHint"),
+          field("diarySections", "diarySections", "diarySectionsHint", { numeric: true }),
+          wide(booleanRows[0]),
+        ]),
+        h(
+          "details",
+          { className: "ofttold-advanced", style: { marginTop: "12px" } },
+          h("summary", { style: { cursor: "pointer", opacity: 0.85 } }, t("advanced")),
+          h("p", { style: { margin: "8px 0", opacity: 0.7, fontSize: "0.9em" } }, t("advancedHint")),
+          grid([
+            wide(field("header", "header", "headerHint")),
+            field("refreshIntervalMs", "refreshIntervalMs", "refreshIntervalMsHint", { numeric: true }),
+            field("refreshAfterMessages", "refreshAfterMessages", "refreshAfterMessagesHint", { numeric: true }),
+            wide(booleanRows[1]),
+            wide(booleanRows[2]),
+          ]),
+        ),
         diagnostics,
         footer,
       );
