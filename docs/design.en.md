@@ -49,7 +49,7 @@ The test is not "is it important" but **can you see it when it fails**:
 | Action | Frequency | Cost of missing it | Visible? | Where |
 | --- | --- | --- | --- | --- |
 | Inject the list into context | every session | the whole mechanism fails silently | **no** | code |
-| Compute R, decide who leaves | only when the list is full | one anchor stays a few days longer | no, but **the cost is small anyway** | document |
+| Compute R, deduplicate by day, rank what sinks | only when the list is full | one anchor stays a few days longer | no | **code** (`lib/anchors.js`) — two hand-computations give two answers, and a stranger has no arithmetic at all |
 | Judge whether a diary entry is worth writing | every entry | one fewer entry | yes | document |
 | Tag an entry with an emotion | every entry | the label is missing | grep finds it | document |
 
@@ -80,7 +80,7 @@ anything and ends as a list nobody reads.
 Eviction ranks by weight rather than age:
 
 ```
-R = exp(-t/S)     t = days since last recall
+R = exp(-t/S)     t = days since the anchor's own date
                   n = number of distinct days it was mentioned
                   S = 1 × 2^n
 ```
@@ -179,6 +179,31 @@ characters ≈ 67549 tokens).
 
 Three tiers: hot = the last 14 days kept in full; warm = older, four days merged into
 one line; cold = untouched original text, still greppable.
+
+## The sinking mechanism (`lib/anchors.js`)
+
+The cap is eight anchors. Past it, **what stays** is computed, not asked.
+
+- A dated anchor uses its own date. An anchor pointing at something that is not a diary
+  entry — `relationship.md`, a folder, a name — is dated **the day the line first
+  appeared** (`.ofttold/anchors.json` remembers that; the folder's mtime changes on every
+  edit and git is not guaranteed to be there).
+- Ten mentions on one day count as **one** day: being recalled is one fact, not ten.
+- **Age alone never evicts.** `S` doubles per recalled day, so an old line everyone keeps
+  reaching for outranks a fresh one nobody touches.
+- A line that leaves and comes back is **new** — the old date would make it look older
+  than it is.
+
+**Sinking is not deletion.** What sinks stays in the file, still greppable, and floats back
+as soon as a diary day mentions it again. What is forgotten is the view, not the record: the
+folder is the single copy of a life, and a parse bug that ate a line is the one failure this
+mechanism must never have.
+
+**Why this was first filed under "document" and then reversed.** The original reasoning was
+"it runs once when the list fills, and being wrong just keeps one anchor a few days longer" —
+that measured the cost on *this* machine, not whether a stranger **has the arithmetic at
+all**. They do not: once the list is full, nothing tells them which line should sink. An
+action that is not fatal can still belong in code, as long as it should happen every time.
 
 ## After a stranger installs it, how do they grow their own fish
 

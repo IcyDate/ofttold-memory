@@ -114,6 +114,15 @@ export const Config = z.object({
     .description(
       "How much of each section to read, when a section does not set its own. 600 characters is about 400 tokens, charged once per session, so raising this raises what every session pays.",
     ),
+  anchorCap: z
+    .natural()
+    .min(0)
+    .max(Number.MAX_SAFE_INTEGER)
+    .default(8)
+    .volatile()
+    .description(
+      "How many lines of a list section stay in view. The rest stay in the file but stop being injected, ranked by exp(-t / 2^n): t is days since the line is dated, n is how many distinct diary days have recalled it. 0 turns the cap off. Untouched when the section holds no bold-bullet list.",
+    ),
   header: z
     .string()
     .default(
