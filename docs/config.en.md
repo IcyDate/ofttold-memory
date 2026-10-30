@@ -16,7 +16,7 @@ The three fields most people use are on the main page. This page covers the rest
 | `diaryCadence` | `"daily"` | `daily` names today when unwritten, `weekly` stays quiet while anything was written in the last 7 days, `off` never speaks. |
 | `diarySections` | `8` | Sections per day before the check names it. |
 | `diaryCheck` | `true` | Report sections past the cap, sections with no `情绪：` line, a missing summary, or a summary the body has run past. Reports only — consolidating deletes the evidence the weight counts. |
-| `header` | `Standing context for this session: notes you wrote, for the person you work with. Read them as your own memory, not as background documentation. Maintaining the folder — index, self-description, diary — is the `ofttold-ritual` skill.` | First line of the injected block. |
+| `header` | `Standing context for this session: notes you wrote, for the person you work with. Read them as your own memory, not as background documentation. Maintaining the folder — index, self-description, diary — is the `ofttold-ritual` skill; when the tail of this block says today is unwritten, that skill says what to write.` | First line of the injected block. |
 | `refreshIntervalMs` | `0` | Minimum milliseconds between injections in one session. `0` injects once. |
 | `refreshAfterMessages` | `0` | Re-inject after this many messages. `0` never. See [design](design.en.md#refreshaftermessages). |
 | `workspaceRelative` | `true` | Resolve a relative `memoryDir` against the session working directory. `false` resolves against the process directory. |

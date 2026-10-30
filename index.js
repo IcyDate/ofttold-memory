@@ -161,7 +161,8 @@ export const Config = z.object({
     .default(
       "Standing context for this session: notes you wrote, for the person you work with. " +
         "Read them as your own memory, not as background documentation. " +
-        "Maintaining the folder — index, self-description, diary — is the `ofttold-ritual` skill.",
+        "Maintaining the folder — index, self-description, diary — is the `ofttold-ritual` skill; " +
+        "when the tail of this block says today is unwritten, that skill says what to write.",
     )
     .volatile()
     .description(
