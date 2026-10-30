@@ -9,6 +9,13 @@ window.__ModuleLoader__.load({
     /** Dictionary namespace owned by this plugin. */
     const NS = "ofttold-memory";
 
+    /**
+     * 页脚要显示版本号。浏览器里拿不到 package.json，所以只能写死一份——那就用一条
+     * 测试盯着它，免得发布时忘了改：版本是唯一会「安静地过期」的东西。
+     */
+    const VERSION = "0.1.1";
+    const REPO = "https://github.com/IcyDate/ofttold-memory";
+
     const en = {
       nav: "Oft-told",
       title: "Oft-told",
@@ -22,12 +29,15 @@ window.__ModuleLoader__.load({
       maxCharsHint: "Longer text is cut. 600 characters is about 400 tokens, charged once per session.",
       header: "The line that opens the block",
       headerHint: "It tells the model this is background, not something you said. Usually no need to change it.",
-      refreshIntervalMs: "How often to inject again",
-      refreshIntervalMsHint: "In milliseconds within one session. 0 means once; 60000 means at most once a minute.",
-      refreshAfterMessages: "Re-inject after how many messages",
-      refreshAfterMessagesHint: "0 means never. Only needed in long sessions where the block gets compacted away.",
-      workspaceRelative: "What a relative path resolves against",
-      workspaceRelativeHint: "On: this session's folder. Off: the folder the process started in. Usually no need to change it.",
+      refreshIntervalMs: "Bring the notes in again every",
+      refreshIntervalMsHint: "In milliseconds, within one session. 0 means once at the start; 60000 means at most once a minute.",
+      refreshAfterMessages: "Bring them in again after how many messages",
+      refreshAfterMessagesHint: "0 means never. Only needed in long sessions, where the notes get pushed out of the context.",
+      workspaceRelative: "Count relative paths from this session's folder",
+      workspaceRelativeHint: "On, paths are resolved against the folder this session runs in. Off, against the folder the process started in. Usually leave it on.",
+      starLead: "Finding it useful?",
+      starLink: "Star it on GitHub",
+      feedbackLink: "Feedback or an issue",
       overridden: "Overridden",
       reset: "Reset to default",
       readOnly: "This deployment stores settings read-only.",
@@ -37,7 +47,7 @@ window.__ModuleLoader__.load({
       saveFailed: "The deployment did not accept these values; they were left for you to correct.",
       invalidNumber: "Enter a number, or leave blank to use the default.",
       diagnostics: "Troubleshooting",
-      diagnosticsHint: "The plugin never fails a session to report a problem, so 'nothing was injected' stays silent by design — it only leaves a record here. The file holds paths and per-injection outcomes, never the text of your notes, so it is safe to paste into an issue.",
+      diagnosticsHint: "The plugin never fails a session to report a problem, so 'the notes never arrived' stays silent by design — it only leaves a record here. The file holds paths and per-injection outcomes, never the text of your notes, so it is safe to paste into an issue.",
       copyReport: "Copy issue summary",
     };
 
@@ -54,12 +64,15 @@ window.__ModuleLoader__.load({
       maxCharsHint: "太长会被截断。600 字大约 400 token，一个会话只算一次。",
       header: "这段记忆开头的说明",
       headerHint: "它要告诉模型「这是背景资料，不是用户说的话」。一般不用改。",
-      refreshIntervalMs: "隔多久重新注入一次",
-      refreshIntervalMsHint: "单位毫秒，只在同一会话内算。0 表示只注入一次；填 60000 就是每分钟最多一次。",
-      refreshAfterMessages: "聊了多少条消息后重新注入",
-      refreshAfterMessagesHint: "0 表示从不。只有会话很长、记忆被压缩掉时才需要。",
-      workspaceRelative: "相对路径按哪里算",
-      workspaceRelativeHint: "开着就按当前会话的目录，关掉就按程序启动的目录。一般不用改。",
+      refreshIntervalMs: "隔多久再带一次笔记",
+      refreshIntervalMsHint: "单位毫秒，只在同一个会话里算。0 = 开头带一次就够；60000 = 最多每分钟再带一次。",
+      refreshAfterMessages: "聊过多少条消息后再带一次",
+      refreshAfterMessagesHint: "0 = 不再带。只有会话特别长、前面的笔记被挤掉时才需要。",
+      workspaceRelative: "相对路径从这次会话的目录算",
+      workspaceRelativeHint: "开着按这次会话的目录算，关掉按程序启动时的目录算。一般保持开着。",
+      starLead: "觉得好用？",
+      starLink: "去 GitHub 点个 Star",
+      feedbackLink: "反馈建议 / 提 issue",
       overridden: "已覆盖",
       reset: "恢复默认",
       readOnly: "本部署的设置是只读的。",
@@ -337,6 +350,58 @@ window.__ModuleLoader__.load({
         ),
       );
 
+      // 勾选框而不是输入框：这个值只有开/关两种，让用户手打 true/false 是在暴露
+      // 内部表示。宿主自带的表单只认文本和数字，所以这里用原生 input 自己画——
+      // 与上面那个自带 DOM 的排查面板同一个理由：不依赖更高级的组件存在。
+      const workspaceRelativeOn =
+        String(state.workspaceRelative?.text ?? "").trim().toLowerCase() === "true";
+      const workspaceRelativeRow = h(
+        "div",
+        { style: { marginTop: "16px" } },
+        h(
+          "label",
+          {
+            style: {
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              cursor: disabled ? "default" : "pointer",
+            },
+          },
+          h("input", {
+            type: "checkbox",
+            checked: workspaceRelativeOn,
+            disabled,
+            onChange: (event) =>
+              props.edit("workspaceRelative", event.target.checked ? "true" : "false"),
+          }),
+          h("span", {}, t("workspaceRelative")),
+        ),
+        h("p", { style: { margin: "4px 0 0 24px", opacity: 0.7, fontSize: "0.9em" } }, t("workspaceRelativeHint")),
+      );
+
+      // 页脚：版本 + Star + 反馈入口。装完插件的人通常只会打开这个面板，
+      // 这是他们唯一能看到「这东西去哪儿提意见」的地方。
+      const footer = h(
+        "p",
+        {
+          style: {
+            marginTop: "16px",
+            paddingTop: "12px",
+            borderTop: "1px solid rgba(127,127,127,0.25)",
+            opacity: 0.75,
+            fontSize: "0.9em",
+          },
+        },
+        `v${VERSION}`,
+        " · ",
+        t("starLead"),
+        " ",
+        h("a", { href: REPO, target: "_blank", rel: "noreferrer noopener" }, t("starLink")),
+        " · ",
+        h("a", { href: `${REPO}/issues`, target: "_blank", rel: "noreferrer noopener" }, t("feedbackLink")),
+      );
+
       const field = (id, label, hint, extra) =>
         h(SettingsValueField, {
           id: `ofttold-${id}`,
@@ -371,8 +436,9 @@ window.__ModuleLoader__.load({
         field("header", "header", "headerHint"),
         field("refreshIntervalMs", "refreshIntervalMs", "refreshIntervalMsHint", { numeric: true }),
         field("refreshAfterMessages", "refreshAfterMessages", "refreshAfterMessagesHint", { numeric: true }),
-        field("workspaceRelative", "workspaceRelative", "workspaceRelativeHint"),
+        workspaceRelativeRow,
         diagnostics,
+        footer,
       );
     }
 

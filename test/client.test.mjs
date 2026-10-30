@@ -517,3 +517,45 @@ test("both dictionaries define the same keys, so neither locale is thinner", () 
   assert.deepEqual(onlyEn, [], `only in en: ${onlyEn.join(", ")}`);
   assert.deepEqual(onlyZh, [], `only in zh: ${onlyZh.join(", ")}`);
 });
+
+/**
+ * Source-level guards for the three things a screenshot review turned up.
+ *
+ * Rendering is not under test here (the stub `createElement` returns null), so these
+ * read the bundle the way a reviewer would: the page must not speak in jargon, the
+ * boolean must not be a free-text box, and the panel must say where to file a
+ * complaint. Weak assertions on purpose — they catch drift, not layout.
+ */
+
+test("the settings page does not say 注入 to the person configuring it", () => {
+  // 「注入」是实现的词，不是用户的词。两处重新注入的说明都出现过它。
+  const zhBlock = CLIENT_SOURCE.slice(CLIENT_SOURCE.indexOf("const zh = {"));
+  for (const key of ["refreshIntervalMsHint", "refreshAfterMessagesHint"]) {
+    const line = zhBlock.split("\n").find((l) => l.includes(`${key}:`));
+    assert.ok(line !== undefined, `${key} must exist`);
+    assert.doesNotMatch(line, /注入/, `${key} must not use the word 注入`);
+  }
+});
+
+test("the boolean setting is a checkbox, not a text box asking for true", () => {
+  assert.match(CLIENT_SOURCE, /type: "checkbox"/);
+  assert.match(
+    CLIENT_SOURCE,
+    /props\.edit\("workspaceRelative", event\.target\.checked \? "true" : "false"\)/,
+    "the checkbox must stage the two values the parser understands",
+  );
+});
+
+test("the panel says where to star and where to complain", () => {
+  assert.match(CLIENT_SOURCE, /const REPO = "https:\/\/github\.com\/IcyDate\/ofttold-memory"/);
+  assert.match(CLIENT_SOURCE, /\$\{REPO\}\/issues/, "an issue link must be reachable from the panel");
+  assert.match(CLIENT_SOURCE, /starLink/);
+});
+
+test("the version in the footer matches package.json", () => {
+  // 浏览器里读不到 package.json，所以版本只能写死一份——这份必须由测试盯着。
+  const pkg = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8"));
+  const found = CLIENT_SOURCE.match(/const VERSION = "([^"]+)"/);
+  assert.ok(found !== null, "client.js must declare VERSION");
+  assert.equal(found[1], pkg.version, "bump both, or the footer lies");
+});
