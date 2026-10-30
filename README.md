@@ -242,3 +242,7 @@ cat ~/.dsh/ofttold-memory/diagnostics.json
 ## License
 
 MIT。
+
+---
+
+改动记录在 [CHANGELOG.md](CHANGELOG.md)：写的是**装了之后你会感觉到什么**，不是提交列表。
