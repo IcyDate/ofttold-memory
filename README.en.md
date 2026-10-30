@@ -6,7 +6,7 @@
 
 <p align="center"><sub>a note helps only when it is in front of the model · <em>injected once, present throughout</em> · no dependence on remembering to look · works out of the box</sub></p>
 
-<p align="center"><sub><strong>A DSH plugin</strong> · the same skill for other harnesses: <a href="./docs/skill.en.md">spec</a></sub></p>
+<p align="center"><sub><strong>A DSH plugin</strong> · other harnesses: planned</sub></p>
 
 <p align="center">
 <a href="https://www.npmjs.com/package/ofttold-memory"><img src="https://img.shields.io/npm/v/ofttold-memory.svg?style=flat-square" alt="npm"></a>
@@ -185,25 +185,11 @@ install rather than the content.
 
 ## Other harnesses
 
-The plugin is DSH-specific: it registers a Cordis plugin and injects a message into a
-session, and that mechanism does not exist outside this harness.
-
-**To carry the same idea elsewhere, use a skill:** one `SKILL.md`, usable by any
-harness that reads skills, with no plugin API to implement. Both are written
-([`skills/ofttold-memory/SKILL.md`](skills/ofttold-memory/SKILL.md) for which sections
-to read, [`skills/ofttold-ritual/SKILL.md`](skills/ofttold-ritual/SKILL.md) for how to
-write) and checked against the real frontmatter contract.
-
-The layering is not either/or: **one spec, one adapter per harness.** Those two
-`SKILL.md` files are the spec; DSH's adapter is this plugin (it publishes them with
-`ctx.skills.register()`); other harnesses are missing their few dozen lines.
-
-Worth being clear about what it loses: **a skill is discovered, not injected**, and
-its body is read only when called. It cannot remove the decision to look — it can only
-make that decision cheaper. The plugin removes the decision itself.
-
-So this says planned, not supported — the details and the three open items are in
-**[Skill version](docs/skill.en.md)**.
+**Planned.** The plugin is tied to DSH: it registers a Cordis plugin and puts a message
+into the session, a mechanism that does not exist outside this harness. The same content
+is meant to ship as a skill, so any harness that reads skills can use it. The draft is in
+[`docs/skill.en.md`](docs/skill.en.md); it has not run on a second harness yet, so no
+usage is documented here.
 
 ---
 

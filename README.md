@@ -6,7 +6,7 @@
 
 <p align="center"><sub>一条笔记只在被摆到眼前时才有用 · <em>一次注入，全程在场</em> · 不用再依赖「记得去看」 · 开箱即用</sub></p>
 
-<p align="center"><sub><strong>DSH 插件</strong> · 其他 harness 用同一份 skill：<a href="./docs/skill.md">spec</a></sub></p>
+<p align="center"><sub><strong>DSH 插件</strong> · 其他 harness：规划中</sub></p>
 
 <p align="center">
 <a href="https://www.npmjs.com/package/ofttold-memory"><img src="https://img.shields.io/npm/v/ofttold-memory.svg?style=flat-square" alt="npm"></a>
@@ -151,15 +151,7 @@ cat ~/.dsh/ofttold-memory/diagnostics.json
 
 ## 其他 harness
 
-插件是 DSH 专用的——它注册 Cordis 插件、往会话里注入一条消息，这个机制在本 harness 之外不存在。
-
-**想把同一套东西搬到别的 harness，走 skill：** 一份 `SKILL.md`，任何读 skill 的 harness 都能用，不需要实现插件 API。两份都写好了（[`skills/ofttold-memory/SKILL.md`](skills/ofttold-memory/SKILL.md) 管读哪几节、[`skills/ofttold-ritual/SKILL.md`](skills/ofttold-ritual/SKILL.md) 管怎么写），对着真实 frontmatter 契约验证过。
-
-分层不是二选一：**spec 一份，适配器每个 harness 一份。** 那两份 `SKILL.md` 是 spec，DSH 的适配器就是这个插件（它用 `ctx.skills.register()` 把两份注册进会话目录），别家 harness 缺的是各自那几十行入口。
-
-但要说清楚 skill 弱在哪：**它是被发现的，不是被注入的**，正文只在被调用时才载入。它去不掉「得有人决定去读」这一步，只能让这一步变便宜。插件去掉的是决定本身。
-
-所以是「规划中」，不是「已支持」——细节和剩下的三件事在 **[Skill 版本](docs/skill.md)**。
+**规划中。** 插件本身绑死 DSH——注册 Cordis 插件、往会话里开一条消息，这套机制出了这个 harness 就不存在。同样的内容打算做成 skill 分发，让任何读 skill 的 harness 都能用；草稿在 [`docs/skill.md`](docs/skill.md)，还没在第二个 harness 上真的跑过，所以这里不写用法。
 
 ---
 
