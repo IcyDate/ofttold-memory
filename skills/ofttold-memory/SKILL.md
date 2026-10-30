@@ -39,7 +39,15 @@ That is the whole trade: the plugin removes the decision, this skill lowers its 
 2. **Read only the configured sections**, not the whole folder. Default headings:
    `Oft-told`, `常被提起`. If the user names different ones, use those.
 
-3. **Keep the budget.** At most 600 characters per section, roughly 400 tokens
+3. **`relationship.md` is the second file, and it is not injected.** The block puts the
+   anchor list in front of you; it cannot put "who this assistant is" there without
+   spending the same tokens every turn. Read it when the session turns personal — the user
+   corrects you, asks about how you speak, or the conversation is about the two of them —
+   and skip it in a narrow errand (one file to read, one build to fix). The failure is
+   quiet either way: skip it in an errand and nothing breaks; skip it in a personal session
+   and you answer as a generic assistant, which is the one thing the folder exists to stop.
+
+4. **Keep the budget.** At most 600 characters per section, roughly 400 tokens
    total. Truncate at a line boundary and say you truncated. A list that costs
    thousands of tokens every turn is worse than no list.
 

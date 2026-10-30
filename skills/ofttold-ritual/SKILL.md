@@ -133,12 +133,57 @@ what it cares about, what the user corrected. It is not a second diary.
   Yes → one distilled line here. Just something that happened → the diary.
 - **Do not record facts that expire**: plugin names, version numbers, file paths,
   resource hashes, one machine's state. Those become lies the moment they change.
-- Do not record dates, do not accumulate a log, do not keep two copies of one thing.
+- Do not record dates, do not accumulate a log, **do not keep two copies of one thing**.
+  The same rule written in `relationship.md` *and* in the agent's own instructions drifts:
+  one copy gets edited, the other keeps asserting the old version. Pick one home per fact
+  and put a pointer in the other.
+- Read the last one or two entries before writing. Not for style — to avoid restating what
+  is already there and to notice that a topic is being reopened rather than opened.
 
 When revising a line about *itself*, carry three small tails: how many revisions, a
 counter-example (when this is not true), and what is still uncertain. Only for
 self-description — **never attach "uncertain" to something about the user**; it reads
 as a disclaimer.
+
+## When the anchor list is full
+
+The cap is 8 lines. Filling it is easy; the point of the cap is the choice it forces.
+
+- **Count by day, not by mention.** `grep -o "<date>" diary/*.md relationship.md` and
+  deduplicate: something recalled on ten turns of one day was recalled on **one** day. The
+  score answers "how many separate days reached for this", which is a fact; mention count
+  is not.
+- **Weight `R = exp(-t/S)` with `S = 1 × 2^n` days**, where `t` is days since the entry and
+  `n` is how many distinct days have recalled it. Recall doubles the interval, so something
+  reached for three times six days ago still scores ~0.47.
+- **Age alone is not a reason to evict.** An old entry everybody keeps citing outranks a
+  fresh one nobody has touched.
+- **The weight only decides who leaves**, and only at the moment something new needs the
+  slot. When the list is under the cap, ordering means nothing — do not sort for its own
+  sake.
+- **Write down who was evicted, and the R at the time.** That log is the only way to learn
+  later whether the parameters were any good. Being wrong here costs one anchor a few days
+  of life, not data.
+
+## When the index gets long
+
+One line per day is cheap until it is not. Around **20 lines** the index starts costing
+more than it returns and should be tiered, not shortened:
+
+- **hot** — the last 14 days, full text;
+- **warm** — older, four days merged into one line;
+- **cold** — the original text stays where it is, still greppable, just not in the index.
+
+The trigger is a count, not a feeling. Before that, leave it flat.
+
+## Hard limits
+
+- **Never write secrets into the folder**: passwords, tokens, phone numbers, internal
+  addresses. A memory folder is meant to be portable and often ends up in git.
+- **Never invent an entry, a date, or a fact to fill a gap.** Check the repository or the
+  file before asserting what happened; "no commit that day" is a fine thing to skip.
+- **Keep the folder in version control** and push it. A memory folder that exists on one
+  machine with one copy is one disk failure from never having existed.
 
 ## What not to do
 
