@@ -13,7 +13,7 @@ window.__ModuleLoader__.load({
      * 页脚要显示版本号。浏览器里拿不到 package.json，所以只能写死一份——那就用一条
      * 测试盯着它，免得发布时忘了改：版本是唯一会「安静地过期」的东西。
      */
-    const VERSION = "0.1.6";
+    const VERSION = "0.1.7";
     const REPO = "https://github.com/IcyDate/ofttold-memory";
     const MEMORY_FILE = "MEMORY.md";
 
