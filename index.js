@@ -22,9 +22,11 @@
  * visible. The human stays the author of what is important.
  */
 
+import { defineTool } from "@deepseek-ai/dsh-tools";
 import { createUserMessage } from "@deepseek-ai/dsh-llm";
 import { buildNotice } from "./lib/notice.js";
 import { localDay, pendingDiaryNudge } from "./lib/diary.js";
+import { rememberEmotion } from "./lib/emotion.js";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import z from "@deepseek-ai/schemastery";
@@ -283,6 +285,55 @@ export function apply(ctx, config) {
       };
     },
   });
+
+
+/**
+ * Register a tool without failing the plugin load.
+ *
+ * `tools` is an optional service like `skills`, and on a host that has not served it yet a
+ * thrown error here would take down the injection too — a plugin that stops being useful
+ * because one affordance is missing is worse than a plugin with one less affordance.
+ */
+function registerTool(ctx, tool) {
+  try {
+    const registry = typeof ctx.get === "function" ? ctx.get("tools") : undefined;
+    if (registry === undefined || typeof registry.register !== "function") return false;
+    registry.register(tool);
+    return true;
+  } catch (error) {
+    ctx.logger?.warn?.(`ofttold-memory: could not register ${tool?.name ?? "tool"}: ${error?.message ?? error}`);
+    return false;
+  }
+}
+
+/** `2026-10-30 11:20` — local, because the writer reads it, not a logger. */
+function localStamp(now = new Date()) {
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${localDay(now)} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+}
+
+  // The emotion cache is one line that changes many times a day, and the two ways to get
+  // it wrong — a word outside the vocabulary, a stamp the writer has to remember — are both
+  // silent. A tool makes the check and the write one action, which is the whole reason the
+  // hand-written script existed and stayed on one machine.
+  registerTool(ctx, defineTool({
+    name: "remember_emotion",
+    description:
+      "Set the live emotion value in the memory folder's relationship.md. Use when the feeling actually changes, not to label a diary section you are about to write (that line is copied from the entry afterwards). The word must already be in that file's 情绪词表 section.",
+    parameters: {
+      word: { type: "string", description: "One word, exactly as it appears in the 情绪词表 section. Not a description, not a sentence." },
+    },
+    output: {
+      schema: { type: "json" },
+      render: (_args, value) => [{ type: "text", text: value.message }],
+    },
+    execute(args) {
+      const word = typeof args.word === "string" ? args.word.trim() : "";
+      if (word === "") return { ok: false, message: "需要一个词，不是一句话。" };
+      const result = rememberEmotion({ memoryDir, word, stamp: localStamp() });
+      return { ok: result.ok, message: result.message };
+    },
+  }));
 
   ctx.on("agent/pre-step", async ({ agent, step, signal }, next) => {
     const decision = await next();

@@ -110,17 +110,16 @@ After writing a section, copy its `情绪：` word into the `**现在**` line of
 drift away from the conversation and stop being a live value at all, and the loop
 (diary tag → current emotion → the memory it matches) breaks.
 
-Two ways to write that line, cheapest first:
+Write it with the **`remember_emotion` tool** when it is available: it checks the word
+against `情绪词表` and stamps the date, so the two ways this goes wrong — a word outside the
+vocabulary, a stamp nobody remembers — become one action. It refuses a word that is not in
+the list and says which ones are, and it refuses rather than inventing a list when the
+section is missing.
 
-- `sed`/editor by hand: read the file, find the line, keep the format, write the date.
-  This is what made it get skipped — measured, the line went unedited for four hours
-  after the section existed.
-- A tiny script next to the folder (`tools/em.sh <word>`) that validates the word
-  against the vocabulary and stamps the date. One command instead of a chore.
-
-If the memory folder has no such script, **offer to create one before telling the user
-to update it by hand** — a step that costs a file read and a format to remember will be
-skipped, and the failure is invisible (the cache just freezes).
+Without the tool, do it by hand: read the file, find the `**现在**` line, keep the format,
+write the date. That is the version measured to get skipped — the line sat unedited for
+four hours after the section existed — so if a folder needs this often and has no tool,
+a one-command script next to it (`tools/em.sh <word>`, same checks) is worth offering.
 
 ### 4. relationship.md
 

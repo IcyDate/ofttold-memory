@@ -110,6 +110,26 @@ R = exp(-t / 2^n)     t = days since the anchor's own date
   it again floats it back. The view forgets, the record does not.
 - `anchorCap` of `0` turns it off.
 
+## Setting an emotion
+
+The `**现在**` line in `relationship.md` is the **live value**: the feeling right now, no
+reason attached. It is written by tool, not by remembering a format:
+
+```
+remember_emotion(word: "定")
+→ 现在：`定`（2026-10-30 11:20 更新）（原来是 `心虚`）
+```
+
+- The word must be in the same file's `## 情绪词表` section, or it is **refused** with the
+  list of words that exist.
+- A missing vocabulary section is also refused — inventing a default list here would be one
+  more copy that drifts.
+- Only the backticked value and the timestamp change; the rest of the line is untouched.
+
+**Why a tool and not a paragraph**: this line changes several times a day, and both ways to
+get it wrong are silent — a word outside the list stops matching any diary tag, and a stale
+timestamp makes the cache look fresher than it is.
+
 ## The line at the end
 
 If the folder has a `diary/`, the injected block closes with one more sentence: today's
@@ -187,8 +207,9 @@ as the rule is longer than the injected block.
 
 - **It does not decide what is worth remembering.** What goes on the list, and whether a
   sinking line deserves rescuing, is the writer's call. The plugin only does the arithmetic.
-- **It does not tag emotions.** The vocabulary lives in `relationship.md`; only the writer
-  can supply the value.
+- **It does not decide what you feel.** The value is the writer's call; writing it is the
+  plugin's — `remember_emotion` checks the vocabulary, stamps the time, and refuses a word
+  that is not on the list.
 - **It does not write the diary.** It names an unwritten day and stops there.
 
 The line between the two is **"would the failure be visible?"** — invisible failures go to
