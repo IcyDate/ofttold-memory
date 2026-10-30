@@ -500,7 +500,7 @@ window.__ModuleLoader__.load({
       // 位置用 fixed 并在 hover 时按视口夹一次——面板容器不知道哪里设了 overflow，
       // 绝对定位的提示会被卡片边缘切掉（实测：右边那列的文字被截断）。
       const TIP_CSS = `
-        .ofttold-tip { position: relative; display: inline-flex; }
+        .ofttold-tip { position: relative; display: inline-flex; isolation: isolate; }
         .ofttold-dot {
           margin-left: 6px; opacity: 0.55; cursor: help;
           border: 1px solid currentColor; border-radius: 50%;
@@ -511,10 +511,18 @@ window.__ModuleLoader__.load({
         .ofttold-body {
           display: none; position: fixed; left: 0; top: 0; z-index: 4000;
           width: 240px; max-width: calc(100vw - 16px);
-          padding: 8px 10px; border-radius: 8px;
-          background: #2b2b2b; color: #fff; font-size: 12px; line-height: 1.55;
+          padding: 9px 11px; border-radius: 8px;
+          /* 宿主页面会给卡片里的文字加透明度，提示框跟着一起变半透明就会和下面的字叠在一起
+             （实测：提示一弹出来，底下的说明文字从框里透出来）。所以这一块所有会受继承影响的
+             视觉属性都钉死：不透明的底色 + opacity 1 + isolation，把父级的影响切开。 */
+          background-color: #0d1a28 !important;
+          background-image: none !important;
+          opacity: 1 !important;
+          isolation: isolate;
+          border: 1px solid rgba(120, 190, 240, 0.32);
+          color: #eaf3fb !important; font-size: 12px; line-height: 1.6;
           font-weight: 400; text-align: left; white-space: normal; overflow-wrap: anywhere;
-          box-shadow: 0 8px 22px rgba(0,0,0,0.28);
+          box-shadow: 0 10px 26px rgba(0, 0, 0, 0.55);
         }
         .ofttold-tip:hover .ofttold-body, .ofttold-tip:focus-within .ofttold-body { display: block; }
       `;

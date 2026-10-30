@@ -653,6 +653,14 @@ test("the tooltip is drawn, not left to the native title attribute", () => {
   assert.equal(CLIENT_SOURCE.includes("title: why"), false, "native tooltips were replaced on purpose");
   // 样式表必须真的挂进树里，否则那几条 CSS 规则等于没写。
   assert.match(CLIENT_SOURCE, /h\("style", \{\}, TIP_CSS\)/);
+
+  // 提示框必须是**不透明**的：宿主给卡片文字留了透明度，跟着继承就会和底下的说明叠在一起
+  // （实测：问号一 hover，下面的文案从提示框里透出来）。所以底色要钉死、opacity 要钉死。
+  const tipBody = CLIENT_SOURCE.match(/\.ofttold-body \{([\s\S]*?)\n        \}/);
+  assert.ok(tipBody, "tooltip body rule is missing");
+  assert.match(tipBody[1], /background-color: #0d1a28 !important/, "tooltip needs an opaque background");
+  assert.match(tipBody[1], /opacity: 1 !important/, "tooltip must not inherit a faded opacity");
+  assert.doesNotMatch(tipBody[1], /background(-color)?:\s*rgba\(/, "a translucent background lets the text underneath show through");
 });
 
 test("the tooltip is clamped to the viewport, because the panel clips overflow", () => {
