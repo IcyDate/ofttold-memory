@@ -646,50 +646,59 @@ test("a '?' only appears when there is something to explain", () => {
 
 test("the tooltip is drawn, not left to the native title attribute", () => {
   // 原生 title 在宿主页面里 hover 不出提示（实测），而且样式跟着系统走、和面板不是一个语气。
-  // 所以自己画：默认 display:none，hover 或键盘聚焦时才出现。
-  assert.match(CLIENT_SOURCE, /\.ofttold-body \{[^}]*display: none/s);
-  assert.match(CLIENT_SOURCE, /\.ofttold-tip:hover \.ofttold-body[^}]*display: block/s);
-  assert.match(CLIENT_SOURCE, /\.ofttold-tip:focus-within \.ofttold-body[^}]*display: block/s);
   assert.equal(CLIENT_SOURCE.includes("title: why"), false, "native tooltips were replaced on purpose");
   // 样式表必须真的挂进树里，否则那几条 CSS 规则等于没写。
   assert.match(CLIENT_SOURCE, /h\("style", \{\}, TIP_CSS\)/);
+  assert.match(CLIENT_SOURCE, /\.ofttold-body \{/);
+});
 
-  // 提示框必须是**不透明**的：宿主给卡片文字留了透明度，跟着继承就会和底下的说明叠在一起
-  // （实测：问号一 hover，下面的文案从提示框里透出来）。所以底色要钉死、opacity 要钉死。
+test("the tooltip hangs off document.body, because ancestor opacity cannot be undone", () => {
+  // 宿主给卡片文字留了透明度，**祖先的 opacity 是整棵子树一起合成的**——子元素写
+  // opacity: 1 或 isolation: isolate 都救不回来（实测两次都被透过来）。唯一可靠的做法是
+  // 让提示框根本不在那棵树里：挂到 document.body 上，用完 remove。
+  assert.match(CLIENT_SOURCE, /document\.body\.appendChild\(tip\)/);
+  assert.match(CLIENT_SOURCE, /openTip\.remove\(\)/);
+  // 不在树里就不能靠 :hover 显示，必须由事件开合。
+  assert.match(CLIENT_SOURCE, /onMouseEnter: show/);
+  assert.match(CLIENT_SOURCE, /onMouseLeave: closeTip/);
+  assert.match(CLIENT_SOURCE, /onFocus: show/);
+  assert.match(CLIENT_SOURCE, /onBlur: closeTip/);
+  // 底色必须写死：浮层虽然脱离了透明树，但别指望继承来的颜色。
   const tipBody = CLIENT_SOURCE.match(/\.ofttold-body \{([\s\S]*?)\n        \}/);
   assert.ok(tipBody, "tooltip body rule is missing");
-  assert.match(tipBody[1], /background-color: #0d1a28 !important/, "tooltip needs an opaque background");
-  assert.match(tipBody[1], /opacity: 1 !important/, "tooltip must not inherit a faded opacity");
+  assert.match(tipBody[1], /background: #0d1a28/, "tooltip needs an opaque background");
   assert.doesNotMatch(tipBody[1], /background(-color)?:\s*rgba\(/, "a translucent background lets the text underneath show through");
 });
 
 test("the tooltip is clamped to the viewport, because the panel clips overflow", () => {
-  // 绝对定位的提示会被卡片边缘切掉（截图：右边那列文字被截断）。所以 hover 时按视口
+  // 绝对定位的提示会被卡片边缘切掉（截图：右边那列文字被截断）。所以打开时按视口
   // 夹一次坐标，用 fixed 定位逃出容器的 overflow。
   assert.match(CLIENT_SOURCE, /position: fixed/);
   assert.match(CLIENT_SOURCE, /Math\.max\(8, Math\.min\(box\.left/);
-  assert.match(CLIENT_SOURCE, /onMouseEnter: placeTip/);
-  assert.match(CLIENT_SOURCE, /onFocus: placeTip/);
 });
 
-test("placeTip keeps the tooltip inside the window", () => {
+test("openTipAt keeps the tooltip inside the window", () => {
   // 直接执行那段逻辑，确认两种情况都不越界：贴着屏幕右边缘、以及贴着左边缘。
-  const source = CLIENT_SOURCE.slice(CLIENT_SOURCE.indexOf("const placeTip ="), CLIENT_SOURCE.indexOf("const helpDot ="));
-  const placeTip = new Function(`${source}; return placeTip;`)();
-  const make = (left) => {
-    const style = {};
-    const body = { style };
-    const wrap = { getBoundingClientRect: () => ({ left, bottom: 100 }), querySelector: () => body };
-    return { wrap, style };
+  // closeTip 和 openTipAt 共用闭包里的 openTip，两个都要切进来。
+  const start = CLIENT_SOURCE.indexOf("let openTip = null;");
+  const source = CLIENT_SOURCE.slice(start, CLIENT_SOURCE.indexOf("const helpDot ="));
+  const appended = [];
+  const fakeDoc = {
+    body: { appendChild: (el) => appended.push(el) },
+    createElement: () => ({ style: {}, setAttribute() {}, textContent: "", remove() {} }),
   };
-  globalThis.innerWidth = 1000;
-  const right = make(950);
-  placeTip({ currentTarget: right.wrap });
-  assert.equal(right.style.width, "240px");
-  assert.equal(right.style.left, "752px", "1000 - 240 - 8, not 950");
-  const left = make(2);
-  placeTip({ currentTarget: left.wrap });
-  assert.equal(left.style.left, "8px", "never closer than 8px to the edge");
+  const openTipAt = new Function(
+    "document",
+    "globalThis",
+    `${source}; return openTipAt;`,
+  )(fakeDoc, { innerWidth: 1000 });
+
+  const anchor = (left) => ({ getBoundingClientRect: () => ({ left, bottom: 100 }) });
+  openTipAt(anchor(950), "why");
+  assert.equal(appended.at(-1).style.width, "240px");
+  assert.equal(appended.at(-1).style.left, "752px", "1000 - 240 - 8, not 950");
+  openTipAt(anchor(2), "why");
+  assert.equal(appended.at(-1).style.left, "8px", "never closer than 8px to the edge");
 });
 
 test("the heading list is a textarea, because it holds one heading per line", () => {

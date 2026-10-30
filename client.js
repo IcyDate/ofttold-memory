@@ -499,8 +499,11 @@ window.__ModuleLoader__.load({
       // 自绘 tooltip，不用原生的 title：title 在宿主页面里 hover 不弹（实测）。
       // 位置用 fixed 并在 hover 时按视口夹一次——面板容器不知道哪里设了 overflow，
       // 绝对定位的提示会被卡片边缘切掉（实测：右边那列的文字被截断）。
+      // 提示框不能嵌在面板里：宿主给卡片文字留了透明度，**祖先的 opacity 是整棵子树一起合成的**，
+      // 子元素写 opacity: 1 / isolation 都救不回来（实测两次都没解决）。所以提示框做成
+      // 挂到 document.body 上的一层浮层，脱离那棵树，透明问题从根上消失。
       const TIP_CSS = `
-        .ofttold-tip { position: relative; display: inline-flex; isolation: isolate; }
+        .ofttold-tip { position: relative; display: inline-flex; }
         .ofttold-dot {
           margin-left: 6px; opacity: 0.55; cursor: help;
           border: 1px solid currentColor; border-radius: 50%;
@@ -509,45 +512,60 @@ window.__ModuleLoader__.load({
         }
         .ofttold-tip:hover .ofttold-dot, .ofttold-tip:focus-within .ofttold-dot { opacity: 1; }
         .ofttold-body {
-          display: none; position: fixed; left: 0; top: 0; z-index: 4000;
+          position: fixed; left: 0; top: 0; z-index: 4000;
           width: 240px; max-width: calc(100vw - 16px);
           padding: 9px 11px; border-radius: 8px;
-          /* 宿主页面会给卡片里的文字加透明度，提示框跟着一起变半透明就会和下面的字叠在一起
-             （实测：提示一弹出来，底下的说明文字从框里透出来）。所以这一块所有会受继承影响的
-             视觉属性都钉死：不透明的底色 + opacity 1 + isolation，把父级的影响切开。 */
-          background-color: #0d1a28 !important;
-          background-image: none !important;
-          opacity: 1 !important;
-          isolation: isolate;
+          background: #0d1a28; color: #eaf3fb;
+          font-size: 12px; line-height: 1.6; font-weight: 400; text-align: left;
+          white-space: normal; overflow-wrap: anywhere;
           border: 1px solid rgba(120, 190, 240, 0.32);
-          color: #eaf3fb !important; font-size: 12px; line-height: 1.6;
-          font-weight: 400; text-align: left; white-space: normal; overflow-wrap: anywhere;
           box-shadow: 0 10px 26px rgba(0, 0, 0, 0.55);
+          pointer-events: none;
         }
-        .ofttold-tip:hover .ofttold-body, .ofttold-tip:focus-within .ofttold-body { display: block; }
       `;
 
-      // 贴着问号下方展开，再按视口宽度夹一次：靠右的那一列不会再把文字推到屏幕外。
-      const placeTip = (event) => {
-        const wrap = event.currentTarget;
-        const body = wrap?.querySelector?.(".ofttold-body");
-        if (body === null || body === undefined) return;
-        const box = wrap.getBoundingClientRect();
+      // 浮层挂在 body 上，所以位置在创建时算一次；贴着问号下方展开，再按视口宽度夹一次，
+      // 靠右的那一列不会把文字推到屏幕外。
+      let openTip = null;
+      const closeTip = () => {
+        if (openTip !== null) {
+          openTip.remove();
+          openTip = null;
+        }
+      };
+      const openTipAt = (anchor, why) => {
+        closeTip();
+        if (typeof document === "undefined" || !document.body) return;
+        const box = anchor.getBoundingClientRect();
         const width = Math.min(240, (globalThis.innerWidth ?? 1024) - 16);
-        body.style.width = `${width}px`;
-        body.style.left = `${Math.max(8, Math.min(box.left, (globalThis.innerWidth ?? 1024) - width - 8))}px`;
-        body.style.top = `${box.bottom + 8}px`;
+        const tip = document.createElement("div");
+        tip.className = "ofttold-body";
+        tip.setAttribute("role", "tooltip");
+        tip.textContent = why;
+        tip.style.width = `${width}px`;
+        tip.style.left = `${Math.max(8, Math.min(box.left, (globalThis.innerWidth ?? 1024) - width - 8))}px`;
+        tip.style.top = `${box.bottom + 8}px`;
+        document.body.appendChild(tip);
+        openTip = tip;
       };
 
       const helpDot = (id) => {
         const why = t(`${id}Why`);
         // 没写说明就不画问号：locale 在缺键时会把键名还回来，不是返回 undefined。
         if (typeof why !== "string" || why === "" || why === `${id}Why`) return null;
+        const show = (event) => openTipAt(event.currentTarget, why);
         return h(
           "span",
-          { className: "ofttold-tip", tabIndex: 0, "aria-label": why, onMouseEnter: placeTip, onFocus: placeTip },
+          {
+            className: "ofttold-tip",
+            tabIndex: 0,
+            "aria-label": why,
+            onMouseEnter: show,
+            onMouseLeave: closeTip,
+            onFocus: show,
+            onBlur: closeTip,
+          },
           h("span", { className: "ofttold-dot", "aria-hidden": "true" }, "?"),
-          h("span", { className: "ofttold-body", role: "tooltip" }, why),
         );
       };
 
