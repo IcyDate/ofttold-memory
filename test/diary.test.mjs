@@ -14,7 +14,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { localDay, pendingDiaryNudge } from "../lib/diary.js";
-import { checkEntry, DETOUR_FROM } from "../lib/diarycheck.js";
+import { checkEntry, diaryIssueLine, DETOUR_FROM } from "../lib/diarycheck.js";
 
 function folder({ diary = true } = {}) {
   const dir = mkdtempSync(join(tmpdir(), "nudge-"));
@@ -94,4 +94,23 @@ test("a section with a 岔路 line stops being counted", () => {
   // 两行的也算（`岔路：没有，我直接查了文件。` 同样是一行记录）。
   const honest = checkEntry({ text: "## 09:00 x\n情绪：定\n岔路：没有，我直接查了文件。\n" });
   assert.equal(honest.sectionsWithoutDetour, 0);
+});
+
+test("an empty vocabulary and a missing one are different stories", () => {
+  const dir = mkdtempSync(join(tmpdir(), "vocab-empty-"));
+  try {
+    mkdirSync(join(dir, "diary"), { recursive: true });
+    // 模板里就有 `## 情绪词表`，只是还没写词——这是第一天，不是走错地方。
+    writeFileSync(join(dir, "relationship.md"), "## 情绪词表\n\n- `（词）` — 占位\n");
+    writeFileSync(join(dir, "diary", "2026-11-02.md"), "## 09:00 x\n情绪：定\n岔路：没有。\n");
+    const line = diaryIssueLine({ memoryDir: dir, day: "2026-11-02", nowMinute: 600 });
+    assert.match(line ?? "", /still empty/);
+    assert.doesNotMatch(line ?? "", /has no `情绪词表` section/);
+    // 真没有这一节时，才说「没有这一节」。
+    writeFileSync(join(dir, "relationship.md"), "## 我是谁\n\n一句话。\n");
+    const missing = diaryIssueLine({ memoryDir: dir, day: "2026-11-02", nowMinute: 600 });
+    assert.match(missing ?? "", /has no `情绪词表` section/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
