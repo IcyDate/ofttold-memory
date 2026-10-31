@@ -1,6 +1,6 @@
 {
   "name": "ofttold-memory",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "icon": "icon.png",
   "description": "Carry a piece of your memory into every session: point it at a folder and a few markdown sections ride along, injected once so recall stops depending on remembering to look. Ships with a starter folder and file.",
   "type": "module",
