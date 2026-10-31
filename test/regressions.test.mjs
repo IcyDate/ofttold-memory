@@ -160,3 +160,13 @@ test("one real anchor makes the section real again", () => {
   assert.equal(rendered.loaded, 1);
   assert.match(rendered.text, /大肥鱼/);
 });
+
+test("remember_emotion computes the folder from the call, not from a name that isn't there", () => {
+  // 真机上撞到的：Windows 那边调用报 `memoryDir is not defined`。工具跑在
+  // `execute` 自己的作用域里，`memoryDir` 是 pre-step 里的局部变量，那里没有。
+  // 单测全在测 lib/emotion.js，没有一条走过这条接线。
+  const source = readFileSync(new URL('../index.js', import.meta.url), 'utf8');
+  assert.match(source, /execute\(args, exec\)/, "the tool handler has to receive the call context");
+  assert.match(source, /memoryDirectory\(exec\?\.agent, config\)/, "and resolve the folder from it");
+  assert.doesNotMatch(source, /rememberEmotion\(\{ memoryDir, word/, "the old bare name is the bug");
+});

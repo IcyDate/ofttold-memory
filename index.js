@@ -360,10 +360,15 @@ function localStamp(now = new Date()) {
       schema: { type: "json" },
       render: (_args, value) => [{ type: "text", text: value.message }],
     },
-    execute(args) {
+    // `exec` 是这次调用的上下文；记忆文件夹要从它里面的 agent 算，不能用
+    // pre-step 里那个局部变量——工具跑在另一处作用域，那个名字根本不存在。
+    // 真实撞上的一次：Windows 机器上调用报 `memoryDir is not defined`，
+    // 而所有单测都在测 lib/emotion.js，没一条走到这条接线。
+    execute(args, exec) {
       const word = typeof args.word === "string" ? args.word.trim() : "";
       if (word === "") return { ok: false, message: "需要一个词，不是一句话。" };
-      const result = rememberEmotion({ memoryDir, word, stamp: localStamp() });
+      const dir = memoryDirectory(exec?.agent, config);
+      const result = rememberEmotion({ memoryDir: dir, word, stamp: localStamp() });
       return { ok: result.ok, message: result.message };
     },
   }));
