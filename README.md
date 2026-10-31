@@ -55,6 +55,54 @@ dsh plugin --profile web add ofttold-memory@latest
 
 ---
 
+## Windows 上装不上？先看这一节
+
+真实测出来的，不是猜的。**在全新 Windows 上第一次跑 `dsh` 命令，十个里有九个会撞这一条**：
+
+```
+dsh : 无法加载文件 C:\Users\<你>\AppData\Roaming\npm\dsh.ps1，因为在此系统上禁止运行脚本。
+    + FullyQualifiedErrorId : UnauthorizedAccess
+```
+
+**这不是插件坏，是 Windows 客户端 PowerShell 默认的执行策略（`Restricted`）不允许运行任何 `.ps1` 脚本**，而 npm 给 `dsh` 生成的启动器正好是一个 `.ps1`。
+
+**别去改执行策略**（那是整台机器的持久设置）。npm 在 Windows 上同时生成了 `dsh.cmd`，`.cmd` 不受执行策略管：
+
+```powershell
+# PowerShell 里，推荐这条
+cmd /c "dsh plugin --profile web add ofttold-memory"
+
+# 或者直接开一个 cmd 窗口（不是 PowerShell）
+dsh plugin --profile web add ofttold-memory
+```
+
+### 第二条：镜像比包慢
+
+如果报
+
+```
+ERR_PNPM_NO_MATCHING_VERSION  No matching version found for ofttold-memory@0.1.x
+while fetching it from https://registry.npmmirror.com/
+```
+
+**是国内的 npmmirror 还没同步到最新版本**，不是包没发出去。等十几分钟重试，或者临时指定官方源：
+
+```powershell
+dsh plugin --profile web add ofttold-memory@latest --registry=https://registry.npmjs.org/
+```
+
+### 如果你在让 AI 代你装
+
+`dsh` 的 agent 有文件沙箱，而插件**必须装进 `~\.dsh\profiles\`**——那个位置在沙箱外，agent 会报
+
+```
+EPERM: operation not permitted, open 'C:\Users\<你>\.dsh\profiles\web\package.json.lock'
+```
+
+**这条命令请自己在终端里敲。** 装完之后插件运行时写记忆是 DSH 自己的进程，不受那个沙箱限制。
+
+---
+
 ## 文件长什么样
 
 ```markdown
