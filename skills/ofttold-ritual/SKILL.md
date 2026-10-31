@@ -203,6 +203,13 @@ The trigger is a count, not a feeling. Before that, leave it flat.
 - **Keep the folder in version control** and push it. A memory folder that exists on one
   machine with one copy is one disk failure from never having existed.
 
+  **Pull before you write, push after you write.** Once the folder is on two machines, two
+  of you are writing to the same lines — the live emotion value changes many times a day,
+  and it is the shortest line in the file, so it is the first thing to collide. A stale
+  clone plus an edit is not a merge conflict, it is a rejection you find out about late.
+  Two sessions on two machines each writing "the current emotion" is exactly the case that
+  produces a duplicate commit and a lost update.
+
 ## Three things the folder is easy to get wrong about
 
 - **Do not rank topics.** A day of writing code, of wiring an API, of running a build counts
