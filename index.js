@@ -26,7 +26,7 @@ import { defineTool } from "@deepseek-ai/dsh-tools";
 import { createUserMessage } from "@deepseek-ai/dsh-llm";
 import { buildNotice } from "./lib/notice.js";
 import { DIARY_CADENCES, localDay, pendingDiaryNudge } from "./lib/diary.js";
-import { diaryIssueLine, minutesOf } from "./lib/diarycheck.js";
+import { detourStaleLine, diaryIssueLine, minutesOf } from "./lib/diarycheck.js";
 import { rememberEmotion } from "./lib/emotion.js";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -146,6 +146,14 @@ export const Config = z.object({
     .volatile()
     .description(
       "Report what is wrong with today's entry: sections past the cap, sections without an `情绪：` line, a summary that is missing after summaryFrom or stale against the body. Report only — nothing is rewritten, because consolidating an entry deletes the evidence the weight counts.",
+    ),
+  detourStaleDays: z
+    .natural()
+    .min(0)
+    .default(21)
+    .volatile()
+    .description(
+      "How many days `detours.md` may go untouched before the block says so. The sentence points at deleting the file rather than at writing more into it: a file of wrong turns nobody adds to is a result, not a backlog. 0 keeps it quiet.",
     ),
   anchorCap: z
     .natural()
@@ -482,7 +490,13 @@ function localStamp(now = new Date()) {
       cap: Number(configValue(config, "diarySections") ?? 8),
       enabled: configValue(config, "diaryCheck") !== false,
     });
-    const tail = [nudge, issue].filter((part) => part !== undefined).join("\n\n");
+    // 一年只该出现几次的一句：`detours.md` 长期没动，说明它自己没长出手续。
+    // 措辞指向「删掉」而不是「该写了」——前者是真结论，后者是催更。
+    const stale = detourStaleLine({
+      memoryDir,
+      days: Number(configValue(config, "detourStaleDays") ?? 21),
+    });
+    const tail = [nudge, issue, stale].filter((part) => part !== undefined).join("\n\n");
     if (tail !== "") {
       // 块尾那句也是「注入出去的东西」，README 里写的是「每一次注入决策都在里面」——
       // 它要算决策的一部分，否则那句话生效与否在诊断文件里查不到。

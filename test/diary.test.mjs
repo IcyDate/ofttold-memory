@@ -9,12 +9,12 @@
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { localDay, pendingDiaryNudge } from "../lib/diary.js";
-import { checkEntry, diaryIssueLine, DETOUR_FROM } from "../lib/diarycheck.js";
+import { checkEntry, detourStaleLine, diaryIssueLine, DETOUR_FROM } from "../lib/diarycheck.js";
 
 function folder({ diary = true } = {}) {
   const dir = mkdtempSync(join(tmpdir(), "nudge-"));
@@ -110,6 +110,27 @@ test("an empty vocabulary and a missing one are different stories", () => {
     writeFileSync(join(dir, "relationship.md"), "## 我是谁\n\n一句话。\n");
     const missing = diaryIssueLine({ memoryDir: dir, day: "2026-11-02", nowMinute: 600 });
     assert.match(missing ?? "", /has no `情绪词表` section/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("the file of wrong turns reports on itself, and points at deletion", () => {
+  const dir = mkdtempSync(join(tmpdir(), "detour-stale-"));
+  try {
+    const file = join(dir, "detours.md");
+    writeFileSync(file, "# 弯路\n");
+    const now = Date.now();
+    // 刚动过：一声不吭。
+    assert.equal(detourStaleLine({ memoryDir: dir, days: 21, now }), undefined);
+    // 三周没动：说出天数，而且**建议删掉**，不是催着写。
+    const old = now / 1000 - 25 * 86_400;
+    utimesSync(file, old, old);
+    const line = detourStaleLine({ memoryDir: dir, days: 21, now });
+    assert.match(line ?? "", /25 days/);
+    assert.match(line ?? "", /deleting it/);
+    // 关掉就彻底安静。
+    assert.equal(detourStaleLine({ memoryDir: dir, days: 0, now }), undefined);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
