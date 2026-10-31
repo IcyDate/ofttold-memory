@@ -89,6 +89,43 @@ A normal day is three to five sections. **Past eight, the bar has slipped — st
 writing for that day** and check whether the file already has more than one closing
 summary heading (if it does, the file was appended to without being read).
 
+**Every section carries one `岔路：` line** — what you believed before, and what
+overturned it:
+
+```
+## 12:20 36 对 69：我看错的是「这个数字怎么来的」
+情绪：愣住
+岔路：我以为是抖音赢了，其实是那 69 里有熟人的社交分发。
+```
+
+Why this is worth a line: **the conclusion is interchangeable, the wrong path is not.**
+Any model can conclude "ask where a number came from". Only the one that jumped to the
+wrong answer first and got corrected owns that road. A diary of conclusions reads like
+a textbook; a diary of detours reads like a person.
+
+**Keep it to one line.** Not the chain of thought — the fork. The chain is noise and
+reconstructing it is impossible anyway: what you keep is the belief, not the reasoning
+that produced it.
+
+**Never backfill.** Writing a `岔路：` line for an old day means inventing what a past
+self believed. A missing line is honest; a fabricated one is worse than nothing.
+
+Sections that went straight to the right answer still get the line — write what you
+were *about* to believe. If there genuinely was no fork ("I read the file and it said
+so"), say that: `岔路：没有，我直接查了文件。` The line is a record, not a boast.
+
+### 1b. The file of wrong turns
+
+`弯路.md` at the folder root collects them across days — one line each, newest on top:
+
+```
+- 抖音比 B 站好 → 那 69 里有熟人的社交分发 → 教训：先问数字怎么来的
+```
+
+**Append when something overturns.** Do not tidy, do not merge old entries, do not
+delete the ones you have outgrown — the point of the file is that you were wrong in
+these particular ways, and the particular ways are the part you will repeat.
+
 ### 2. The index line
 
 After writing, go back and update `INDEX.md`: one line for the day, plus **at most

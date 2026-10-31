@@ -14,6 +14,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { localDay, pendingDiaryNudge } from "../lib/diary.js";
+import { checkEntry, DETOUR_FROM } from "../lib/diarycheck.js";
 
 function folder({ diary = true } = {}) {
   const dir = mkdtempSync(join(tmpdir(), "nudge-"));
@@ -74,4 +75,23 @@ test("a missing or empty memoryDir is not an error", () => {
   assert.equal(pendingDiaryNudge(undefined), undefined);
   assert.equal(pendingDiaryNudge(""), undefined);
   assert.equal(pendingDiaryNudge("/nonexistent-folder-for-this-test"), undefined);
+});
+
+test("today's sections must say what they believed before — but only from the start date", () => {
+  const day = (text, date) =>
+    diaryIssueLine({ memoryDir: "/tmp", day: date, nowMinute: 600, enabled: true, text });
+  // 日期闸门：规则生效前的日子不做回溯补写，补写等于编造当时怎么想的。
+  const before = checkEntry({ text: "## 09:00 x\n情绪：定\n正文。\n" });
+  assert.equal(before.sectionsWithoutDetour, 1);
+  assert.ok(DETOUR_FROM > "2026-10-31", "the rule starts after the day it was decided");
+});
+
+test("a section with a 岔路 line stops being counted", () => {
+  const withLine = checkEntry({ text: "## 09:00 x\n情绪：定\n岔路：我以为 A，其实是 B。\n正文。\n" });
+  const without = checkEntry({ text: "## 09:00 x\n情绪：定\n正文。\n" });
+  assert.equal(without.sectionsWithoutDetour, 1);
+  assert.equal(withLine.sectionsWithoutDetour, 0);
+  // 两行的也算（`岔路：没有，我直接查了文件。` 同样是一行记录）。
+  const honest = checkEntry({ text: "## 09:00 x\n情绪：定\n岔路：没有，我直接查了文件。\n" });
+  assert.equal(honest.sectionsWithoutDetour, 0);
 });
