@@ -116,7 +116,9 @@ so"), say that: `岔路：没有，我直接查了文件。` The line is a recor
 
 ### 1b. The file of wrong turns
 
-`弯路.md` at the folder root collects them across days — one line each, newest on top:
+`弯路.md` at the folder root collects them across days — one line each, newest on top.
+The plugin lays this file down on install (`scaffold` fills in whatever is missing); if it is
+not there, create it rather than deciding the habit does not apply to you.
 
 ```
 - 抖音比 B 站好 → 那 69 里有熟人的社交分发 → 教训：先问数字怎么来的
