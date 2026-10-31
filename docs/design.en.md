@@ -124,6 +124,25 @@ translated into a judgement ("I mistook reluctance for irresponsibility" contain
 
 The plugin does not tag emotions. You tag them; it carries them.
 
+## Two machines, one live value
+
+One memory folder can be in use on two machines at once (one writing code, one talking to
+someone), and "the current emotion" is a **per-session** value: both are true at the same
+time, but only one can be stored.
+
+**Decision: last writer wins, do not split it per machine.**
+
+The line is "how it felt the last time anyone wrote", not a ledger. Splitting it would add a
+dimension to the vocabulary, the subset constraint and the reading path — **for a case that
+only appears when two machines edit the same line at the same moment**. It is the same
+judgement that made us refuse three copies of one vocabulary: structure complexity is paid
+for the common case, not the rare one.
+
+**The one rule that comes with it**: once the folder is in version control, **pull before
+you write, push after you write**. When both machines edit that line, finding "the remote
+already has the value I was about to write" is a normal outcome — that is not being
+overwritten, it is the same thing seen from two places. Judge by content, not by timestamp.
+
 ## No automatic writes
 
 Every field is set by hand. The model cannot give itself context.
