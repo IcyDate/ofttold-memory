@@ -8,7 +8,7 @@ The three fields most people use are on the main page. This page covers the rest
 
 | Field | Default | Purpose |
 |---|---|---|
-| `memoryDir` | `~/.dsh/ofttold-memory` | Folder holding the markdown. Created on first run with a four-file skeleton (`MEMORY.md` / `INDEX.md` / `relationship.md` / `diary/`). A folder that already holds notes gets nothing added. |
+| `memoryDir` | `~/.dsh/ofttold-memory` | Folder holding the markdown. Created on first run with a five-file skeleton (`MEMORY.md` / `INDEX.md` / `relationship.md` / `detours.md` / `diary/`). A folder that already holds notes gets nothing added. |
 | `sections` | `["Oft-told", "常被提起"]` | Which sections to lift. Strings or objects (see below). |
 | `maxChars` | `600` | Per-section character budget. 600 characters ≈ 400 tokens. |
 | `anchorCap` | `8` | How many bold bullets a section keeps in view. The rest sink — ranked by `exp(-t / 2^n)`, kept in the file, no longer injected. `0` turns it off. |
@@ -16,6 +16,7 @@ The three fields most people use are on the main page. This page covers the rest
 | `diaryCadence` | `"daily"` | `daily` names today when unwritten, `weekly` stays quiet while anything was written in the last 7 days, `off` never speaks. |
 | `diarySections` | `8` | Sections per day before the check names it. |
 | `diaryCheck` | `true` | Report sections past the cap, sections with no `情绪：` line, a missing summary, or a summary the body has run past. Reports only — consolidating deletes the evidence the weight counts. |
+| `detourStaleDays` | `21` | How many days `detours.md` may go untouched before the block says so. The sentence points at **deleting** the file, not at writing more into it — a file of wrong turns nobody adds to is a result, not a backlog. `0` keeps it quiet. |
 | `header` | `Standing context for this session: notes you wrote, for the person you work with. Read them as your own memory, not as background documentation. Maintaining the folder — index, self-description, diary — is the `ofttold-ritual` skill; when the tail of this block says today is unwritten, that skill says what to write.` | First line of the injected block. |
 | `refreshIntervalMs` | `0` | Minimum milliseconds between injections in one session. `0` injects once. |
 | `refreshAfterMessages` | `0` | Re-inject after this many messages. `0` never. See [design](design.en.md#refreshaftermessages). |
