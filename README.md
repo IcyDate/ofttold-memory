@@ -49,7 +49,7 @@ flowchart LR
 dsh plugin --profile web add ofttold-memory@latest
 ```
 
-**这就是全部安装步骤。** 装的是 npm 上的预构建产物，没有构建步骤，不需要额外授权；想跟仓库最新代码走，把包名换成 `github:IcyDate/ofttold-memory` 即可。 第一次运行会创建 `~/.dsh/ofttold-memory/`，并铺一份五文件骨架：`MEMORY.md`（注入源）、`INDEX.md`（日记索引）、`relationship.md`（我是谁 + 情绪缓存区）、`弯路.md`（我原以为是什么、实际是什么）、`diary/`（一天一个文件）。**全是空壳加注释，一条记忆都不预填**——写什么只能由你决定。把 `memoryDir` 指向你已有的文件夹——日记、索引、规则文件都算——插件**只补缺的那几个文件，已有文件一个字都不动**：它会补上 `relationship.md`（情绪词表与缓存区住在那里）和 `diary/`（块尾那句提醒靠它），否则写的那一半会缺一块。
+**这就是全部安装步骤。** 装的是 npm 上的预构建产物，没有构建步骤，不需要额外授权；想跟仓库最新代码走，把包名换成 `github:IcyDate/ofttold-memory` 即可。 第一次运行会创建 `~/.dsh/ofttold-memory/`，并铺一份五文件骨架：`MEMORY.md`（注入源）、`INDEX.md`（日记索引）、`relationship.md`（我是谁 + 情绪缓存区）、`detours.md`（我原以为是什么、实际是什么）、`diary/`（一天一个文件）。**全是空壳加注释，一条记忆都不预填**——写什么只能由你决定。把 `memoryDir` 指向你已有的文件夹——日记、索引、规则文件都算——插件**只补缺的那几个文件，已有文件一个字都不动**：它会补上 `relationship.md`（情绪词表与缓存区住在那里）和 `diary/`（块尾那句提醒靠它），否则写的那一半会缺一块。
 
 然后打开 **设置 → 拾光** 用鼠标调整，或者直接改 profile 的 `cordis.patch.yml`。
 

@@ -43,7 +43,7 @@ test("the skeleton lays down all four files in an empty folder", () => {
   const dir = mkdtempSync(join(tmpdir(), "ofttold-skeleton-"));
   const result = scaffoldMemory(dir);
   assert.equal(result.skipped, false);
-  assert.deepEqual(result.createdFiles, ["MEMORY.md", "INDEX.md", "relationship.md", "弯路.md", "diary/README.md"]);
+  assert.deepEqual(result.createdFiles, ["MEMORY.md", "INDEX.md", "relationship.md", "detours.md", "diary/README.md"]);
   assert.ok(existsSync(join(dir, "MEMORY.md")));
   assert.ok(existsSync(join(dir, "INDEX.md")));
   assert.ok(existsSync(join(dir, "relationship.md")));
@@ -81,7 +81,7 @@ test("an existing notes folder gains only the files it is missing", () => {
   writeFileSync(join(dir, "INDEX.md"), mine, "utf8");
   const result = scaffoldMemory(dir);
   assert.equal(result.skipped, false);
-  assert.deepEqual(result.createdFiles, ["MEMORY.md", "relationship.md", "弯路.md", "diary/README.md"]);
+  assert.deepEqual(result.createdFiles, ["MEMORY.md", "relationship.md", "detours.md", "diary/README.md"]);
   assert.equal(readFileSync(join(dir, "INDEX.md"), "utf8"), mine, "the file that was already there must be untouched");
 });
 
@@ -231,8 +231,8 @@ test("a fresh folder also gets the file of wrong turns", () => {
   const dir = mkdtempSync(join(tmpdir(), "skeleton-wrong-turns-"));
   try {
     const result = scaffoldMemory(dir);
-    assert.ok(result.createdFiles.includes("弯路.md"), "the file of wrong turns is part of the shape");
-    const text = readFileSync(join(dir, "弯路.md"), "utf8");
+    assert.ok(result.createdFiles.includes("detours.md"), "the file of wrong turns is part of the shape");
+    const text = readFileSync(join(dir, "detours.md"), "utf8");
     // 它自己得说清怎么算一条，否则第一个使用者只会写「今天学到了一课」。
     assert.match(text, /以为/);
     assert.match(text, /证据/);

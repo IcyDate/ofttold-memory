@@ -53,7 +53,7 @@ dsh plugin --profile web add ofttold-memory@latest
 so no build approval is needed. To track the repository instead, use
 `github:IcyDate/ofttold-memory` in place of the package name. The first run creates `~/.dsh/ofttold-memory/` with a
 five-file skeleton: `MEMORY.md` (the injected source), `INDEX.md` (the diary index),
-`relationship.md` (who the assistant is, plus the live emotion value), `弯路.md`
+`relationship.md` (who the assistant is, plus the live emotion value), `detours.md`
 (what it believed before being corrected), and `diary/` (one file per day). **All of it is empty shells and comments — not one memory is
 pre-filled**, because what to remember is the one thing nobody can decide for you. Point `memoryDir` at a folder you already use — a diary, an index, a rules file — and it
 **fills in only the files that are missing, never rewriting one that exists**. That
