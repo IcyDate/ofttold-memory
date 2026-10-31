@@ -775,3 +775,15 @@ test("the save note and the session boundary are stated", () => {
   assert.match(CLIENT_SOURCE, /saveHint: "改完点最下面的「保存」，下一个会话生效。"/);
   assert.match(CLIENT_SOURCE, /t\("saveHint"\)/);
 });
+
+test("the opening line gets a textarea: it is a sentence, not an identifier", () => {
+  // 那一行有一百多字符，单行输入框只能看见开头十几个字——用户没法一眼看完自己改的是什么。
+  assert.match(
+    CLIENT_SOURCE,
+    /field\("header", \{ multiline: true, rows: \d+ \}\)/,
+    "header must be rendered as a wrapping box",
+  );
+  // 多行控件要能接受显式行数，否则只能退到默认的 3 行。
+  assert.match(CLIENT_SOURCE, /multiline = false, rows \}/);
+  assert.match(CLIENT_SOURCE, /rows: multiline \? rows \?\? 3 : undefined/);
+});

@@ -605,11 +605,11 @@ window.__ModuleLoader__.load({
             )
           : null;
 
-      const control = (id, { numeric = false, multiline = false } = {}) =>
+      const control = (id, { numeric = false, multiline = false, rows } = {}) =>
         h(multiline ? "textarea" : "input", {
           id: `ofttold-${id}`,
           type: multiline ? undefined : "text",
-          rows: multiline ? 3 : undefined,
+          rows: multiline ? rows ?? 3 : undefined,
           inputMode: numeric ? "numeric" : undefined,
           value: state[id]?.text ?? "",
           disabled,
@@ -802,7 +802,7 @@ window.__ModuleLoader__.load({
           h("summary", { style: { cursor: "pointer", opacity: 0.85, fontSize: "0.95em" } }, t("advanced")),
           h("p", { style: HINT }, t("advancedHint")),
           COLUMNS([
-            wide(field("header")),
+            wide(field("header", { multiline: true, rows: 4 })),
             field("refreshIntervalMs", { numeric: true }),
             field("refreshAfterMessages", { numeric: true }),
             wide(booleanRow("workspaceRelative")),
