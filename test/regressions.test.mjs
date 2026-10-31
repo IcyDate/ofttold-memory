@@ -1,12 +1,13 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync, mkdirSync, writeFileSync, rmSync} from 'node:fs';
+import {readFileSync, mkdirSync, mkdtempSync, writeFileSync, rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 
 import {readVocabulary} from '../lib/emotion.js';
 import {scoreAnchors, parseAnchors, countRecalls} from '../lib/anchors.js';
 import {renderSources, stampSourceDates} from '../lib/sources.js';
+import {buildNotice} from '../lib/notice.js';
 
 const dir = (name) => {
   const d = join(tmpdir(), `ofttold-reg-${name}-${process.pid}`);
@@ -105,4 +106,57 @@ test('the template comments never reach the injected block', () => {
   assert.equal(r.loaded, 1);
   assert.ok(!r.text.includes('<!--'), 'HTML 注释是给人看的，不能进上下文');
   assert.ok(r.text.includes('真的'));
+});
+
+test("a section holding only template samples counts as empty, not as memory", () => {
+  // 0.1.5 修好了模板，但**老文件夹不会被迁移**：锚点在 INDEX.md，MEMORY.md 里
+  // 留着建文件夹时的示例。结果是 `loaded: 1` 一切正常，注入的是我们编的假锚点。
+  // 真实撞上的一次：Windows 机器上注入块里出现 `Example · where the project is`。
+  const dir = mkdtempSync(join(tmpdir(), "ofttold-samples-"));
+  writeFileSync(
+    join(dir, "MEMORY.md"),
+    [
+      "# 我的记忆",
+      "",
+      "## 常被提起",
+      "",
+      "> 上限 8 条。",
+      "",
+      "- **示例·项目在哪** → `~/work/my-project`｜省得每次问",
+      "- **示例·别动的东西** → 不要改 `config/prod.yml`",
+      "",
+    ].join("\n"),
+  );
+  const rendered = renderSources({}, dir);
+  assert.equal(rendered.loaded, 0, "samples are documentation, not memory");
+  assert.equal(rendered.text.includes("示例·项目在哪"), false, "fake anchors must not reach the block");
+  assert.equal(rendered.attempts[0].reason, "only_samples", "and the reason has to be recorded");
+
+  // 提示语得说「写在别处了」，不能笼统说「还没写」——说成后者，用户会去写新的，
+  // 而他真正写的那些一直在另一个文件里。
+  const notice = buildNotice({
+    attempts: rendered.attempts,
+    memoryDir: dir,
+    header: "HEADER",
+  });
+  assert.match(notice, /only the template's example lines/);
+  assert.match(notice, /another file/);
+  assert.doesNotMatch(notice, /nothing to read yet/);
+});
+
+test("one real anchor makes the section real again", () => {
+  const dir = mkdtempSync(join(tmpdir(), "ofttold-samples-mixed-"));
+  writeFileSync(
+    join(dir, "MEMORY.md"),
+    [
+      "## 常被提起",
+      "",
+      "- **示例·项目在哪** → `~/work/my-project`",
+      "- **大肥鱼·是蓝鲸只是圆润** → 名字的由来",
+      "",
+    ].join("\n"),
+  );
+  const rendered = renderSources({}, dir);
+  assert.equal(rendered.loaded, 1);
+  assert.match(rendered.text, /大肥鱼/);
 });
