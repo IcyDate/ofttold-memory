@@ -57,6 +57,27 @@ dsh plugin --profile web add ofttold-memory@latest
 
 ## Windows 上装不上？先看这一节
 
+### 第一条：`pnpm` 不是内部或外部命令
+
+`dsh plugin` 只是把参数转发给 **pnpm**，而**装 dsh 不会顺带装 pnpm**。全新机器上第一条命令就会停在这儿：
+
+```
+'pnpm' 不是内部或外部命令，也不是可运行的程序或批处理文件。
+```
+
+先装它：
+
+```powershell
+npm install -g pnpm
+pnpm --version
+```
+
+`pnpm --version` 打出版本号才算通了。
+
+---
+
+### 第二条：`.ps1` 被执行策略拦下
+
 真实测出来的，不是猜的。**在全新 Windows 上第一次跑 `dsh` 命令，十个里有九个会撞这一条**：
 
 ```
@@ -76,7 +97,7 @@ cmd /c "dsh plugin --profile web add ofttold-memory"
 dsh plugin --profile web add ofttold-memory
 ```
 
-### 第二条：镜像比包慢
+### 第三条：镜像比包慢
 
 如果报
 
@@ -91,7 +112,7 @@ while fetching it from https://registry.npmmirror.com/
 dsh plugin --profile web add ofttold-memory@latest --registry=https://registry.npmjs.org/
 ```
 
-### 如果你在让 AI 代你装
+### 第四条：如果你在让 AI 代你装
 
 `dsh` 的 agent 有文件沙箱，而插件**必须装进 `~\.dsh\profiles\`**——那个位置在沙箱外，agent 会报
 
