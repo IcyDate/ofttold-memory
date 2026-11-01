@@ -33,13 +33,34 @@ test("a dated bullet is an anchor, guidance and comments are not", () => {
 
 test("counting is per day, not per mention", () => {
   // 同一天提十次是一次「被想起」，不是十次——权重规则里最容易算错的一格。
-  const anchor = { title: "x", date: dayOf("2026-10-28"), dayString: "2026-10-28" };
+  const anchor = { title: "片子·枪", date: dayOf("2026-10-28"), dayString: "2026-10-28" };
   const diaries = {
-    "2026-10-28": "2026-10-28 2026-10-28 2026-10-28",
-    "2026-10-29": "01:00 提了一次，02:00 又提了一次 2026-10-28",
+    "2026-10-28": "片子 片子 片子",
+    "2026-10-29": "01:00 提了一次，02:00 又提了一次 片子",
     "2026-10-30": "无关内容",
   };
   assert.equal(countRecalls(anchor, diaries), 1, "two mentions on one day are one day");
+});
+
+test("an anchor is recalled when the anchor is discussed, not when its birth date is written", () => {
+  // 真撞上的一格：四条锚点同一天出生，于是「10-30」出现在哪篇日记里，四条一起加分。
+  // 那条日记里根本没提其中三件，可它们照样挤掉了别的位置。
+  const anchor = { title: "反例·修订 N·被纠正", date: dayOf("2026-10-30"), dayString: "2026-10-30" };
+  const diaries = {
+    "2026-10-31": "今天读 2026-10-30 那天的日记，发现写错了",  // 只提日期
+    "2026-11-01": "又踩了一次：反例要带上修订号",              // 提了 handle
+  };
+  assert.equal(countRecalls(anchor, diaries), 1, "only the handle is a recall");
+});
+
+test("a one-character handle is not a handle — it falls back to the whole title", () => {
+  // 「拾」会命中每篇日记里的「拾光」，那等于每条都加分。宁可少数，不要虚高。
+  const anchor = { title: "拾·从字里拾回来", date: dayOf("2026-10-30"), dayString: "2026-10-30" };
+  const diaries = {
+    "2026-10-31": "今天在用拾光这个文件夹，拾光很好",
+    "2026-11-01": "拾·从字里拾回来 这句我今天又想了想",
+  };
+  assert.equal(countRecalls(anchor, diaries), 1, "only the full title counts");
 });
 
 test("the entry that introduced the fact is its birth, not a recall", () => {
@@ -51,9 +72,9 @@ test("recall doubles the interval, so an old line everyone touches outlives a ne
   // 三次被想起才追平六天的年龄：S 从 1 变到 8，才把 exp(-7/8)=0.42 抬过 exp(-1)=0.37。
   // 少一次（S=4）就还是新的那条赢——「老但常想起」不是自动的，得有次数。
   const diaries = {
-    "2026-10-26": "提过 2026-10-23",
-    "2026-10-27": "提过 2026-10-23",
-    "2026-10-28": "提过 2026-10-23",
+    "2026-10-26": "又提到 旧但常被想起",
+    "2026-10-27": "又提到 旧但常被想起",
+    "2026-10-28": "又提到 旧但常被想起",
   };
   const text = ["- **旧但常被想起** → `2026-10-23`", "- **新但没人碰** → `2026-10-29`"].join("\n");
   const { anchors } = scoreAnchors({ text, diaries, nowDay: NOW_DAY });
@@ -107,7 +128,7 @@ test("the cap keeps the most recalled and names what sank", async () => {
   const dir = mkdtempSync(join(tmpdir(), "ofttold-cap-"));
   mkdirSync(join(dir, "diary"), { recursive: true });
   for (const day of ["2026-10-25", "2026-10-26", "2026-10-27", "2026-10-28", "2026-10-29", "2026-10-30"]) {
-    writeFileSync(join(dir, "diary", `${day}.md`), "又提到 2026-10-01 这一天", "utf8");
+    writeFileSync(join(dir, "diary", `${day}.md`), "又提到 老但天天被想起 这件事", "utf8");
   }
   const text = [
     "- **老但天天被想起** → `2026-10-01`",

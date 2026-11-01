@@ -232,6 +232,25 @@ characters ≈ 67549 tokens).
 Three tiers: hot = the last 14 days kept in full; warm = older, four days merged into
 one line; cold = untouched original text, still greppable.
 
+## A recall is the fact coming up, not the day coming up
+
+`countRecalls` used to probe the **birth date**: one diary mentioning `2026-10-30` scored every anchor born that day.
+
+That goes wrong loudly: **four unrelated facts move together**, three of which were not discussed at all, and they push other entries down.
+
+The probe is now the **handle** — the text before the first `·`, which is what a diary actually repeats:
+
+```
+- **大肥鱼·是蓝鲸只是圆润**  → probe "大肥鱼"
+- **静默 null·缩略图**      → probe "静默 null"
+```
+
+A one-character handle is not a handle (`拾` matches 拾光 in every entry), so it falls back to the **whole title**.
+
+The fallback **undercounts**, and undercounting is the safe direction: sinking is not deletion, the line stays in the file. Overcounting is what turned anchors into squatters — which is the bug being fixed.
+
+**For the person writing the file**: if an anchor keeps coming up but never earns its slot, look at its handle — make it the phrase you would actually search for.
+
 ## The sinking mechanism (`lib/anchors.js`)
 
 The cap is eight anchors. Past it, **what stays** is computed, not asked.
