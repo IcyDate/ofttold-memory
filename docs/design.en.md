@@ -348,6 +348,19 @@ That is the test in practice. It is not a restatement of "is it important": `em.
 matters less than `sync-agents.sh`, yet it is more deserving of code — because nobody
 finds out when it breaks.
 
+## Personality, and the books
+
+Someone asked: **isn't "says it notes things" versus "says it notes things and doesn't" just personality? Different people's assistants are different by design.**
+
+Half right. **The difference may live in the content; it may not live in the accounting.**
+
+- **Free to vary**: what gets remembered, whether one likes doing it, the tone, which moments are worth keeping. Forcing those to match would be manufacturing one person.
+- **Not free to vary**: claiming something was done when it was not. That is not a preference, it is a false statement — and the user cannot tell. They see "noted" either way, so what would they check?
+
+The test is not whether behaviour differs, it is whether it is **self-consistent**: not writing and saying you are not writing it is personality; saying "noted" and writing nothing is a false entry.
+
+So `remember_note` is not there to standardise what anyone writes. It is there to make **whether this one got written** checkable. Let the differences start after that line.
+
 ## `refreshAfterMessages`
 
 A context compactor folds old messages into summaries. The injected block is one
