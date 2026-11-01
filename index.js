@@ -27,8 +27,10 @@ import { createUserMessage } from "@deepseek-ai/dsh-llm";
 import { buildNotice } from "./lib/notice.js";
 import { DIARY_CADENCES, localDay, pendingDiaryNudge } from "./lib/diary.js";
 import { detourStaleLine, diaryIssueLine, minutesOf } from "./lib/diarycheck.js";
+import { openTasks, rememberNote, ANCHOR_HEADING, NOTE_FILE, TASK_HEADING } from "./lib/notes.js";
 import { rememberEmotion } from "./lib/emotion.js";
 import { homedir } from "node:os";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import z from "@deepseek-ai/schemastery";
 import { z as zod } from "zod";
@@ -381,6 +383,34 @@ function localStamp(now = new Date()) {
     },
   }));
 
+  // 「记下了」得是一个动作，不能是一句话。措辞千变万化（记下了/记住了/放心上了），
+  // 所以这里不认词，只提供一个便宜的落点：调用它就有可见的一行，没调用就是没发生。
+  registerTool(ctx, defineTool({
+    name: "remember_note",
+    description:
+      `Write one thing into the memory folder's ${NOTE_FILE}. Use it whenever the user asks you to keep something — a fact that should still hold later (kind \"anchor\", stored under ${ANCHOR_HEADING}) or a piece of work still owed (kind \"task\", stored under ${TASK_HEADING}). Saying you noted something without calling this is a claim with no action behind it.`,
+    parameters: {
+      text: { type: "string", description: "The fact, or the task, in one line. What you would want to read back later." },
+      title: { type: "string", description: "Optional handle for an anchor, the bold part you will scan for. Defaults to the start of the text." },
+      kind: { type: "string", description: "\"anchor\" (default) for a fact, \"task\" for work still owed." },
+    },
+    output: {
+      schema: { type: "json" },
+      render: (_args, value) => [{ type: "text", text: value.message }],
+    },
+    execute(args, exec) {
+      const dir = memoryDirectory(exec?.agent, config);
+      const kind = typeof args.kind === "string" && args.kind.trim() !== "" ? args.kind.trim() : "anchor";
+      const result = rememberNote({
+        memoryDir: dir,
+        text: typeof args.text === "string" ? args.text : "",
+        title: typeof args.title === "string" ? args.title : undefined,
+        kind,
+      });
+      return { ok: result.ok, message: result.message };
+    },
+  }));
+
   ctx.on("agent/pre-step", async ({ agent, step, signal }, next) => {
     const decision = await next();
     if (decision.kind === "reject" || signal.aborted) return decision;
@@ -496,7 +526,18 @@ function localStamp(now = new Date()) {
       memoryDir,
       days: Number(configValue(config, "detourStaleDays") ?? 21),
     });
-    const tail = [nudge, issue, stale].filter((part) => part !== undefined).join("\n\n");
+    // 待办写进文件也不算「有家」——它不注入就没人读。这里只报条数，不搬正文：
+    // 搬正文等于把任务塞进每一轮的上下文，而「有几条」就足够让人去翻那一段。
+    const tasks = (() => {
+      try {
+        const open = openTasks(readFileSync(join(memoryDir, NOTE_FILE), "utf8"));
+        if (open.length === 0) return undefined;
+        return `- ${open.length} open task${open.length === 1 ? "" : "s"} in \`${NOTE_FILE}\` under \`${TASK_HEADING}\``;
+      } catch {
+        return undefined;
+      }
+    })();
+    const tail = [nudge, issue, stale, tasks].filter((part) => part !== undefined).join("\n\n");
     if (tail !== "") {
       // 块尾那句也是「注入出去的东西」，README 里写的是「每一次注入决策都在里面」——
       // 它要算决策的一部分，否则那句话生效与否在诊断文件里查不到。

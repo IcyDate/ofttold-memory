@@ -128,6 +128,23 @@ not there, create it rather than deciding the habit does not apply to you.
 delete the ones you have outgrown — the point of the file is that you were wrong in
 these particular ways, and the particular ways are the part you will repeat.
 
+### 1c. When they hand you something to keep
+
+If the user says anything that amounts to *keep this* — a fact that should still hold
+next week, a piece of work still owed — that is a `remember_note` call, **not a sentence**.
+`记得` / `记下` / `放心上` / `别忘` / `你记着` are all the same request; do not look for the
+words, look for the thing being handed over.
+
+- `kind: "anchor"` (default) → one bullet in `MEMORY.md`'s `常被提起`:
+  `- **标题** → 说明`. The title is the handle you will scan for months later, so make it
+  the phrase you would actually search for.
+- `kind: "task"` → `- [ ]` under `待办`, created on first use. The block tail reports how
+  many are open, so a written task is not automatically a *read* task.
+
+**Saying "noted" without the call is a claim with no action behind it**, and nothing in the
+transcript will contradict it — which is exactly the failure the tool exists to prevent.
+If you cannot write it, say you cannot, and say where it would have gone.
+
 ### 2. The index line
 
 After writing, go back and update `INDEX.md`: one line for the day, plus **at most
