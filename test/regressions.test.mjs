@@ -195,3 +195,21 @@ test("the notice reports the most specific reason, not the first one that fails"
   });
   assert.match(allWrong, /none of its headings matched/);
 });
+
+test("the anchor cap never sinks a hard rule", () => {
+  // 上限（anchorCap）属于锚点那节：它按「被想起」的权重决定谁沉底，而「硬约定」
+  // 里没有「被想起」这回事——每条算出来都是 R=0.50，沉的纯属排后面的那些，
+  // 等于随机丢掉一条不能破的规矩。用户早先拍板「先不改」时只有锚点会被读；
+  // 这两节进了默认读取之后，这就是真问题。
+  const dir = mkdtempSync(join(tmpdir(), "rules-"));
+  const rules = Array.from({ length: 10 }, (_, i) => `- **规矩 ${i + 1}** → 第 ${i + 1} 条`).join("\n");
+  const anchors = Array.from({ length: 12 }, (_, i) => `- **锚点 ${i + 1}** → 第 ${i + 1} 条`).join("\n");
+  writeFileSync(
+    join(dir, "MEMORY.md"),
+    `# 记忆\n\n## 常被提起\n\n${anchors}\n\n## 硬约定\n\n${rules}\n`,
+    "utf8",
+  );
+  const rendered = renderSources({}, dir);
+  assert.equal((rendered.text.match(/^- \*\*规矩 /gm) || []).length, 10, "一条硬规矩都不许沉");
+  assert.equal((rendered.text.match(/^- \*\*锚点 /gm) || []).length, 8, "锚点仍然按上限沉");
+});
