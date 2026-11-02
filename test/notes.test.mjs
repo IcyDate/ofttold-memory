@@ -138,3 +138,25 @@ test("a task nobody does for months stops counting and starts asking", () => {
   // 没有日期的任务算不出年龄，不猜。
   assert.deepEqual(staleTasks("- [ ] no date here", "2026-11-02"), []);
 });
+
+test("writing and reading use the same exact heading match", () => {
+  // 真 bug：写入端用子串匹配、读取端用精确匹配，于是
+  // `## 常被提起（手动维护，上限 8 条）` 会被写进去却永远读不出来——
+  // 写得成功、读不出来，两边都不报错。
+  const dir = fresh();
+  writeFileSync(
+    join(dir, NOTE_FILE),
+    "# 记忆\n\n## 常被提起（手动维护，上限 8 条）\n\n> 说明。\n\n## 待办事项\n\n- [ ] 2026-11-01 起 ｜ 邻居的\n",
+    "utf8",
+  );
+  const refused = rememberNote({ memoryDir: dir, text: "新锚点", kind: "anchor" });
+  assert.equal(refused.ok, false, "带后缀的标题不能被当作 `常被提起` 写进去");
+  // 拒绝的时候要指出来那个几乎一样的标题，否则用户只看到「没有这一节」。
+  assert.match(refused.message, /常被提起（手动维护，上限 8 条）/);
+
+  // `## 待办事项` 不能被当成 `## 待办`。
+  assert.deepEqual(openTasks(readFileSync(join(dir, NOTE_FILE), "utf8")), []);
+  rememberNote({ memoryDir: dir, text: "真正的待办", kind: "task", stampText: "2026-11-02" });
+  const open = openTasks(readFileSync(join(dir, NOTE_FILE), "utf8"));
+  assert.deepEqual(open.map((t) => t.text), ["真正的待办"]);
+});
