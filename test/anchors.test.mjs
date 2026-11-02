@@ -162,3 +162,12 @@ test("the same local date scores the same at midnight and at noon", () => {
   assert.equal(today(night), dayOf(isoOf(today(night))));
   assert.equal(isoOf(today(night)), "2026-11-02");
 });
+
+test("a one-character handle falls back to the longest segment, not the full title", () => {
+  // 实测过的 bug：`拾·从字里拾回来` 的 handle 是「拾」，一个字不是 handle（会匹配
+  // 拾光，每个日记里都有），于是退回**全标题**——但全标题带着 `·` 分隔符，日记从不
+  // 那样写，这条锚点就永远 0 次被提起，被当成没人记得的东西沉掉。
+  const anchor = { title: "拾·从字里拾回来", date: 5, dayString: "2026-10-28" };
+  const diaries = { "2026-10-29": "今天想明白从字里拾回来是什么意思" };
+  assert.equal(countRecalls(anchor, diaries), 1, "最长段「从字里拾回来」应当命中");
+});
