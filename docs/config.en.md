@@ -11,7 +11,7 @@ The three fields most people use are on the main page. This page covers the rest
 | `memoryDir` | `~/.dsh/ofttold-memory` | Folder holding the markdown. Created on first run with a five-file skeleton (`memory.md` / `index.md` / `relationship.md` / `detours.md` / `diary/`). A folder that already holds notes gets nothing added. |
 | `sections` | unset = the anchor heading (`Oft-told` / `常被提起`, whichever appears first) + `我是谁` + `硬约定` | Which sections to lift. Strings or objects (see below). Once set, only what you name. |
 | `maxChars` | `600` | Per-section character budget. 600 characters ≈ 400 tokens. |
-| `anchorCap` | `8` | How many bold bullets a section keeps in view. The rest sink — ranked by `exp(-t / 2^n)`, kept in the file, no longer injected. `0` turns it off. |
+| `anchorCap` | `8` | How many bold bullets a section keeps in view. The rest sink — ranked by `exp(-t / 2^n)`, kept in the file, no longer injected. `0` turns it off. **The character budget is derived from it** (cap × longest line × 1.25 + the sinking note), so `maxChars` does not need to be raised alongside it; an explicit per-section `maxChars` still wins. |
 | `summaryFrom` | `"17:30"` | When the day's `## 今天` summary starts being expected. Before this hour the check stays quiet. |
 | `diaryCadence` | `"daily"` | `daily` names today when unwritten, `weekly` stays quiet while anything was written in the last 7 days, `off` never speaks. |
 | `diarySections` | `0` | Sections per day before the check names it. **`0` is the default: off.** A busy day has more sections than a quiet one, so the count says nothing about whether the entry is a transcript. |

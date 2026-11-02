@@ -213,3 +213,28 @@ test("the anchor cap never sinks a hard rule", () => {
   assert.equal((rendered.text.match(/^- \*\*规矩 /gm) || []).length, 10, "一条硬规矩都不许沉");
   assert.equal((rendered.text.match(/^- \*\*锚点 /gm) || []).length, 8, "锚点仍然按上限沉");
 });
+
+test("raising anchorCap actually shows more anchors, without also raising maxChars", () => {
+  // 实测过的坑：`maxChars` 原来在 `anchorCap` 之前生效，把条数上限抬到 12
+  // 也一条都进不来，末尾只多一句 `(3 more line(s) omitted)`——两个数必须一起
+  // 调，而没人知道这件事。现在预算是从条数算出来的，只调一个就该生效。
+  const dir = mkdtempSync(join(tmpdir(), "budget-"));
+  const long = "说明文字，故意写得接近真实锚点的长度，让字符预算真的会咬人";
+  const anchors = Array.from({ length: 14 }, (_, i) => `- **锚点 ${i + 1}·一条标题** → \`2026-11-01\` 起｜\`relationship.md\`｜${long}`).join("\n");
+  writeFileSync(join(dir, "memory.md"), `# 记忆\n\n## 常被提起\n\n${anchors}\n`, "utf8");
+
+  const eight = renderSources({}, dir);
+  assert.equal((eight.text.match(/^- \*\*锚点 /gm) || []).length, 8);
+  assert.doesNotMatch(eight.text, /omitted|cut mid-line/, "默认预算不该切掉第八条");
+
+  const twelve = renderSources({ anchorCap: 12 }, dir);
+  assert.equal((twelve.text.match(/^- \*\*锚点 /gm) || []).length, 12);
+  assert.doesNotMatch(twelve.text, /omitted|cut mid-line/);
+
+  // 显式给这一节设 maxChars 仍然是用户说了算。
+  const pinned = renderSources(
+    { anchorCap: 12, sections: [{ file: "memory.md", heading: "常被提起", maxChars: 300 }] },
+    dir,
+  );
+  assert.match(pinned.text, /omitted|cut mid-line/);
+});
