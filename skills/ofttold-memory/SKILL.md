@@ -27,12 +27,15 @@ That is the whole trade: the plugin removes the decision, this skill lowers its 
 
 ## What to do
 
-1. **Find the memory folder.** Default `~/.dsh/ofttold-memory/`, but check for
-   `memory.md` in these places first, in order:
-   - `~/.dsh/ofttold-memory/memory.md`
+1. **Find the memory folder.** Check for `memory.md` in these places, in order:
    - a folder the user names when they say "my notes", "my diary", "拾光"
+   - `.ofttold/memory.md` inside the current workspace — **this is the default**
+   - `~/.dsh/ofttold-memory/memory.md` — where versions before 0.1.16 put it; still
+     read when a `memory.md` is actually there
    - `AGENTS.md` or `CLAUDE.md` in the workspace, if it holds a short list of standing
      facts rather than tool instructions
+   The profile sets this concretely (`memoryDir` in `cordis.patch.yml`); read that
+   before guessing, and never assume the outside-the-workspace path.
 
    If none exist, say so in one line and continue the task. Do not create files.
 

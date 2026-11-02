@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -170,4 +170,14 @@ test("a one-character handle falls back to the longest segment, not the full tit
   const anchor = { title: "拾·从字里拾回来", date: 5, dayString: "2026-10-28" };
   const diaries = { "2026-10-29": "今天想明白从字里拾回来是什么意思" };
   assert.equal(countRecalls(anchor, diaries), 1, "最长段「从字里拾回来」应当命中");
+});
+
+test("the template's examples live in comments, so stamping leaves the file alone", () => {
+  // 第一版只看 `示例·` 前缀，可模板把中英两组示例都放在 <!-- --> 里，标题是
+  // `项目的规矩` / `Project rules` 这种正常词，照样被盖上日期——第一次运行就改
+  // 用户刚拿到的文件。
+  const template = readFileSync(new URL("../templates/memory.md", import.meta.url), "utf8");
+  const result = stampUndated(template, "2026-11-02");
+  assert.deepEqual(result.stamped, []);
+  assert.equal(result.text, template, "盖章不该动模板一个字");
 });

@@ -277,12 +277,20 @@ export function memoryDirectory(agent, config) {
   // validation. Testing truthiness would silently mean "false" for any caller
   // that hands `apply` an unvalidated object, so the code states the documented
   // default itself and only an explicit `false` turns it off.
-  const base =
-    configValue(config, "workspaceRelative") !== false && typeof agent?.session?.header?.cwd === "string"
-      ? agent.session.header.cwd
-      : process.cwd();
+  const sessionCwd = typeof agent?.session?.header?.cwd === "string" ? agent.session.header.cwd : undefined;
   const configured = configValue(config, "memoryDir");
-  if (configured != null) return expandPath(configured, base);
+  if (configured != null) {
+    // `workspaceRelative` exists to decide what *the user's* relative paths are
+    // resolved against. It was never meant to move the default folder, so it
+    // only applies here, to a path somebody actually configured.
+    const base = configValue(config, "workspaceRelative") !== false && sessionCwd ? sessionCwd : process.cwd();
+    return expandPath(configured, base);
+  }
+
+  // The default is not a user path, so it does not consult `workspaceRelative`:
+  // it has to land in the session's workspace by definition, because that is
+  // the only place the assistant's own file tools are allowed to write.
+  const base = sessionCwd ?? process.cwd();
 
   // The default is *inside* the workspace on purpose. The assistant writes the
   // diary, the index and relationship.md with its own file tools, and those go

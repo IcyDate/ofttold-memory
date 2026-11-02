@@ -4,7 +4,7 @@
     "description": "Keep your notes in the room in every session: point it at a folder, and it lifts a few sections in at the start. Ships with a starter folder and file, so it works out of the box."
   },
   "config": {
-    "memoryDir": "Where your notes live. Created with a starter file on first run, so you can leave this alone; point it at a folder you already keep and the plugin only reads it.",
+    "memoryDir": "Where your memory folder lives. Leave it empty and it is `.ofttold` inside the current workspace. Created with a starter file on first run; point it at a folder you already keep and only the missing files get filled in.",
     "sections": "Which parts it should remember. Write the headings as they appear in your notes, one per line — you can list several.",
     "maxChars": "How much of each section to read. Longer text is cut. 600 characters is about 400 tokens, charged once per session.",
     "header": "The line that opens the block. It tells the model this is background, not something you said. Usually no need to change it.",

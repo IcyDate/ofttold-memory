@@ -304,3 +304,17 @@ test("a folder made by an older version is still found, not orphaned", async () 
     rmSync(ws, { recursive: true, force: true });
   }
 });
+
+test("workspaceRelative does not move the default folder", async () => {
+  // 关掉 workspaceRelative 是为了让**用户自己配的**相对路径换个基准，
+  // 不该把默认的记忆文件夹也一起挪到 process.cwd() 去——那样它又跑到工作区外，
+  // 助手照旧写不进去，而这次连症状都更难看出来。
+  const { memoryDirectory } = await import("../index.js");
+  const ws = mkdtempSync(join(tmpdir(), "ofttold-workspace-"));
+  try {
+    const agent = { session: { header: { cwd: ws } } };
+    assert.equal(memoryDirectory(agent, { workspaceRelative: false }), join(ws, ".ofttold"));
+  } finally {
+    rmSync(ws, { recursive: true, force: true });
+  }
+});
