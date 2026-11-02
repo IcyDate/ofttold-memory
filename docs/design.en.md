@@ -55,6 +55,10 @@ The test is not "is it important" but **can you see it when it fails**:
 
 **Failures with no symptom must go into code; failures you can see can stay in prose.**
 
+There is a second axis, and it is not the same one: **some things are perfectly visible and still must not go into code — judgment about proportion.**
+
+"Should I crack a joke right now" is the example. You could write a counter that tracks "how many turns without one", and its only remaining function would be to nag. A joke produced by nagging is not a joke; it is an action taken to silence the counter. **Facts can be counted** (was today written, where did the summary stop, how many tasks have been open how long); **proportion cannot.** The line holds between the plugin and its users too — a system that encodes "the right tone" as a rule gets exactly the tone that follows the rule.
+
 This rules out "the more we move into the plugin the better". The weight formula is
 the most code-shaped thing in this document and the least deserving of code: it fires
 a few times a year, and the line "a wrong parameter costs one anchor a few extra

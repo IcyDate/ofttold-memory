@@ -62,6 +62,8 @@ summary has thrown away nine of them.
 Complaint and irritation belong there; that is what it is for. Someone opening the file
 wants the day, not the transcript, and nobody scrolls to the bottom to find out how it went.
 
+**How to tell a line is doing nothing: move it to another day.** If it still reads true — "it was hard but worth it", "the tool matters more than the code" — then it was never about this day. *A sentence that would fit anywhere says nothing about anywhere.* The test is cheap and it is the only one that catches padding: a transcript is visible as padding, an interchangeable sentence is not.
+
 **Rewrite that block in the same breath as writing a section.** Not "at the end of the day" —
 the end of the day is the moment attention is gone, and a summary that lags the body is worse
 than none because it reads as current and is not. The `（HH:mm 更新）` stamp is what makes the
