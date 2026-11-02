@@ -27,7 +27,7 @@ import { createUserMessage } from "@deepseek-ai/dsh-llm";
 import { buildNotice } from "./lib/notice.js";
 import { DIARY_CADENCES, localDay, pendingDiaryNudge } from "./lib/diary.js";
 import { detourStaleLine, diaryIssueLine, minutesOf } from "./lib/diarycheck.js";
-import { completeTask, daysOpen, openTasks, rememberNote, ANCHOR_HEADING, NOTE_FILE, TASK_HEADING } from "./lib/notes.js";
+import { completeTask, daysOpen, openTasks, rememberNote, staleTasks, ANCHOR_HEADING, NOTE_FILE, TASK_HEADING } from "./lib/notes.js";
 import { rememberEmotion } from "./lib/emotion.js";
 import { homedir } from "node:os";
 import { readFileSync } from "node:fs";
@@ -156,6 +156,14 @@ export const Config = z.object({
     .volatile()
     .description(
       "How many days `detours.md` may go untouched before the block says so. The sentence points at deleting the file rather than at writing more into it: a file of wrong turns nobody adds to is a result, not a backlog. 0 keeps it quiet.",
+    ),
+  taskStaleDays: z
+    .natural()
+    .min(0)
+    .default(30)
+    .volatile()
+    .description(
+      "How long a task may stay open before the block stops counting it and asks whether to keep it. Past this age a task named every session becomes background noise — asking whether it still exists is a real question, chasing it is not. 0 keeps it quiet.",
     ),
   anchorCap: z
     .natural()
@@ -555,13 +563,23 @@ function localStamp(now = new Date()) {
     // 搬正文等于把任务塞进每一轮的上下文，而「有几条」就足够让人去翻那一段。
     const tasks = (() => {
       try {
-        const open = openTasks(readFileSync(join(memoryDir, NOTE_FILE), "utf8"));
+        const source = readFileSync(join(memoryDir, NOTE_FILE), "utf8");
+        const open = openTasks(source);
         if (open.length === 0) return undefined;
         // 条数告诉你有几条，**最久那条挂了多久**才告诉你该不该现在动手。
         const todayIso = localDay();
         const ages = open.map((task) => daysOpen(task, todayIso)).filter((n) => n !== undefined);
         const oldest = ages.length === 0 ? undefined : Math.max(...ages);
         const head = `- ${open.length} open task${open.length === 1 ? "" : "s"} in \`${NOTE_FILE}\` under \`${TASK_HEADING}\``;
+        // 挂了太久的**换一种语气**：不再计入「有几条」，而是问它还要不要。
+        // 一条待办如果两个月里每会话都被点名，它就成了背景噪音——那正是提醒变成
+        // 没提醒的过程。问「要不要删」是真问题，催「怎么还没做」不是。
+        const stale = staleTasks(source, todayIso, Number(configValue(config, "taskStaleDays") ?? 30));
+        if (stale.length > 0) {
+          const named = stale.slice(0, 3).map((task) => `${task.text}（${task.age} 天）`).join("、");
+          const more = stale.length > 3 ? ` 等 ${stale.length} 条` : "";
+          return `${head}. ${stale.length} of them may not be worth keeping: ${named}${more} — 还要不要，你说一句，我勾掉或删掉`;
+        }
         return oldest === undefined || oldest <= 0 ? head : `${head}, the oldest open ${oldest} day${oldest === 1 ? "" : "s"}`;
       } catch {
         return undefined;

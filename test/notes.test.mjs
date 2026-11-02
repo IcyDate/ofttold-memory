@@ -6,7 +6,7 @@ import { join } from "node:path";
 
 import { scaffoldMemory } from "../lib/scaffold.js";
 import { parseAnchors } from "../lib/anchors.js";
-import { completeTask, daysOpen, openTasks, rememberNote, titleOf } from "../lib/notes.js";
+import { completeTask, daysOpen, openTasks, rememberNote, staleTasks, titleOf } from "../lib/notes.js";
 import { NOTE_FILE } from "../lib/notes.js";
 
 const fresh = () => {
@@ -120,4 +120,21 @@ test("completion matches the text exactly, and names what is actually open", () 
   assert.match(wrong.message, /no open task reads exactly "修白名单"/);
   assert.match(wrong.message, /修白名单和缓存/);
   assert.equal(readFileSync(join(dir, NOTE_FILE), "utf8").includes("[x]"), false);
+});
+
+test("a task nobody does for months stops counting and starts asking", () => {
+  const dir = fresh();
+  rememberNote({ memoryDir: dir, text: "新的一条", kind: "task", stampText: "2026-11-02" });
+  rememberNote({ memoryDir: dir, text: "挂了 40 天的", kind: "task", stampText: "2026-09-23" });
+  rememberNote({ memoryDir: dir, text: "挂了 10 天的", kind: "task", stampText: "2026-10-23" });
+  const text = readFileSync(join(dir, NOTE_FILE), "utf8");
+  // 默认 30 天：只有那条超龄的被挑出来。
+  const stale = staleTasks(text, "2026-11-02");
+  assert.equal(stale.length, 1);
+  assert.equal(stale[0].age, 40);
+  // 阈值可调，也能关掉——关掉之后一句都不提。
+  assert.equal(staleTasks(text, "2026-11-02", 7).length, 2);
+  assert.deepEqual(staleTasks(text, "2026-11-02", 0), []);
+  // 没有日期的任务算不出年龄，不猜。
+  assert.deepEqual(staleTasks("- [ ] no date here", "2026-11-02"), []);
 });

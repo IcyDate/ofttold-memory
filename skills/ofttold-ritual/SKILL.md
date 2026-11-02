@@ -143,6 +143,12 @@ words, look for the thing being handed over.
   **A ticked task stays in the file** — it is the only evidence the thing was ever done —
   and the block tail reports how many are still open plus how long the oldest has waited.
 
+**After ticking one off, ask once**: did this leave something that should hold from
+now on? A rule you discovered, a preference you learned, a wrong turn worth keeping.
+If yes, write it as an `anchor` (or into `relationship.md`); if not, leave it. **Do not
+tick-and-promote by habit** — `常被提起` fills with one-off work that way, and a list of
+one-off work is not a list of what keeps coming up.
+
 **Only promises get a task.** Not "this is important" and not "you mentioned this once":
 the test is whether the sentence contains *something I am going to do*. When it is not
 clear, ask — a task shows up in the block tail every session, so putting one there is
