@@ -170,3 +170,28 @@ test("remember_emotion computes the folder from the call, not from a name that i
   assert.match(source, /memoryDirectory\(exec\?\.agent, config\)/, "and resolve the folder from it");
   assert.doesNotMatch(source, /rememberEmotion\(\{ memoryDir, word/, "the old bare name is the bug");
 });
+
+test("the notice reports the most specific reason, not the first one that fails", () => {
+  // 默认现在还会顺带找「我是谁」「硬约定」。用户没有这两节时，attempts 里就会有一条
+  // heading_not_found；要是它抢在前面，真正的原因（那节只剩示例 / 还空着）就看不见了。
+  const header = "HEADER";
+  const mixed = buildNotice({
+    header,
+    memoryDir: "/tmp/m",
+    attempts: [
+      { file: "MEMORY.md", heading: "常被提起", reason: "only_samples" },
+      { file: "MEMORY.md", heading: "我是谁", reason: "heading_not_found" },
+      { file: "MEMORY.md", heading: "硬约定", reason: "heading_not_found" },
+    ],
+  });
+  assert.match(mixed, /only the template's example lines/);
+  assert.doesNotMatch(mixed, /none of its headings matched/);
+
+  // 真的一个标题都没匹配上时，才报那条。
+  const allWrong = buildNotice({
+    header,
+    memoryDir: "/tmp/m",
+    attempts: [{ file: "MEMORY.md", heading: "常被提起", reason: "heading_not_found" }],
+  });
+  assert.match(allWrong, /none of its headings matched/);
+});
