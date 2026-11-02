@@ -287,6 +287,29 @@ install rather than the content.
 
 ---
 
+## What it touches, and what it leaves alone
+
+For a supply-chain reviewer. This plugin reads and writes files — that cannot be
+declared away — so here is exactly what:
+
+| | |
+|---|---|
+| **Reads** | the `##` sections you name, inside `memoryDir`; today's entry under `diary/`; the vocabulary in `relationship.md`; the mtime of `detours.md` |
+| **Writes** | only inside `memoryDir`: filling in missing skeleton files, stamping a start date onto an undated anchor, appending or ticking a task in `MEMORY.md`, rewriting the one `**now**` line in `relationship.md`, renaming a legacy file into its new name |
+| **Never writes** | anything outside `memoryDir`. Not `~/.dsh`, not the workspace, not session data |
+| **Network** | none. No outbound request of any kind |
+| **Subprocess** | none. No exec, no spawn, no shell |
+| **Credentials** | none. No environment secrets, no keychain |
+
+**Runtime dependencies: zero.** There is no `dependencies` block — every `@deepseek-ai/*`
+package is a `peerDependency` provided by the host, and so is `schemastery`.
+
+**Failure bounds:** no read or write failure is ever thrown into the host. The injected block
+says in one line what it tried and why nothing was read; a missing folder gets the skeleton
+filled in; an unwritable path goes quiet instead of retrying.
+
+---
+
 ## Other harnesses
 
 **Planned.** The plugin is tied to DSH; the same idea is meant to ship as a skill that any

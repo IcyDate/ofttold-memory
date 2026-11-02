@@ -33,7 +33,6 @@ import { homedir } from "node:os";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import z from "@deepseek-ai/schemastery";
-import { z as zod } from "zod";
 
 import { configValue } from "./lib/config.js";
 import { Diagnostics } from "./lib/diagnostics.js";
@@ -228,12 +227,33 @@ export const Config = z.object({
  * does not silently re-inject: after a restart the earlier message is still in
  * the replayed log, and injecting again would pay twice for the same text.
  */
-const stateSchema = zod.object({
-  injectedCount: zod.number(),
-  lastInjectedAt: zod.number().nullable(),
-  lastInjectedMessageCount: zod.number().nullable(),
-  messageCount: zod.number(),
-});
+const stateSchema = {
+  /**
+   * 手写而不是 zod：这是包里**唯一**用到 zod 的地方，而它只需要 `parse()`。
+   *
+   * 保留 zod 的代价不是体积，是**供应链审查**——DSH STORE 的自动准入要求
+   * 「零运行期依赖」，有依赖就得再单独审一遍锁文件。为了五个数字字段带一个
+   * 依赖进来，不划算。宿主在 `.parse()` 抛错时跳过这一行（`try { ... } catch { continue }`），
+   * 所以契约只有一条：**形状不对就抛**。
+   */
+  parse(row) {
+    const value = row ?? {};
+    const check = (field, allowNull) => {
+      const current = value[field];
+      if (current === null && allowNull) return null;
+      if (typeof current !== "number" || !Number.isFinite(current)) {
+        throw new TypeError(`projection state ${field} must be a finite number`);
+      }
+      return current;
+    };
+    return {
+      injectedCount: check("injectedCount", false),
+      lastInjectedAt: check("lastInjectedAt", true),
+      lastInjectedMessageCount: check("lastInjectedMessageCount", true),
+      messageCount: check("messageCount", false),
+    };
+  },
+};
 
 /**
  * Resolve the absolute memory folder.
