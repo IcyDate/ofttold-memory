@@ -6,7 +6,7 @@ import { join } from "node:path";
 
 import { scaffoldMemory } from "../lib/scaffold.js";
 import { parseAnchors } from "../lib/anchors.js";
-import { openTasks, rememberNote, titleOf } from "../lib/notes.js";
+import { completeTask, daysOpen, openTasks, rememberNote, titleOf } from "../lib/notes.js";
 import { NOTE_FILE } from "../lib/notes.js";
 
 const fresh = () => {
@@ -50,10 +50,13 @@ test("a task opens the 待办 section and reads back", () => {
     memoryDir: dir,
     text: "剥掉 spm_id_from 再匹配白名单",
     kind: "task",
+    stampText: "2026-11-02",
   });
   assert.equal(added.ok, true, added.message);
   const open = openTasks(readFileSync(join(dir, NOTE_FILE), "utf8"));
-  assert.deepEqual(open, ["剥掉 spm_id_from 再匹配白名单"]);
+  assert.deepEqual(open, [
+    { text: "剥掉 spm_id_from 再匹配白名单", opened: "2026-11-02" },
+  ]);
 });
 
 test("a missing anchor section is refused rather than invented", () => {
@@ -80,4 +83,41 @@ test("empty text, unknown kind and a missing file all fail loudly", () => {
 test("the title is derived from the text when it is not given", () => {
   assert.equal(titleOf("主人喜欢古镇，天气冷没下水。"), "主人喜欢古镇");
   assert.equal(titleOf("一条很长的、" + "字".repeat(40)).length <= 25, true);
+});
+
+test("a task carries the day it was opened, and that day is readable back", () => {
+  const dir = fresh();
+  rememberNote({ memoryDir: dir, text: "等上游合并", kind: "task", stampText: "2026-11-01" });
+  const text = readFileSync(join(dir, NOTE_FILE), "utf8");
+  assert.match(text, /- \[ \] 2026-11-01 起 ｜ 等上游合并/);
+  const [task] = openTasks(text);
+  assert.equal(task.opened, "2026-11-01");
+  // 「挂了多久」是待办唯一有用的信息，所以这个数必须真的算得出来。
+  assert.equal(daysOpen(task, "2026-11-03"), 2);
+  assert.equal(daysOpen({ text: "no date" }, "2026-11-03"), undefined);
+});
+
+test("completing a task ticks it instead of deleting it", () => {
+  const dir = fresh();
+  rememberNote({ memoryDir: dir, text: "修白名单", kind: "task", stampText: "2026-11-02" });
+  const done = completeTask({ memoryDir: dir, text: "修白名单", stampText: "2026-11-04" });
+  assert.equal(done.ok, true, done.message);
+  const text = readFileSync(join(dir, NOTE_FILE), "utf8");
+  // 留着，不是删掉：它是「这件事做过」的唯一证据。
+  assert.match(text, /- \[x\] 2026-11-02 起 ｜ 修白名单（2026-11-04 完成）/);
+  // 勾掉之后不再计入未完成，块尾那条数会自己少一条。
+  assert.equal(openTasks(text).length, 0);
+  // 再勾一次要拒绝，不能默默成功。
+  assert.equal(completeTask({ memoryDir: dir, text: "修白名单" }).ok, false);
+});
+
+test("completion matches the text exactly, and names what is actually open", () => {
+  const dir = fresh();
+  rememberNote({ memoryDir: dir, text: "修白名单和缓存", kind: "task", stampText: "2026-11-02" });
+  const wrong = completeTask({ memoryDir: dir, text: "修白名单", stampText: "2026-11-04" });
+  // 模糊匹配会勾掉错的那一条，而"悄悄完成了错的"比"什么都完不成"更糟。
+  assert.equal(wrong.ok, false);
+  assert.match(wrong.message, /no open task reads exactly "修白名单"/);
+  assert.match(wrong.message, /修白名单和缓存/);
+  assert.equal(readFileSync(join(dir, NOTE_FILE), "utf8").includes("[x]"), false);
 });

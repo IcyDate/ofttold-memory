@@ -138,8 +138,15 @@ words, look for the thing being handed over.
 - `kind: "anchor"` (default) → one bullet in `MEMORY.md`'s `常被提起`:
   `- **标题** → 说明`. The title is the handle you will scan for months later, so make it
   the phrase you would actually search for.
-- `kind: "task"` → `- [ ]` under `待办`, created on first use. The block tail reports how
-  many are open, so a written task is not automatically a *read* task.
+- `kind: "task"` → `- [ ] 2026-11-02 起 ｜ …` under `待办`, created on first use. The date is
+  the day it was opened; `complete_task` appends the day it was finished and ticks the box.
+  **A ticked task stays in the file** — it is the only evidence the thing was ever done —
+  and the block tail reports how many are still open plus how long the oldest has waited.
+
+**Only promises get a task.** Not "this is important" and not "you mentioned this once":
+the test is whether the sentence contains *something I am going to do*. When it is not
+clear, ask — a task shows up in the block tail every session, so putting one there is
+promising to bring it up again, and that promise should be theirs too.
 
 **Saying "noted" without the call is a claim with no action behind it**, and nothing in the
 transcript will contradict it — which is exactly the failure the tool exists to prevent.

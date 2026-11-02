@@ -27,7 +27,7 @@ import { createUserMessage } from "@deepseek-ai/dsh-llm";
 import { buildNotice } from "./lib/notice.js";
 import { DIARY_CADENCES, localDay, pendingDiaryNudge } from "./lib/diary.js";
 import { detourStaleLine, diaryIssueLine, minutesOf } from "./lib/diarycheck.js";
-import { openTasks, rememberNote, ANCHOR_HEADING, NOTE_FILE, TASK_HEADING } from "./lib/notes.js";
+import { completeTask, daysOpen, openTasks, rememberNote, ANCHOR_HEADING, NOTE_FILE, TASK_HEADING } from "./lib/notes.js";
 import { rememberEmotion } from "./lib/emotion.js";
 import { homedir } from "node:os";
 import { readFileSync } from "node:fs";
@@ -406,6 +406,31 @@ function localStamp(now = new Date()) {
         text: typeof args.text === "string" ? args.text : "",
         title: typeof args.title === "string" ? args.title : undefined,
         kind,
+        stampText: localDay(),
+      });
+      return { ok: result.ok, message: result.message };
+    },
+  }));
+
+  // 勾掉，不是删掉：删了就没有「这件事做过」的证据，而 `openTasks` 本来就不数
+  // 已勾的行——块尾自己会少一条，文件里还留着。
+  registerTool(ctx, defineTool({
+    name: "complete_task",
+    description:
+      `Tick off one open task in ${NOTE_FILE} under ${TASK_HEADING}. The line stays in the file as history; it just stops being counted. Use the task text exactly as it appears in the file.`,
+    parameters: {
+      text: { type: "string", description: "The task text, exactly as written after the `- [ ] date 起 ｜` prefix." },
+    },
+    output: {
+      schema: { type: "json" },
+      render: (_args, value) => [{ type: "text", text: value.message }],
+    },
+    execute(args, exec) {
+      const dir = memoryDirectory(exec?.agent, config);
+      const result = completeTask({
+        memoryDir: dir,
+        text: typeof args.text === "string" ? args.text : "",
+        stampText: localDay(),
       });
       return { ok: result.ok, message: result.message };
     },
@@ -532,7 +557,12 @@ function localStamp(now = new Date()) {
       try {
         const open = openTasks(readFileSync(join(memoryDir, NOTE_FILE), "utf8"));
         if (open.length === 0) return undefined;
-        return `- ${open.length} open task${open.length === 1 ? "" : "s"} in \`${NOTE_FILE}\` under \`${TASK_HEADING}\``;
+        // 条数告诉你有几条，**最久那条挂了多久**才告诉你该不该现在动手。
+        const todayIso = localDay();
+        const ages = open.map((task) => daysOpen(task, todayIso)).filter((n) => n !== undefined);
+        const oldest = ages.length === 0 ? undefined : Math.max(...ages);
+        const head = `- ${open.length} open task${open.length === 1 ? "" : "s"} in \`${NOTE_FILE}\` under \`${TASK_HEADING}\``;
+        return oldest === undefined || oldest <= 0 ? head : `${head}, the oldest open ${oldest} day${oldest === 1 ? "" : "s"}`;
       } catch {
         return undefined;
       }
