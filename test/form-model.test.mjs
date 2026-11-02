@@ -259,3 +259,19 @@ test("a change with unsaved edits offers save at the top, not only at the bottom
   assert.match(SOURCE, /onClick: \(\) => props\.save\(\)/);
   assert.match(SOURCE, /state\.dirty/);
 });
+
+test("every field the plugin declares can be reached from the panel", () => {
+  // 上面那条守的是「面板画的 == client.js 自己声明的」，没跟 index.js 的 Config 对过。
+  // 于是 `detourStaleDays` / `taskStaleDays` 加进 schema 之后一直没人画，用户永远
+  // 改不到——静默的，因为没有东西会报错。
+  const index = readFileSync(new URL("../index.js", import.meta.url), "utf8");
+  const declared = [...index.matchAll(/^ {2}([a-zA-Z]+): z$/gm)].map((m) => m[1]);
+  assert.ok(declared.length >= 12, `only ${declared.length} fields found in the schema`);
+  const drawn = new Set([
+    ...[...SOURCE.matchAll(/field\("([a-zA-Z]+)"/g)].map((m) => m[1]),
+    ...[...SOURCE.matchAll(/booleanRow\("([a-zA-Z]+)"/g)].map((m) => m[1]),
+    ...[...SOURCE.matchAll(/selectRow\("([a-zA-Z]+)"/g)].map((m) => m[1]),
+  ]);
+  const unreachable = declared.filter((key) => !drawn.has(key));
+  assert.deepEqual(unreachable, [], "declared but impossible to set from the page");
+});

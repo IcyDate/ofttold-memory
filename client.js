@@ -293,6 +293,8 @@ window.__ModuleLoader__.load({
           { ...settingsTextField("diaryCadence") },
           { ...settingsTextField("summaryFrom") },
           { ...settingsNumberField("diarySections") },
+          { ...settingsNumberField("detourStaleDays") },
+          { ...settingsNumberField("taskStaleDays") },
           {
             ...settingsTextField("diaryCheck"),
             format: (value) => (typeof value === "boolean" ? String(value) : ""),
@@ -359,6 +361,8 @@ window.__ModuleLoader__.load({
             diaryCadence: this.form.field("diaryCadence"),
             summaryFrom: this.form.field("summaryFrom"),
             diarySections: this.form.field("diarySections"),
+            detourStaleDays: this.form.field("detourStaleDays"),
+            taskStaleDays: this.form.field("taskStaleDays"),
             diaryCheck: this.form.field("diaryCheck"),
             skills: this.form.field("skills"),
           };
@@ -794,6 +798,8 @@ window.__ModuleLoader__.load({
             field("summaryFrom"),
             field("diarySections", { numeric: true }),
             wide(booleanRow("diaryCheck")),
+            field("detourStaleDays", { numeric: true }),
+            field("taskStaleDays", { numeric: true }),
           ]),
         ]),
         h(

@@ -560,6 +560,8 @@ test("the panel renders cards, controls and a where-line for the headings", () =
     summaryFrom: fieldState("17:30"),
     diarySections: fieldState("8"),
     diaryCheck: fieldState("true"),
+    detourStaleDays: fieldState("21"),
+    taskStaleDays: fieldState("30"),
     skills: fieldState("true"),
   };
   const tree = page.component({

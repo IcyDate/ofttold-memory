@@ -175,7 +175,7 @@ three — that is the layout answering.
 | Setting | Default | Meaning |
 | --- | --- | --- |
 | `memoryDir` | `~/.dsh/ofttold-memory` | Your memory folder. Missing files are filled in on first run; existing ones are never rewritten. |
-| `sections` | `["Oft-told", "常被提起"]` | Which headings ride along. Just the heading text. |
+| `sections` | see below | Which headings ride along. Unset: the anchor heading (`Oft-told` / `常被提起`, whichever comes first in the file) plus `我是谁` and `硬约定` when they exist. |
 | `maxChars` | `600` | Character budget per section. 600 characters ≈ 400 tokens. |
 | `anchorCap` | `8` | How many bold bullets a section keeps in view; the rest sink without being deleted. `0` turns it off. |
 | `summaryFrom` | `"17:30"` | When the day's `## 今天` summary starts being expected. |

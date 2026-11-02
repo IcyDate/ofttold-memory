@@ -9,7 +9,7 @@ The three fields most people use are on the main page. This page covers the rest
 | Field | Default | Purpose |
 |---|---|---|
 | `memoryDir` | `~/.dsh/ofttold-memory` | Folder holding the markdown. Created on first run with a five-file skeleton (`MEMORY.md` / `INDEX.md` / `relationship.md` / `detours.md` / `diary/`). A folder that already holds notes gets nothing added. |
-| `sections` | `["Oft-told", "常被提起"]` | Which sections to lift. Strings or objects (see below). |
+| `sections` | unset = the anchor heading (`Oft-told` / `常被提起`, whichever appears first) + `我是谁` + `硬约定` | Which sections to lift. Strings or objects (see below). Once set, only what you name. |
 | `maxChars` | `600` | Per-section character budget. 600 characters ≈ 400 tokens. |
 | `anchorCap` | `8` | How many bold bullets a section keeps in view. The rest sink — ranked by `exp(-t / 2^n)`, kept in the file, no longer injected. `0` turns it off. |
 | `summaryFrom` | `"17:30"` | When the day's `## 今天` summary starts being expected. Before this hour the check stays quiet. |
