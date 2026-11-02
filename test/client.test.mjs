@@ -790,3 +790,39 @@ test("the opening line gets a textarea: it is a sentence, not an identifier", ()
   assert.match(CLIENT_SOURCE, /multiline = false, rows \}/);
   assert.match(CLIENT_SOURCE, /rows: multiline \? rows \?\? 3 : undefined/);
 });
+
+test("every field the panel draws has a label and a hint in both dictionaries", () => {
+  // 实测过的形状：`detourStaleDays` / `taskStaleDays` / `detourChars` 三个字段
+  // 能渲染、能保存、能被那条「schema 声明的字段都设置得到」的守卫生效，但
+  // **标签和说明从来没有词条**——面板上直接显示 `detourStaleDays` 和一串
+  // `detourStaleDaysHint`。
+  //
+  // 上面那条「every key the panel asks for」查的是源码里字面的 `t("key")`，
+  // 而 `settingsNumberField(id)` 是在宿主里运行时才拼出 `${id}` 和 `${id}Hint`
+  // 的，扫不到。**验了，但验的不是会坏的那一层。**
+  const source = CLIENT_SOURCE;
+  const dictionary = (marker) => {
+    const start = source.indexOf(marker);
+    assert.ok(start >= 0, `${marker} not found`);
+    const end = source.indexOf("\n    };", start);
+    const body = source.slice(start + marker.length, end);
+    return new Set([...body.matchAll(/\n\s{6}([A-Za-z][A-Za-z0-9]*):/g)].map((match) => match[1]));
+  };
+  // 宿主那三个 helper 会自己查 `${id}` 与 `${id}Hint`；本地 `field(id, ...)` 只查 `${id}`。
+  const withHint = [...source.matchAll(/settings(?:Number|Text)Field\("([A-Za-z][A-Za-z0-9]*)"\)/g)].map((m) => m[1]);
+  const labelOnly = [...source.matchAll(/(?<![.\w])field\("([A-Za-z][A-Za-z0-9]*)"/g)].map((m) => m[1]);
+  assert.ok(withHint.length > 5, `the field scan found almost nothing: ${withHint.join(", ")}`);
+
+  for (const [label, marker] of [["en", "const en = {"], ["zh", "const zh = {"]]) {
+    const keys = dictionary(marker);
+    const missing = [];
+    for (const id of withHint) {
+      if (!keys.has(id)) missing.push(id);
+      if (!keys.has(`${id}Hint`)) missing.push(`${id}Hint`);
+    }
+    for (const id of labelOnly) {
+      if (!keys.has(id)) missing.push(id);
+    }
+    assert.deepEqual(missing, [], `${label} dictionary is missing: ${missing.join(", ")}`);
+  }
+});
