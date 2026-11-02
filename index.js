@@ -30,7 +30,7 @@ import { detourSizeLine, diaryIssueLine, minutesOf } from "./lib/diarycheck.js";
 import { completeTask, daysOpen, openTasks, rememberNote, staleTasks, ANCHOR_HEADING, NOTE_FILE, TASK_HEADING } from "./lib/notes.js";
 import { rememberEmotion } from "./lib/emotion.js";
 import { homedir } from "node:os";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import z from "@deepseek-ai/schemastery";
 
@@ -38,9 +38,15 @@ import { configValue } from "./lib/config.js";
 import { Diagnostics } from "./lib/diagnostics.js";
 import { scaffoldMemory } from "./lib/scaffold.js";
 import { registerSkills } from "./lib/skills.js";
-import { DEFAULT_SECTIONS, expandPath, renderSources, stampSourceDates } from "./lib/sources.js";
+import { DEFAULT_MEMORY_FILE, DEFAULT_SECTIONS, LEGACY_MEMORY_FILE, expandPath, renderSources, stampSourceDates } from "./lib/sources.js";
 
 export const name = "ofttold-memory";
+
+/** Where the memory folder lives when nobody configured one: inside the workspace. */
+export const DEFAULT_MEMORY_DIR = ".ofttold";
+
+/** Where 0.1.15 and earlier put it. Still read, so nobody's memory goes missing. */
+export const LEGACY_MEMORY_DIR = "~/.dsh/ofttold-memory";
 
 export const inject = ["agents", "sessionProjections"];
 
@@ -97,10 +103,10 @@ const Section = z.union([
 export const Config = z.object({
   memoryDir: z
     .string()
-    .default("~/.dsh/ofttold-memory")
+    .default(".ofttold")
     .volatile()
     .description(
-      "Where your notes live. Created with a starter `memory.md` on first run, so you can leave this alone. Point it at a folder you already keep and the plugin only reads it.",
+      "Where the memory folder lives. The default sits inside the current workspace, because the assistant writes the diary and the index with its own file tools and those cannot write outside the workspace under the default file policy. Point it elsewhere and that folder must be writable too.",
     ),
   sections: z
     .array(Section)
@@ -266,7 +272,7 @@ const stateSchema = {
  * @param {any} config - Validated plugin config.
  * @returns {string} Absolute memory directory.
  */
-function memoryDirectory(agent, config) {
+export function memoryDirectory(agent, config) {
   // The Config schema defaults this to true, but that default only exists after
   // validation. Testing truthiness would silently mean "false" for any caller
   // that hands `apply` an unvalidated object, so the code states the documented
@@ -275,7 +281,35 @@ function memoryDirectory(agent, config) {
     configValue(config, "workspaceRelative") !== false && typeof agent?.session?.header?.cwd === "string"
       ? agent.session.header.cwd
       : process.cwd();
-  return expandPath(configValue(config, "memoryDir") ?? "~/.dsh/ofttold-memory", base);
+  const configured = configValue(config, "memoryDir");
+  if (configured != null) return expandPath(configured, base);
+
+  // The default is *inside* the workspace on purpose. The assistant writes the
+  // diary, the index and relationship.md with its own file tools, and those go
+  // through the host's sandboxed filesystem service — which under the default
+  // `workspace-write` policy allows the workspace root and temp dirs and
+  // nothing else. A memory folder outside the workspace is therefore readable
+  // by the plugin (it uses plain `node:fs`) but unwritable by the assistant
+  // (it uses `ctx.fs`), and the visible symptom is a diary that never gets
+  // written for no stated reason.
+  const local = expandPath(DEFAULT_MEMORY_DIR, base);
+  if (existsSync(local)) return local;
+
+  // Folders created by 0.1.15 and earlier live outside the workspace. If one is
+  // there, keep reading it rather than silently starting an empty memory
+  // somewhere else — the whole point of this folder is that it is not thrown
+  // away. Moving it is the user's call, and the docs say how.
+  //
+  // The check has to look for a memory file, not just the directory:
+  // `~/.dsh/ofttold-memory` is *also* where diagnostics.json is written, so it
+  // exists on every machine that has ever run the plugin. Treating that as a
+  // memory folder would keep everyone on the old broken default forever.
+  const legacy = expandPath(LEGACY_MEMORY_DIR, base);
+  if (existsSync(join(legacy, DEFAULT_MEMORY_FILE)) || existsSync(join(legacy, LEGACY_MEMORY_FILE))) {
+    return legacy;
+  }
+
+  return local;
 }
 
 /**

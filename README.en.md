@@ -51,7 +51,7 @@ dsh plugin --profile web add ofttold-memory@latest
 
 **That is the whole setup.** It installs the prebuilt package from npm — no build step,
 so no build approval is needed. To track the repository instead, use
-`github:IcyDate/ofttold-memory` in place of the package name. The first run creates `~/.dsh/ofttold-memory/` with a
+`github:IcyDate/ofttold-memory` in place of the package name. The first run creates `.ofttold/` **inside the current workspace**, with a
 five-file skeleton: `memory.md` (the injected source), `index.md` (the diary index),
 `relationship.md` (who the assistant is, plus the live emotion value), `detours.md`
 (the shapes of mistakes it keeps making), and `diary/` (one file per day). **All of it is empty shells and comments — not one memory is
@@ -174,7 +174,7 @@ three — that is the layout answering.
 
 | Setting | Default | Meaning |
 | --- | --- | --- |
-| `memoryDir` | `~/.dsh/ofttold-memory` | Your memory folder. Missing files are filled in on first run; existing ones are never rewritten. |
+| `memoryDir` | `.ofttold` | Your memory folder. Missing files are filled in on first run; existing ones are never rewritten. |
 | `sections` | see below | Which headings ride along. Unset: the anchor heading (`Oft-told` / `常被提起`, whichever comes first in the file) plus `我是谁` and `硬约定` when they exist. |
 | `maxChars` | `600` | Character budget per section. 600 characters ≈ 400 tokens. |
 | `anchorCap` | `8` | How many bold bullets a section keeps in view; the rest sink without being deleted. `0` turns it off. |

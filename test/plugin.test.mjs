@@ -10,7 +10,7 @@
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -265,4 +265,42 @@ test("the block ends by saying the day is not written yet", async () => {
   assert.match(text, /diary\/\d{4}-\d{2}-\d{2}\.md/);
   // 状态行是块尾最后一行：它一句话、无句号、无指令，和上面那行体检区分得开。
   assert.match(text.trimEnd(), /`diary\/\d{4}-\d{2}-\d{2}\.md`\)$/, "the status line stays last");
+});
+
+test("the default memory folder lives inside the workspace, not outside it", async () => {
+  // 助手写日记用的是宿主那个被沙箱拦着的文件服务；默认的 workspace-write 只放
+  // 工作区与临时目录。默认值如果放在工作区外，插件自己（裸 node:fs）写得进去，
+  // 助手却写不进去，症状就是日记永远空着而没人报错。
+  const { memoryDirectory } = await import("../index.js");
+  const ws = mkdtempSync(join(tmpdir(), "ofttold-workspace-"));
+  try {
+    const agent = { session: { header: { cwd: ws } } };
+    assert.equal(memoryDirectory(agent, {}), join(ws, ".ofttold"));
+  } finally {
+    rmSync(ws, { recursive: true, force: true });
+  }
+});
+
+test("a folder made by an older version is still found, not orphaned", async () => {
+  const { memoryDirectory, LEGACY_MEMORY_DIR } = await import("../index.js");
+  const home = mkdtempSync(join(tmpdir(), "ofttold-home-"));
+  const ws = mkdtempSync(join(tmpdir(), "ofttold-workspace-"));
+  const previous = process.env.HOME;
+  try {
+    // 老默认路径按 HOME 解析，这里把它指到一个临时 home 上，避免碰真实的家目录。
+    process.env.HOME = home;
+    const legacy = join(home, ".dsh", "ofttold-memory");
+    mkdirSync(legacy, { recursive: true });
+    // 只有目录不算：`~/.dsh/ofttold-memory` 还是 diagnostics.json 的落脚处，
+    // 每台跑过插件的机器上都有这个目录。得真有一份记忆文件才算老文件夹。
+    writeFileSync(join(legacy, "memory.md"), "# memory\n", "utf8");
+    const agent = { session: { header: { cwd: ws } } };
+    assert.equal(memoryDirectory(agent, {}), legacy, "老文件夹在，就该继续用它");
+    assert.equal(LEGACY_MEMORY_DIR, "~/.dsh/ofttold-memory");
+  } finally {
+    if (previous === undefined) delete process.env.HOME;
+    else process.env.HOME = previous;
+    rmSync(home, { recursive: true, force: true });
+    rmSync(ws, { recursive: true, force: true });
+  }
 });
