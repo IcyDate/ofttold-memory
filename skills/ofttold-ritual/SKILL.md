@@ -123,17 +123,27 @@ so"), say that: `岔路：没有，我直接查了文件。` The line is a recor
 
 ### 1b. The file of wrong turns
 
-`detours.md` at the folder root collects them across days — one line each, newest on top.
-The plugin lays this file down on install (`scaffold` fills in whatever is missing); if it is
-not there, create it rather than deciding the habit does not apply to you.
+`detours.md` at the folder root holds the **shapes** of my mistakes, not the incidents.
+The diary's `岔路：` line is one wrong turn, on the day it happened; this file is the
+question those lines cannot answer on their own: *which way do I keep going wrong?*
 
 ```
-- 抖音比 B 站好 → 那 69 里有熟人的社交分发 → 教训：先问数字怎么来的
+## 一、我信了自己推的那一层，没去验实际的那一层（5 次）
+- 把猜到的原因写成查到的原因（`bvid()` 只看 `pathname`）
+- 抖音 69 > B 站 36 就解释成「抖音更适合」
 ```
 
-**Append when something overturns.** Do not tidy, do not merge old entries, do not
-delete the ones you have outgrown — the point of the file is that you were wrong in
-these particular ways, and the particular ways are the part you will repeat.
+**Only a shape that has happened twice gets a line.** One wrong turn on its own is not a
+pattern and stays in the diary. When a new incident matches an existing shape, add it
+under that shape and raise the count; when it matches nothing, it does not come here yet.
+
+A shape earns its place with three parts: **what I keep believing**, **what is actually
+true**, and **the tell** — the words I say right before I make it. Without the tell it is
+a lesson; with the tell it is catchable.
+
+**Budget: two or three thousand characters a month.** Past that the file has stopped
+being a mirror and become a second diary, which is the thing it exists to avoid. The
+plugin's `detourChars` says so when it happens.
 
 ### 1c. When they hand you something to keep
 

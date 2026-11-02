@@ -182,6 +182,7 @@ three — that is the layout answering.
 | `diaryCadence` | `"daily"` | How often the folder is expected to grow: `daily` / `weekly` (quiet while anything was written in the last 7 days) / `off`. |
 | `diarySections` | `0` | Sections per day. Default `0` = don't count — **a count cannot tell a transcript from a record**. |
 | `diaryCheck` | `true` | The diary check on or off. |
+| `detourChars` | `3000` | How large the file of wrong turns may grow. It holds **recurring shapes**, not incidents; past this it is a second diary. `0` turns it off. |
 
 Everything else has a working default. The full field list, the object form of
 `sections` for the rare per-section case, exact heading matching, and cross-platform

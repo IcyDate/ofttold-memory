@@ -255,8 +255,9 @@ remember_note(text: "主人喜欢一条溪穿街的古镇，黄龙溪那种", ti
 | `diaryCadence` | `"daily"` | 多久写一次：`daily` / `weekly`（最近 7 天有写过就不催）/ `off`（永不提醒）。 |
 | `diarySections` | `0` | 一天最多几节。默认 `0`＝不数——**节数说明不了是不是流水账**。 |
 | `diaryCheck` | `true` | 日记体检开关。 |
+| `detourChars` | `3000` | 弯路文件最大多少字。它只该装**重复犯的那几种错**，超了就已经是第二本日记。`0` 关掉。 |
 
-**这 9 项在设置页里都能改**（面板把布尔项画成勾选框，不用手打 true/false）。剩下的 `header`、`workspaceRelative`、`refreshIntervalMs`、`refreshAfterMessages` 也有面板入口，只是平时不用动。完整字段表、`sections` 的对象写法、小节名精确匹配、跨平台行为在 **[配置说明](docs/config.md)**。
+**这 10 项在设置页里都能改**（面板把布尔项画成勾选框，不用手打 true/false）。剩下的 `header`、`workspaceRelative`、`refreshIntervalMs`、`refreshAfterMessages` 也有面板入口，只是平时不用动。完整字段表、`sections` 的对象写法、小节名精确匹配、跨平台行为在 **[配置说明](docs/config.md)**。
 
 ---
 

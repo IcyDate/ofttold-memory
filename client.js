@@ -293,6 +293,7 @@ window.__ModuleLoader__.load({
           { ...settingsTextField("diaryCadence") },
           { ...settingsTextField("summaryFrom") },
           { ...settingsNumberField("diarySections") },
+          { ...settingsNumberField("detourChars") },
           { ...settingsNumberField("detourStaleDays") },
           { ...settingsNumberField("taskStaleDays") },
           {
@@ -361,6 +362,7 @@ window.__ModuleLoader__.load({
             diaryCadence: this.form.field("diaryCadence"),
             summaryFrom: this.form.field("summaryFrom"),
             diarySections: this.form.field("diarySections"),
+            detourChars: this.form.field("detourChars"),
             detourStaleDays: this.form.field("detourStaleDays"),
             taskStaleDays: this.form.field("taskStaleDays"),
             diaryCheck: this.form.field("diaryCheck"),
@@ -798,6 +800,7 @@ window.__ModuleLoader__.load({
             field("summaryFrom"),
             field("diarySections", { numeric: true }),
             wide(booleanRow("diaryCheck")),
+            field("detourChars", { numeric: true }),
             field("detourStaleDays", { numeric: true }),
             field("taskStaleDays", { numeric: true }),
           ]),

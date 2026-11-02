@@ -233,9 +233,10 @@ test("a fresh folder also gets the file of wrong turns", () => {
     const result = scaffoldMemory(dir);
     assert.ok(result.createdFiles.includes("detours.md"), "the file of wrong turns is part of the shape");
     const text = readFileSync(join(dir, "detours.md"), "utf8");
-    // 它自己得说清怎么算一条，否则第一个使用者只会写「今天学到了一课」。
-    assert.match(text, /以为/);
-    assert.match(text, /证据/);
+    // 它自己得说清「什么时候才轮到写进来」，否则第一个使用者会把每一次错都记进去，
+    // 三天以后这个文件就变成第二本日记（实测：11 条事故 / 2591 字符 / 3 天）。
+    assert.match(text, /形状/);
+    assert.match(text, /两次/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

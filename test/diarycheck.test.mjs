@@ -6,7 +6,7 @@ import test from "node:test";
 
 import { latestEntryDay, pendingDiaryNudge } from "../lib/diary.js";
 
-import { checkEntry, clockOf, diaryIssueLine, lastSectionMinute, minutesOf, strayTags, summaryState, tagsOf } from "../lib/diarycheck.js";
+import { checkEntry, clockOf, detourSizeLine, diaryIssueLine, lastSectionMinute, minutesOf, strayTags, summaryState, tagsOf } from "../lib/diarycheck.js";
 
 const DAY = `# 2026-10-30
 
@@ -153,4 +153,23 @@ test("a summary with no stamp is present but never claimed stale", () => {
   const state = summaryState("## 今天\n\n说明\n");
   assert.equal(state.present, true);
   assert.equal(state.minute, undefined);
+});
+
+test("a detours file that grew into a second diary says so", () => {
+  // 设计这个文件时定的预算是一个月两三千字。实测第一份真实文件三天就写到
+  // 2591 字符、11 条事故——八到十倍。旧的 21 天检查只问「还有没有在动」，
+  // 问不出「长成什么样了」，而后者才是当初想问的。
+  const dir = mkdtempSync(join(tmpdir(), "ofttold-detour-size-"));
+  mkdirSync(join(dir, "diary"), { recursive: true });
+  const small = "# 弯路\n\n## 一、形状一（2 次）\n\n- 实例\n";
+  writeFileSync(join(dir, "detours.md"), small, "utf8");
+  assert.equal(detourSizeLine({ memoryDir: dir, limit: 3000 }), undefined, "小文件不该被点名");
+
+  const big = small + "- 又一条很长很长的实例说明，重复很多次直到超过上限\n".repeat(120);
+  writeFileSync(join(dir, "detours.md"), big, "utf8");
+  const line = detourSizeLine({ memoryDir: dir, limit: 3000 });
+  rmSync(dir, { recursive: true, force: true });
+  assert.match(line, /detours\.md is \d+ characters across 1 shape/);
+  assert.match(line, /records incidents instead of shapes/);
+  assert.equal(detourSizeLine({ memoryDir: "/tmp/nowhere-xyz", limit: 3000 }), undefined);
 });

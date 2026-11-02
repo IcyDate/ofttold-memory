@@ -16,6 +16,7 @@
 | `diaryCadence` | `"daily"` | 多久写一次：`daily` 每天催 / `weekly` 最近 7 天有写过就不催 / `off` 永不提醒。没有 `diary/` 目录时三种都闭嘴。 |
 | `diarySections` | `0` | 一天最多几节。**默认 `0`＝不数**：忙的一天节数自然多，这个数说明不了是不是流水账。 |
 | `diaryCheck` | `true` | 日记体检：节数、缺 `情绪：` 行、摘要缺失或落后。**只报不改**——整理会删掉权重数的证据。 |
+| `detourChars` | `3000` | `detours.md` 最大多少字符。它只该装「重复犯的那几种错」——几百字。超过两三千字，它就已经是第二本日记了。`0` 关掉。 |
 | `detourStaleDays` | `21` | `detours.md` 多少天没动过就在块尾说一句；句子指向**删掉它**，不是催着写。`0` 关掉。 |
 | `taskStaleDays` | 30 | 一条待办挂了多久之后，块尾不再计数、改成问「还要不要」。`0` 关掉。 |
 | `header` | `Standing context for this session: notes you wrote, for the person you work with. Read them as your own memory, not as background documentation. Maintaining the folder — index, self-description, diary — is the `ofttold-ritual` skill; when the tail of this block says today is unwritten, that skill says what to write.` | 注入块的第一行。 |

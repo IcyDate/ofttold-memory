@@ -26,7 +26,7 @@ import { defineTool } from "@deepseek-ai/dsh-tools";
 import { createUserMessage } from "@deepseek-ai/dsh-llm";
 import { buildNotice } from "./lib/notice.js";
 import { DIARY_CADENCES, localDay, pendingDiaryNudge } from "./lib/diary.js";
-import { detourStaleLine, diaryIssueLine, minutesOf } from "./lib/diarycheck.js";
+import { detourSizeLine, detourStaleLine, diaryIssueLine, minutesOf } from "./lib/diarycheck.js";
 import { completeTask, daysOpen, openTasks, rememberNote, staleTasks, ANCHOR_HEADING, NOTE_FILE, TASK_HEADING } from "./lib/notes.js";
 import { rememberEmotion } from "./lib/emotion.js";
 import { homedir } from "node:os";
@@ -147,6 +147,14 @@ export const Config = z.object({
     .volatile()
     .description(
       "Report what is wrong with today's entry: sections past the cap, sections without an `情绪：` line, a summary that is missing after summaryFrom or stale against the body. Report only — nothing is rewritten, because consolidating an entry deletes the evidence the weight counts.",
+    ),
+  detourChars: z
+    .natural()
+    .min(0)
+    .default(3000)
+    .volatile()
+    .description(
+      "How large `detours.md` may grow before the block says so. The file is meant to hold the *shapes* of recurring mistakes — a few hundred characters — not the incidents, which belong in each day's `岔路：` line. Past two or three thousand characters it reads as a second diary, which is the thing it exists to avoid. 0 keeps it quiet.",
     ),
   detourStaleDays: z
     .natural()
@@ -579,6 +587,12 @@ function localStamp(now = new Date()) {
       memoryDir,
       days: Number(configValue(config, "detourStaleDays") ?? 21),
     });
+    // 同一个问题的另一半，而且是当初设计这个文件时真正想问的那一半：它会不会长大。
+    // `detourStaleDays` 问「它还有没有在长」，这一条问「它长成什么样了」。
+    const oversized = detourSizeLine({
+      memoryDir,
+      limit: Number(configValue(config, "detourChars") ?? 3000),
+    });
     // 待办写进文件也不算「有家」——它不注入就没人读。这里只报条数，不搬正文：
     // 搬正文等于把任务塞进每一轮的上下文，而「有几条」就足够让人去翻那一段。
     const tasks = (() => {
@@ -605,7 +619,7 @@ function localStamp(now = new Date()) {
         return undefined;
       }
     })();
-    const tail = [nudge, issue, stale, tasks].filter((part) => part !== undefined).join("\n\n");
+    const tail = [nudge, issue, stale, oversized, tasks].filter((part) => part !== undefined).join("\n\n");
     if (tail !== "") {
       // 块尾那句也是「注入出去的东西」，README 里写的是「每一次注入决策都在里面」——
       // 它要算决策的一部分，否则那句话生效与否在诊断文件里查不到。
