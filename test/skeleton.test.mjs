@@ -240,3 +240,18 @@ test("a fresh folder also gets the file of wrong turns", () => {
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("the template's empty slots never ride along as if they were notes", () => {
+  // 真 bug：模板里 `- （写你自己：怎么称呼、脾气）` 一旦被用户加进 `sections`，
+  // 那行就原样进上下文，看起来像一条真记忆。占位符要算「还没写」。
+  const dir = mkdtempSync(join(tmpdir(), "placeholder-"));
+  scaffoldMemory(dir);
+  const rendered = renderSources({ sections: ["我是谁", "硬约定"] }, dir);
+  assert.equal(rendered.loaded, 0, "占位符不算内容");
+  assert.equal(rendered.text.includes("写你自己"), false);
+  // 而且理由要和「只剩示例行」分开——说成同一种，用户会去别的文件里找不存在的笔记。
+  assert.deepEqual(rendered.failed, [
+    "我是谁: only_placeholder",
+    "硬约定: only_placeholder",
+  ]);
+});
