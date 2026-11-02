@@ -26,7 +26,7 @@ import { defineTool } from "@deepseek-ai/dsh-tools";
 import { createUserMessage } from "@deepseek-ai/dsh-llm";
 import { buildNotice } from "./lib/notice.js";
 import { DIARY_CADENCES, localDay, pendingDiaryNudge } from "./lib/diary.js";
-import { detourSizeLine, detourStaleLine, diaryIssueLine, minutesOf } from "./lib/diarycheck.js";
+import { detourSizeLine, diaryIssueLine, minutesOf } from "./lib/diarycheck.js";
 import { completeTask, daysOpen, openTasks, rememberNote, staleTasks, ANCHOR_HEADING, NOTE_FILE, TASK_HEADING } from "./lib/notes.js";
 import { rememberEmotion } from "./lib/emotion.js";
 import { homedir } from "node:os";
@@ -155,14 +155,6 @@ export const Config = z.object({
     .volatile()
     .description(
       "How large `detours.md` may grow before the block says so. The file is meant to hold the *shapes* of recurring mistakes — a few hundred characters — not the incidents, which belong in each day's `岔路：` line. Past two or three thousand characters it reads as a second diary, which is the thing it exists to avoid. 0 keeps it quiet.",
-    ),
-  detourStaleDays: z
-    .natural()
-    .min(0)
-    .default(21)
-    .volatile()
-    .description(
-      "How many days `detours.md` may go untouched before the block says so. The sentence points at deleting the file rather than at writing more into it: a file of wrong turns nobody adds to is a result, not a backlog. 0 keeps it quiet.",
     ),
   taskStaleDays: z
     .natural()
@@ -581,14 +573,7 @@ function localStamp(now = new Date()) {
       cap: Number(configValue(config, "diarySections") ?? 0),
       enabled: configValue(config, "diaryCheck") !== false,
     });
-    // 一年只该出现几次的一句：`detours.md` 长期没动，说明它自己没长出手续。
-    // 措辞指向「删掉」而不是「该写了」——前者是真结论，后者是催更。
-    const stale = detourStaleLine({
-      memoryDir,
-      days: Number(configValue(config, "detourStaleDays") ?? 21),
-    });
-    // 同一个问题的另一半，而且是当初设计这个文件时真正想问的那一半：它会不会长大。
-    // `detourStaleDays` 问「它还有没有在长」，这一条问「它长成什么样了」。
+    // 当初设计这个文件时真正想问的那一件事：**它会不会长大**。
     const oversized = detourSizeLine({
       memoryDir,
       limit: Number(configValue(config, "detourChars") ?? 3000),
@@ -619,7 +604,7 @@ function localStamp(now = new Date()) {
         return undefined;
       }
     })();
-    const tail = [nudge, issue, stale, oversized, tasks].filter((part) => part !== undefined).join("\n\n");
+    const tail = [nudge, issue, oversized, tasks].filter((part) => part !== undefined).join("\n\n");
     if (tail !== "") {
       // 块尾那句也是「注入出去的东西」，README 里写的是「每一次注入决策都在里面」——
       // 它要算决策的一部分，否则那句话生效与否在诊断文件里查不到。

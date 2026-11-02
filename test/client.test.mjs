@@ -561,7 +561,6 @@ test("the panel renders cards, controls and a where-line for the headings", () =
     diarySections: fieldState("8"),
     diaryCheck: fieldState("true"),
     detourChars: fieldState("3000"),
-    detourStaleDays: fieldState("21"),
     taskStaleDays: fieldState("30"),
     skills: fieldState("true"),
   };
@@ -792,10 +791,9 @@ test("the opening line gets a textarea: it is a sentence, not an identifier", ()
 });
 
 test("every field the panel draws has a label and a hint in both dictionaries", () => {
-  // 实测过的形状：`detourStaleDays` / `taskStaleDays` / `detourChars` 三个字段
+  // 实测过的形状：`taskStaleDays` / `detourChars` 这几个字段
   // 能渲染、能保存、能被那条「schema 声明的字段都设置得到」的守卫生效，但
-  // **标签和说明从来没有词条**——面板上直接显示 `detourStaleDays` 和一串
-  // `detourStaleDaysHint`。
+  // **标签和说明从来没有词条**——面板上直接显示键名和一串 `…Hint`。
   //
   // 上面那条「every key the panel asks for」查的是源码里字面的 `t("key")`，
   // 而 `settingsNumberField(id)` 是在宿主里运行时才拼出 `${id}` 和 `${id}Hint`
