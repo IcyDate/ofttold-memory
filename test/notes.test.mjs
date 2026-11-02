@@ -160,3 +160,16 @@ test("writing and reading use the same exact heading match", () => {
   const open = openTasks(readFileSync(join(dir, NOTE_FILE), "utf8"));
   assert.deepEqual(open.map((t) => t.text), ["真正的待办"]);
 });
+
+test("the whole line works as well as the bare text, and nothing else does", () => {
+  const dir = fresh();
+  rememberNote({ memoryDir: dir, text: "修白名单", kind: "task", stampText: "2026-11-02" });
+  rememberNote({ memoryDir: dir, text: "修白名单和缓存", kind: "task", stampText: "2026-11-02" });
+  // 把文件里那一行原样贴回来，指的是同一条——前缀不是模糊，是读取端自己认得的那段。
+  const full = completeTask({ memoryDir: dir, text: "- [ ] 2026-11-02 起 ｜ 修白名单", stampText: "2026-11-03" });
+  assert.equal(full.ok, true);
+  // 但「修白名单」仍然不能勾掉「修白名单和缓存」：悄悄完成了错的那条更糟。
+  const near = completeTask({ memoryDir: dir, text: "修白名单", stampText: "2026-11-03" });
+  assert.equal(near.ok, false);
+  assert.match(near.message, /修白名单和缓存/);
+});
