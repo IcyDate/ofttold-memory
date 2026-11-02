@@ -134,12 +134,12 @@ export const Config = z.object({
     ),
   diarySections: z
     .natural()
-    .min(1)
+    .min(0)
     .max(Number.MAX_SAFE_INTEGER)
-    .default(8)
+    .default(0)
     .volatile()
     .description(
-      "How many `##` sections a single day's entry may hold before the check names it. The rule of thumb is three to five; the cap is the point where a day stops being a record and becomes a transcript.",
+      "How many `##` sections a single day's entry may hold before the check names it. 0 turns this off, and off is the default: counting sections does not measure what it looks like it measures. A busy day produces more sections than a quiet one, and the sections get longer, not shorter, when the day was real. Whether a section belongs on its own or folds into the one before it is a judgment, not a count.",
     ),
   diaryCheck: z
     .boolean()
@@ -570,7 +570,7 @@ function localStamp(now = new Date()) {
       day: localDay(),
       nowMinute: new Date().getHours() * 60 + new Date().getMinutes(),
       summaryFrom: minutesOf(configValue(config, "summaryFrom") ?? "17:30"),
-      cap: Number(configValue(config, "diarySections") ?? 8),
+      cap: Number(configValue(config, "diarySections") ?? 0),
       enabled: configValue(config, "diaryCheck") !== false,
     });
     // 一年只该出现几次的一句：`detours.md` 长期没动，说明它自己没长出手续。

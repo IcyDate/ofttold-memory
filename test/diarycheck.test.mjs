@@ -124,6 +124,18 @@ test("a missing day and a disabled check say nothing at all", () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
+test("a cap of 0 turns the section count off entirely", () => {
+  const text = Array.from({ length: 30 }, (_, i) => `## ${String(9 + i).padStart(2, "0")}:00 s\n\n情绪：定\n岔路：x\n`).join("\n");
+  const dir = mkdtempSync(join(tmpdir(), "ofttold-cap0-"));
+  mkdirSync(join(dir, "diary"), { recursive: true });
+  writeFileSync(join(dir, "diary", "2026-10-30.md"), text, "utf8");
+  writeFileSync(join(dir, "relationship.md"), "# 关系\n\n## 情绪词表\n\n- `定` — 结论落定\n", "utf8");
+  const line = diaryIssueLine({ memoryDir: dir, day: "2026-10-30", nowMinute: 1300, cap: 0 });
+  rmSync(dir, { recursive: true, force: true });
+  // 0 是「关掉」，不是「上限为零」——30 节也不该被点名。
+  assert.equal(line, undefined);
+});
+
 test("over the section cap is named with both numbers", () => {
   const text = Array.from({ length: 9 }, (_, i) => `## ${String(9 + i).padStart(2, "0")}:00 s\n\n情绪：定\n`).join("\n");
   const line = (() => {

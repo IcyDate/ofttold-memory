@@ -168,7 +168,7 @@ EPERM: operation not permitted, open 'C:\Users\<你>\.dsh\profiles\web\package.j
 
 | 看到什么 | 会说什么 |
 |---|---|
-| 一天超过 `diarySections` 节（默认 8） | `9 sections, over the 8-per-day bar` |
+| 一天超过 `diarySections` 节（**默认关掉**，设了数才检查） | `9 sections, over the 8-per-day bar` |
 | 有节没写 `情绪：` 行 | `2 without an \`情绪：\` line` |
 | 标签的词不在词表里 | `烦躁 not in the vocabulary` |
 | 用了标签但没有词表节 | `tags used, but relationship.md has no \`情绪词表\` section` |
@@ -253,7 +253,7 @@ remember_note(text: "主人喜欢一条溪穿街的古镇，黄龙溪那种", ti
 | `anchorCap` | `8` | 一节的粗体列表最多留几条，超出的沉底但不删。`0` 关掉。 |
 | `summaryFrom` | `"17:30"` | 从几点开始要求顶部有 `## 今天` 摘要。 |
 | `diaryCadence` | `"daily"` | 多久写一次：`daily` / `weekly`（最近 7 天有写过就不催）/ `off`（永不提醒）。 |
-| `diarySections` | `8` | 一天最多几节，超了体检会点名。 |
+| `diarySections` | `0` | 一天最多几节。默认 `0`＝不数——**节数说明不了是不是流水账**。 |
 | `diaryCheck` | `true` | 日记体检开关。 |
 
 **这 9 项在设置页里都能改**（面板把布尔项画成勾选框，不用手打 true/false）。剩下的 `header`、`workspaceRelative`、`refreshIntervalMs`、`refreshAfterMessages` 也有面板入口，只是平时不用动。完整字段表、`sections` 的对象写法、小节名精确匹配、跨平台行为在 **[配置说明](docs/config.md)**。

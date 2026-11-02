@@ -117,7 +117,7 @@ The same line reports three more things, and **reports only**:
 
 | What it sees | What it says |
 |---|---|
-| More than `diarySections` sections (default 8) | `9 sections, over the 8-per-day bar` |
+| More than `diarySections` sections (**off by default**) | `9 sections, over the 8-per-day bar` |
 | A section with no `情绪：` line | `2 without an \`情绪：\` line` |
 | A tag whose word is not in the vocabulary | `烦躁 not in the vocabulary` |
 | Tags but no vocabulary section at all | `tags used, but relationship.md has no \`情绪词表\` section` |
@@ -180,7 +180,7 @@ three — that is the layout answering.
 | `anchorCap` | `8` | How many bold bullets a section keeps in view; the rest sink without being deleted. `0` turns it off. |
 | `summaryFrom` | `"17:30"` | When the day's `## 今天` summary starts being expected. |
 | `diaryCadence` | `"daily"` | How often the folder is expected to grow: `daily` / `weekly` (quiet while anything was written in the last 7 days) / `off`. |
-| `diarySections` | `8` | Sections per day before the check names it. |
+| `diarySections` | `0` | Sections per day. Default `0` = don't count — **a count cannot tell a transcript from a record**. |
 | `diaryCheck` | `true` | The diary check on or off. |
 
 Everything else has a working default. The full field list, the object form of

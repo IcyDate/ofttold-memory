@@ -85,9 +85,16 @@ is free and there is usually one real thing just finished. Ask one question: did
 stretch produce something the user can take away? Fixed, ran, decided, corrected →
 write a section first. Read a file, ran a command, fixed a typo → skip it.
 
-A normal day is three to five sections. **Past eight, the bar has slipped — stop
-writing for that day** and check whether the file already has more than one closing
-summary heading (if it does, the file was appended to without being read).
+**The question is not how many sections, it is whether this is the same thread.** A
+busy day has more sections than a quiet one and that is not a defect — today's 13
+sections came from four releases, five bugs and a new archive. Before opening a new
+section, ask: **is this a continuation of something already written today?** If it is
+the same thread, **fold it into that section** rather than opening another one — the
+reader should not have to stitch two headings back together. If it is a different
+thread, open a new one even if that makes the day long.
+
+The failure this replaces was counting: a fixed cap punished busy days and said nothing
+about the actual defect. **Merging is a judgment; no count can make it.**
 
 **Every section carries one `岔路：` line** — what you believed before, and what
 overturned it:

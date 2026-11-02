@@ -14,7 +14,7 @@ The three fields most people use are on the main page. This page covers the rest
 | `anchorCap` | `8` | How many bold bullets a section keeps in view. The rest sink — ranked by `exp(-t / 2^n)`, kept in the file, no longer injected. `0` turns it off. |
 | `summaryFrom` | `"17:30"` | When the day's `## 今天` summary starts being expected. Before this hour the check stays quiet. |
 | `diaryCadence` | `"daily"` | `daily` names today when unwritten, `weekly` stays quiet while anything was written in the last 7 days, `off` never speaks. |
-| `diarySections` | `8` | Sections per day before the check names it. |
+| `diarySections` | `0` | Sections per day before the check names it. **`0` is the default: off.** A busy day has more sections than a quiet one, so the count says nothing about whether the entry is a transcript. |
 | `diaryCheck` | `true` | Report sections past the cap, sections with no `情绪：` line, a missing summary, or a summary the body has run past. Reports only — consolidating deletes the evidence the weight counts. |
 | `detourStaleDays` | `21` | How many days `detours.md` may go untouched before the block says so. The sentence points at **deleting** the file, not at writing more into it — a file of wrong turns nobody adds to is a result, not a backlog. `0` keeps it quiet. |
 | `taskStaleDays` | 30 | How long a task may stay open before the block stops counting it and asks whether to keep it. `0` keeps it quiet. |
