@@ -213,7 +213,7 @@ test("a boolean field parses to a real boolean, not the string 'true'", async ()
 });
 
 test("object-form sections render read-only instead of being flattened", () => {
-  const { props } = mountWith({ sections: [{ file: "INDEX.md", heading: "常被提起", maxChars: 600 }] });
+  const { props } = mountWith({ sections: [{ file: "index.md", heading: "常被提起", maxChars: 600 }] });
   const state = props.hooks.memoryForm.getSnapshot();
   assert.equal(state.sectionsComplex, true);
   // The heading still shows, so the field is informative rather than blank.

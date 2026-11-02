@@ -28,8 +28,8 @@ That is the whole trade: the plugin removes the decision, this skill lowers its 
 ## What to do
 
 1. **Find the memory folder.** Default `~/.dsh/ofttold-memory/`, but check for
-   `MEMORY.md` in these places first, in order:
-   - `~/.dsh/ofttold-memory/MEMORY.md`
+   `memory.md` in these places first, in order:
+   - `~/.dsh/ofttold-memory/memory.md`
    - a folder the user names when they say "my notes", "my diary", "拾光"
    - `AGENTS.md` or `CLAUDE.md` in the workspace, if it holds a short list of standing
      facts rather than tool instructions

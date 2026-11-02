@@ -65,9 +65,9 @@ const Section = z.union([
     .object({
       file: z
         .string()
-        .default("MEMORY.md")
+        .default("memory.md")
         .description(
-          "Which file inside your notes folder this section lives in. Defaults to `MEMORY.md`. Absolute and `~/` paths also work, for notes kept elsewhere.",
+          "Which file inside your notes folder this section lives in. Defaults to `memory.md`. Absolute and `~/` paths also work, for notes kept elsewhere.",
         ),
       heading: z
         .string()
@@ -101,7 +101,7 @@ export const Config = z.object({
     .default("~/.dsh/ofttold-memory")
     .volatile()
     .description(
-      "Where your notes live. Created with a starter `MEMORY.md` on first run, so you can leave this alone. Point it at a folder you already keep and the plugin only reads it.",
+      "Where your notes live. Created with a starter `memory.md` on first run, so you can leave this alone. Point it at a folder you already keep and the plugin only reads it.",
     ),
   sections: z
     .array(Section)

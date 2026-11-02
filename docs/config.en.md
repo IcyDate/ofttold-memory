@@ -8,7 +8,7 @@ The three fields most people use are on the main page. This page covers the rest
 
 | Field | Default | Purpose |
 |---|---|---|
-| `memoryDir` | `~/.dsh/ofttold-memory` | Folder holding the markdown. Created on first run with a five-file skeleton (`MEMORY.md` / `INDEX.md` / `relationship.md` / `detours.md` / `diary/`). A folder that already holds notes gets nothing added. |
+| `memoryDir` | `~/.dsh/ofttold-memory` | Folder holding the markdown. Created on first run with a five-file skeleton (`memory.md` / `index.md` / `relationship.md` / `detours.md` / `diary/`). A folder that already holds notes gets nothing added. |
 | `sections` | unset = the anchor heading (`Oft-told` / `常被提起`, whichever appears first) + `我是谁` + `硬约定` | Which sections to lift. Strings or objects (see below). Once set, only what you name. |
 | `maxChars` | `600` | Per-section character budget. 600 characters ≈ 400 tokens. |
 | `anchorCap` | `8` | How many bold bullets a section keeps in view. The rest sink — ranked by `exp(-t / 2^n)`, kept in the file, no longer injected. `0` turns it off. |
@@ -26,7 +26,7 @@ The three fields most people use are on the main page. This page covers the rest
 
 ## The object form of `sections`
 
-A bare string names a heading in `MEMORY.md`, which covers almost every case. Use
+A bare string names a heading in `memory.md`, which covers almost every case. Use
 the object form when a section lives in another file, needs its own budget, or
 should display under a different name:
 

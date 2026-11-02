@@ -20,7 +20,7 @@ import { fileURLToPath } from "node:url";
 const PACKAGE_ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 
 import { scaffoldMemory } from "../lib/scaffold.js";
-import { renderSources } from "../lib/sources.js";
+import { existingName, renderSources } from "../lib/sources.js";
 import { loadSkills, parseFrontmatter, registerSkills } from "../lib/skills.js";
 
 /** A fake plugin context whose `get("skills")` returns a recording registry. */
@@ -43,9 +43,9 @@ test("the skeleton lays down all four files in an empty folder", () => {
   const dir = mkdtempSync(join(tmpdir(), "ofttold-skeleton-"));
   const result = scaffoldMemory(dir);
   assert.equal(result.skipped, false);
-  assert.deepEqual(result.createdFiles, ["MEMORY.md", "INDEX.md", "relationship.md", "detours.md", "diary/README.md"]);
-  assert.ok(existsSync(join(dir, "MEMORY.md")));
-  assert.ok(existsSync(join(dir, "INDEX.md")));
+  assert.deepEqual(result.createdFiles, ["memory.md", "index.md", "relationship.md", "detours.md", "diary/README.md"]);
+  assert.ok(existsSync(join(dir, "memory.md")));
+  assert.ok(existsSync(join(dir, "index.md")));
   assert.ok(existsSync(join(dir, "relationship.md")));
   assert.ok(existsSync(join(dir, "diary", "README.md")));
 });
@@ -57,11 +57,11 @@ test("the skeleton pre-fills no memory, only empty shells", () => {
   const dir = mkdtempSync(join(tmpdir(), "ofttold-shell-"));
   scaffoldMemory(dir);
   const relationship = readFileSync(join(dir, "relationship.md"), "utf8");
-  const index = readFileSync(join(dir, "INDEX.md"), "utf8");
+  const index = readFileSync(join(dir, "index.md"), "utf8");
   // The emotion cache exists but holds no value: `未填` is a placeholder, not a tag.
   assert.match(relationship, /\*\*现在\*\*：`（未填）`/);
   // The index carries no anchor section on purpose: the default injection source
-  // is MEMORY.md, and a section here would only work with a `file:` override —
+  // is memory.md, and a section here would only work with a `file:` override —
   // shipping one taught users to write into a place nothing reads.
   assert.equal(/^## 常被提起/m.test(index), false);
   // The example format lives inside an HTML comment on purpose, so a real entry
@@ -78,11 +78,11 @@ test("an existing notes folder gains only the files it is missing", () => {
   // 邀请；文件夹里「我已经有笔记」不是让机制缺一半的理由。已有的那个文件不动。
   const dir = mkdtempSync(join(tmpdir(), "ofttold-hasnotes-"));
   const mine = "# 索引\n\n- 真的一条\n";
-  writeFileSync(join(dir, "INDEX.md"), mine, "utf8");
+  writeFileSync(join(dir, "index.md"), mine, "utf8");
   const result = scaffoldMemory(dir);
   assert.equal(result.skipped, false);
-  assert.deepEqual(result.createdFiles, ["MEMORY.md", "relationship.md", "detours.md", "diary/README.md"]);
-  assert.equal(readFileSync(join(dir, "INDEX.md"), "utf8"), mine, "the file that was already there must be untouched");
+  assert.deepEqual(result.createdFiles, ["memory.md", "relationship.md", "detours.md", "diary/README.md"]);
+  assert.equal(readFileSync(join(dir, "index.md"), "utf8"), mine, "the file that was already there must be untouched");
 });
 
 test("a folder that already has the whole skeleton reports nothing created", () => {
@@ -103,13 +103,13 @@ test("a file where the folder should be is reported, not written around", () => 
 });
 
 test("the skeleton never overwrites a file that already exists", () => {
-  // Half-scaffolded folders are normal: someone deletes INDEX.md and keeps the
+  // Half-scaffolded folders are normal: someone deletes index.md and keeps the
   // rest. The missing file is created; the kept one is not touched.
   const dir = mkdtempSync(join(tmpdir(), "ofttold-partial-"));
   scaffoldMemory(dir);
-  writeFileSync(join(dir, "MEMORY.md"), "## 常被提起\n\n- mine\n", "utf8");
+  writeFileSync(join(dir, "memory.md"), "## 常被提起\n\n- mine\n", "utf8");
   scaffoldMemory(dir);
-  assert.equal(readFileSync(join(dir, "MEMORY.md"), "utf8"), "## 常被提起\n\n- mine\n");
+  assert.equal(readFileSync(join(dir, "memory.md"), "utf8"), "## 常被提起\n\n- mine\n");
 });
 
 test("both shipped skills parse and satisfy the registry contract", () => {
@@ -144,7 +144,7 @@ test("the ritual skill covers the four things injection cannot teach", () => {
   const body = ritual.content;
   // 指路：词表和上限写在骨架文件里，skill 必须说清去哪儿读，否则读者只会
   // 知道「有个封闭词表」而不知道它在哪。
-  for (const pointer of ["情绪词表", "常被提起", "INDEX.md", "diary/README.md"]) {
+  for (const pointer of ["情绪词表", "常被提起", "index.md", "diary/README.md"]) {
     assert.ok(body.includes(pointer), `ritual skill must point at ${pointer}`);
   }
   for (const topic of ["diary", "index", "emotion", "relationship.md"]) {
@@ -204,7 +204,7 @@ test("the injected block says what it is and where the writing protocol lives", 
   // 就退化成靠自觉。
   const dir = mkdtempSync(join(tmpdir(), "header-"));
   try {
-    writeFileSync(join(dir, "MEMORY.md"), "## 常被提起\n\n- one\n", "utf8");
+    writeFileSync(join(dir, "memory.md"), "## 常被提起\n\n- one\n", "utf8");
     const rendered = renderSources({}, dir);
     assert.ok(rendered !== undefined, "a section with content must render");
     const firstLine = rendered.text.split("\n")[0];
@@ -254,4 +254,26 @@ test("the template's empty slots never ride along as if they were notes", () => 
     "我是谁: only_placeholder",
     "硬约定: only_placeholder",
   ]);
+});
+
+test("a folder scaffolded before the rename keeps reading, and gets renamed in place", () => {
+  // 0.1.13 把 `MEMORY.md` / `INDEX.md` 统一成小写。已经装过的人文件夹里还是旧名字：
+  // 如果只认新名字，用户写的东西还在旧文件里、注入块却空了——又一次「写得进、读不出」。
+  const dir = mkdtempSync(join(tmpdir(), "ofttold-migrate-"));
+  writeFileSync(join(dir, "MEMORY.md"), "# 记忆\n\n## 常被提起\n\n- **老文件夹里的锚点** → x\n", "utf8");
+  writeFileSync(join(dir, "INDEX.md"), "# 索引\n", "utf8");
+  // 改名之前也要读得到。
+  assert.equal(existingName("memory.md", dir), "MEMORY.md");
+  const before = renderSources({}, dir);
+  assert.ok(before.text.includes("老文件夹里的锚点"), "the old name must still be read");
+
+  const result = scaffoldMemory(dir);
+  assert.deepEqual(result.renamedFiles.sort(), ["INDEX.md → index.md", "MEMORY.md → memory.md"]);
+  // 按目录里的真实条目名判断：macOS 的大小写不敏感文件系统上 `existsSync("MEMORY.md")`
+  // 对着 `memory.md` 也会返 true，用它断言等于什么都没验。
+  const after = readdirSync(dir);
+  assert.equal(after.includes("MEMORY.md"), false, "the old name must be gone, not duplicated");
+  assert.equal(after.includes("memory.md"), true);
+  assert.equal(readFileSync(join(dir, "memory.md"), "utf8").includes("老文件夹里的锚点"), true, "content survives the rename");
+  assert.ok(renderSources({}, dir).text.includes("老文件夹里的锚点"));
 });

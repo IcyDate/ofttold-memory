@@ -134,7 +134,7 @@ test("resolveSections turns a bare heading into a file-backed section", () => {
   // The whole point of the string form: someone who has never read the docs
   // types a heading and it resolves inside the default memory file.
   const [section] = resolveSections(["常被提起"], 600);
-  assert.equal(section.file, "MEMORY.md");
+  assert.equal(section.file, "memory.md");
   assert.equal(section.heading, "常被提起");
   assert.equal(section.maxChars, 600);
   assert.equal(section.label, "常被提起");
@@ -142,7 +142,7 @@ test("resolveSections turns a bare heading into a file-backed section", () => {
 
 test("resolveSections accepts the object form and fills in its blanks", () => {
   const [section] = resolveSections([{ heading: "我是谁" }], 600);
-  assert.equal(section.file, "MEMORY.md");
+  assert.equal(section.file, "memory.md");
   assert.equal(section.label, "我是谁", "label must fall back to the heading");
   const [custom] = resolveSections([{ file: "OTHER.md", heading: "硬约定", maxChars: 50, label: "约定" }], 600);
   assert.equal(custom.file, "OTHER.md");
@@ -154,7 +154,7 @@ test("resolveSections skips entries that cannot resolve", () => {
   // A stray blank string or a heading-less object is a typo, not a section: it
   // must not become a source that can never load and only adds noise.
   assert.deepEqual(resolveSections(["", "   "], 600), []);
-  assert.deepEqual(resolveSections([{ file: "MEMORY.md" }], 600), []);
+  assert.deepEqual(resolveSections([{ file: "memory.md" }], 600), []);
   assert.deepEqual(resolveSections([{ heading: "  " }], 600), []);
 });
 
@@ -181,11 +181,11 @@ test("loadSource renders a section and truncates it", () => {
 });
 
 test("loadSource resolves a relative file inside the memory folder", () => {
-  // This is the contract the string form depends on: `MEMORY.md` means the one
+  // This is the contract the string form depends on: `memory.md` means the one
   // in the configured folder, not one next to the process.
   const dir = mkdtempSync(join(tmpdir(), "ofttold-"));
-  writeFileSync(join(dir, "MEMORY.md"), DOC, "utf8");
-  const result = loadSource({ file: "MEMORY.md", heading: "常被提起", maxChars: 100, label: "x" }, dir);
+  writeFileSync(join(dir, "memory.md"), DOC, "utf8");
+  const result = loadSource({ file: "memory.md", heading: "常被提起", maxChars: 100, label: "x" }, dir);
   assert.equal(result.ok, true);
 });
 
@@ -208,7 +208,7 @@ test("loadSource says a mid-line cut was a cut", () => {
 
 test("renderSources joins loaded sections and names the failures", () => {
   const dir = mkdtempSync(join(tmpdir(), "ofttold-"));
-  writeFileSync(join(dir, "MEMORY.md"), DOC, "utf8");
+  writeFileSync(join(dir, "memory.md"), DOC, "utf8");
   const rendered = renderSources(
     {
       header: "Standing",
@@ -242,7 +242,7 @@ test("renderSources with the default config loads the scaffolded template", () =
   const dir = mkdtempSync(join(tmpdir(), "ofttold-"));
   scaffoldMemory(dir);
   const rendered = renderSources({}, dir);
-  assert.ok(rendered !== undefined, "default config must load the scaffolded MEMORY.md");
+  assert.ok(rendered !== undefined, "default config must load the scaffolded memory.md");
   assert.equal(rendered.loaded, 1);
   assert.match(rendered.text, /### 常被提起/);
 });
@@ -254,7 +254,7 @@ test("the fallback list is alternatives, not a set: one spelling wins", () => {
   // train users to ignore the only diagnostic this plugin has.
   const dir = mkdtempSync(join(tmpdir(), "ofttold-alt-"));
   writeFileSync(
-    join(dir, "MEMORY.md"),
+    join(dir, "memory.md"),
     "## 常被提起\n\n- 中文那条\n\n## Oft-told\n\n- english line\n",
     "utf8",
   );
@@ -269,7 +269,7 @@ test("a heading the user named is still reported when it is missing", () => {
   // The silence above applies only to the built-in fallback. If a user asked for
   // a specific heading, its absence is news and must reach the injected block.
   const dir = mkdtempSync(join(tmpdir(), "ofttold-named-"));
-  writeFileSync(join(dir, "MEMORY.md"), "## 常被提起\n\n- one\n", "utf8");
+  writeFileSync(join(dir, "memory.md"), "## 常被提起\n\n- one\n", "utf8");
   const rendered = renderSources({ sections: ["常被提起", "nope"] }, dir);
   assert.equal(rendered.loaded, 1);
   assert.equal(rendered.failed.length, 1);
@@ -280,16 +280,16 @@ test("scaffoldMemory fills the gaps in an existing notes folder without touching
   // Pointing memoryDir at a folder of notes is the documented way in. It must not
   // be a half-install: the writing side needs relationship.md and diary/ to exist,
   // or the emotion cache and the daily nudge have nowhere to live. What stays true
-  // is that the user's own INDEX.md is never rewritten.
+  // is that the user's own index.md is never rewritten.
   const dir = mkdtempSync(join(tmpdir(), "ofttold-notes-"));
   const mine = "# 索引\n\n## 常被提起\n\n- 真的一条\n";
-  writeFileSync(join(dir, "INDEX.md"), mine, "utf8");
+  writeFileSync(join(dir, "index.md"), mine, "utf8");
   const result = scaffoldMemory(dir);
   assert.equal(result.skipped, false);
-  assert.ok(result.createdFiles.includes("MEMORY.md"));
+  assert.ok(result.createdFiles.includes("memory.md"));
   assert.ok(result.createdFiles.includes("relationship.md"));
   assert.equal(existsSync(join(dir, "diary", "README.md")), true);
-  assert.equal(readFileSync(join(dir, "INDEX.md"), "utf8"), mine);
+  assert.equal(readFileSync(join(dir, "index.md"), "utf8"), mine);
 });
 
 test("scaffoldMemory still writes into a genuinely empty folder", () => {
@@ -297,7 +297,7 @@ test("scaffoldMemory still writes into a genuinely empty folder", () => {
   const result = scaffoldMemory(dir);
   assert.equal(result.skipped, false);
   assert.equal(result.createdFile, true);
-  assert.ok(existsSync(join(dir, "MEMORY.md")));
+  assert.ok(existsSync(join(dir, "memory.md")));
 });
 
 test("a Windows-editor file loads: BOM stripped, CRLF normalized", () => {
@@ -306,7 +306,7 @@ test("a Windows-editor file loads: BOM stripped, CRLF normalized", () => {
   // itself to the first heading so exact matching fails, and CRLF leaves `\r`
   // in the injected text.
   const dir = mkdtempSync(join(tmpdir(), "ofttold-win-"));
-  const file = join(dir, "MEMORY.md");
+  const file = join(dir, "memory.md");
   writeFileSync(file, "\uFEFF# 我的记忆\r\n\r\n## 常被提起\r\n\r\n- 一\r\n- 二\r\n", "utf8");
   const loaded = loadSource({ file, heading: "常被提起", maxChars: 100, label: "x" }, dir);
   assert.equal(loaded.ok, true, "a BOM+CRLF file must still resolve its section");
@@ -379,7 +379,7 @@ test("configValue reads fields of a config whose values are references", () => {
   const config = resolvedConfig({
     memoryDir: "~/Desktop/拾光",
     maxChars: 600,
-    sections: [{ file: "INDEX.md", heading: "常被提起", maxChars: 600, label: "L" }],
+    sections: [{ file: "index.md", heading: "常被提起", maxChars: 600, label: "L" }],
   });
   assert.equal(configValue(config, "memoryDir"), "~/Desktop/拾光");
   assert.equal(configValue(config, "maxChars"), 600);
@@ -403,7 +403,7 @@ test("expandPath accepts a volatile reference, because it is exported", () => {
 test("renderSources reads a config whose values are references", () => {
   const folder = mkdtempSync(join(tmpdir(), "ofttold-volatile-"));
   try {
-    writeFileSync(join(folder, "MEMORY.md"), "# 常被提起\n\n一条要记住的事。\n");
+    writeFileSync(join(folder, "memory.md"), "# 常被提起\n\n一条要记住的事。\n");
     const rendered = renderSources(
       resolvedConfig({ sections: ["常被提起"], maxChars: 600, header: "Standing context" }),
       folder,
@@ -467,7 +467,7 @@ test("diagnostics records no file contents, only the facts about them", () => {
   const memory = mkdtempSync(join(tmpdir(), "ofttold-diag2-"));
   const storage = mkdtempSync(join(tmpdir(), "ofttold-diag2-store-"));
   try {
-    writeFileSync(join(memory, "MEMORY.md"), "# 常被提起\n\n这是不该出现在诊断里的正文。\n");
+    writeFileSync(join(memory, "memory.md"), "# 常被提起\n\n这是不该出现在诊断里的正文。\n");
     const diagnostics = new Diagnostics();
     const rendered = renderSources({ sections: ["常被提起"] }, memory);
     diagnostics.record("injected", { loaded: rendered.loaded, failed: rendered.failed, chars: rendered.text.length });

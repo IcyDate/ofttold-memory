@@ -18,9 +18,9 @@ const dir = (name) => {
 
 test('a fresh install injects the anchors the user wrote, not our samples', () => {
   const memoryDir = dir('fresh');
-  const tpl = readFileSync(new URL('../templates/MEMORY.md', import.meta.url), 'utf8');
-  writeFileSync(join(memoryDir, 'MEMORY.md'), tpl.replace('## 常被提起\n', '## 常被提起\n\n- **项目的规矩** → `docs/rules.md`｜别每次重讲\n'));
-  writeFileSync(join(memoryDir, 'INDEX.md'), readFileSync(new URL('../templates/INDEX.md', import.meta.url), 'utf8'));
+  const tpl = readFileSync(new URL('../templates/memory.md', import.meta.url), 'utf8');
+  writeFileSync(join(memoryDir, 'memory.md'), tpl.replace('## 常被提起\n', '## 常被提起\n\n- **项目的规矩** → `docs/rules.md`｜别每次重讲\n'));
+  writeFileSync(join(memoryDir, 'index.md'), readFileSync(new URL('../templates/index.md', import.meta.url), 'utf8'));
 
   const rendered = renderSources({}, memoryDir);
   assert.equal(rendered.loaded, 1);
@@ -29,12 +29,12 @@ test('a fresh install injects the anchors the user wrote, not our samples', () =
 });
 
 test('the INDEX template does not claim to be the default injection source', () => {
-  const indexTpl = readFileSync(new URL('../templates/INDEX.md', import.meta.url), 'utf8');
+  const indexTpl = readFileSync(new URL('../templates/index.md', import.meta.url), 'utf8');
   for (const line of indexTpl.split('\n')) {
     const heading = line.startsWith('## ') ? line.slice(3).trim() : '';
     assert.ok(
       heading !== '常被提起' && !heading.startsWith('常被提起（'),
-      'INDEX 模板里出现「常被提起」会让用户以为写了就生效，而默认读的是 MEMORY.md',
+      'INDEX 模板里出现「常被提起」会让用户以为写了就生效，而默认读的是 memory.md',
     );
   }
 });
@@ -61,20 +61,20 @@ test('an undated anchor is neutral, not "newest"', () => {
 test('stamping is driven by the configured sections, not the built-in list', () => {
   const memoryDir = dir('stamp');
   writeFileSync(
-    join(memoryDir, 'INDEX.md'),
+    join(memoryDir, 'index.md'),
     '## 常被提起\n\n- **真锚点** → 没有日期\n',
   );
   writeFileSync(
-    join(memoryDir, 'MEMORY.md'),
+    join(memoryDir, 'memory.md'),
     '## 常被提起\n\n- **别的文件里的东西** → 没有日期\n',
   );
 
-  stampSourceDates({sections: [{file: 'INDEX.md', heading: '常被提起'}]}, memoryDir, '2026-10-30');
+  stampSourceDates({sections: [{file: 'index.md', heading: '常被提起'}]}, memoryDir, '2026-10-30');
 
-  const index = readFileSync(join(memoryDir, 'INDEX.md'), 'utf8');
-  const memory = readFileSync(join(memoryDir, 'MEMORY.md'), 'utf8');
-  assert.ok(index.includes('2026-10-30'), '配置的 INDEX.md 要被盖章');
-  assert.ok(!memory.includes('2026-10-30'), '没配置的 MEMORY.md 不该被改');
+  const index = readFileSync(join(memoryDir, 'index.md'), 'utf8');
+  const memory = readFileSync(join(memoryDir, 'memory.md'), 'utf8');
+  assert.ok(index.includes('2026-10-30'), '配置的 index.md 要被盖章');
+  assert.ok(!memory.includes('2026-10-30'), '没配置的 memory.md 不该被改');
 });
 
 test('the plugin passes the config object to stampSourceDates', () => {
@@ -99,7 +99,7 @@ test('counting recalls still works with the sample filter in place', () => {
 test('the template comments never reach the injected block', () => {
   const memoryDir = dir('comments');
   writeFileSync(
-    join(memoryDir, 'MEMORY.md'),
+    join(memoryDir, 'memory.md'),
     '## 常被提起\n\n<!-- 说明：示例写在这里，不该被注入 -->\n- **真的** → x\n',
   );
   const r = renderSources({}, memoryDir);
@@ -109,12 +109,12 @@ test('the template comments never reach the injected block', () => {
 });
 
 test("a section holding only template samples counts as empty, not as memory", () => {
-  // 0.1.5 修好了模板，但**老文件夹不会被迁移**：锚点在 INDEX.md，MEMORY.md 里
+  // 0.1.5 修好了模板，但**老文件夹不会被迁移**：锚点在 index.md，memory.md 里
   // 留着建文件夹时的示例。结果是 `loaded: 1` 一切正常，注入的是我们编的假锚点。
   // 真实撞上的一次：Windows 机器上注入块里出现 `Example · where the project is`。
   const dir = mkdtempSync(join(tmpdir(), "ofttold-samples-"));
   writeFileSync(
-    join(dir, "MEMORY.md"),
+    join(dir, "memory.md"),
     [
       "# 我的记忆",
       "",
@@ -147,7 +147,7 @@ test("a section holding only template samples counts as empty, not as memory", (
 test("one real anchor makes the section real again", () => {
   const dir = mkdtempSync(join(tmpdir(), "ofttold-samples-mixed-"));
   writeFileSync(
-    join(dir, "MEMORY.md"),
+    join(dir, "memory.md"),
     [
       "## 常被提起",
       "",
@@ -179,9 +179,9 @@ test("the notice reports the most specific reason, not the first one that fails"
     header,
     memoryDir: "/tmp/m",
     attempts: [
-      { file: "MEMORY.md", heading: "常被提起", reason: "only_samples" },
-      { file: "MEMORY.md", heading: "我是谁", reason: "heading_not_found" },
-      { file: "MEMORY.md", heading: "硬约定", reason: "heading_not_found" },
+      { file: "memory.md", heading: "常被提起", reason: "only_samples" },
+      { file: "memory.md", heading: "我是谁", reason: "heading_not_found" },
+      { file: "memory.md", heading: "硬约定", reason: "heading_not_found" },
     ],
   });
   assert.match(mixed, /only the template's example lines/);
@@ -191,7 +191,7 @@ test("the notice reports the most specific reason, not the first one that fails"
   const allWrong = buildNotice({
     header,
     memoryDir: "/tmp/m",
-    attempts: [{ file: "MEMORY.md", heading: "常被提起", reason: "heading_not_found" }],
+    attempts: [{ file: "memory.md", heading: "常被提起", reason: "heading_not_found" }],
   });
   assert.match(allWrong, /none of its headings matched/);
 });
@@ -205,7 +205,7 @@ test("the anchor cap never sinks a hard rule", () => {
   const rules = Array.from({ length: 10 }, (_, i) => `- **规矩 ${i + 1}** → 第 ${i + 1} 条`).join("\n");
   const anchors = Array.from({ length: 12 }, (_, i) => `- **锚点 ${i + 1}** → 第 ${i + 1} 条`).join("\n");
   writeFileSync(
-    join(dir, "MEMORY.md"),
+    join(dir, "memory.md"),
     `# 记忆\n\n## 常被提起\n\n${anchors}\n\n## 硬约定\n\n${rules}\n`,
     "utf8",
   );

@@ -76,7 +76,7 @@ test("empty text, unknown kind and a missing file all fail loudly", () => {
   assert.match(rememberNote({ memoryDir: dir, text: "x", kind: "someday" }).message, /unknown kind/);
   assert.match(
     rememberNote({ memoryDir: join(dir, "nope"), text: "x" }).message,
-    /no MEMORY\.md in that folder/,
+    /no memory\.md in that folder/,
   );
 });
 

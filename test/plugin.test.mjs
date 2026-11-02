@@ -70,7 +70,7 @@ function harness(base) {
 /** Create a temp workspace holding one memory file. */
 function workspace() {
   const dir = mkdtempSync(join(tmpdir(), "ofttold-"));
-  writeFileSync(join(dir, "MEMORY.md"), DOC, "utf8");
+  writeFileSync(join(dir, "memory.md"), DOC, "utf8");
   return dir;
 }
 
@@ -174,7 +174,7 @@ test("scaffolds a starter memory file when the folder is empty", async () => {
   // Scaffolding is lazy: it runs when a session actually starts, because a
   // relative folder only means something once there is a session cwd.
   await h.drive({ step: 1 });
-  assert.ok(existsSync(join(memoryDir, "MEMORY.md")));
+  assert.ok(existsSync(join(memoryDir, "memory.md")));
 });
 
 test("a relative memory folder resolves against the session cwd, not the process", () => {
@@ -184,14 +184,14 @@ test("a relative memory folder resolves against the session cwd, not the process
   const dir = mkdtempSync(join(tmpdir(), "ofttold-"));
   const h = harness(dir);
   apply(h.ctx, config({ memoryDir: "memory" }));
-  assert.equal(existsSync(join(dir, "memory", "MEMORY.md")), false, "nothing may be created before a session exists");
+  assert.equal(existsSync(join(dir, "memory", "memory.md")), false, "nothing may be created before a session exists");
 });
 
 test("never overwrites an existing memory file", () => {
   const dir = workspace();
   const h = harness(dir);
   apply(h.ctx, config());
-  assert.equal(readFileSync(join(dir, "MEMORY.md"), "utf8"), DOC, "existing notes must survive");
+  assert.equal(readFileSync(join(dir, "memory.md"), "utf8"), DOC, "existing notes must survive");
 });
 
 test("passes through a rejected decision untouched", async () => {

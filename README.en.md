@@ -32,7 +32,7 @@
 
 ```mermaid
 flowchart LR
-    A[Your notes<br/>MEMORY.md] -->|pick sections<br/>by heading| B[Read + truncate]
+    A[Your notes<br/>memory.md] -->|pick sections<br/>by heading| B[Read + truncate]
     B --> C[Inject once<br/>as a user message]
     C --> D[Session context]
     D -->|stays in history| E[Every later turn]
@@ -52,7 +52,7 @@ dsh plugin --profile web add ofttold-memory@latest
 **That is the whole setup.** It installs the prebuilt package from npm — no build step,
 so no build approval is needed. To track the repository instead, use
 `github:IcyDate/ofttold-memory` in place of the package name. The first run creates `~/.dsh/ofttold-memory/` with a
-five-file skeleton: `MEMORY.md` (the injected source), `INDEX.md` (the diary index),
+five-file skeleton: `memory.md` (the injected source), `index.md` (the diary index),
 `relationship.md` (who the assistant is, plus the live emotion value), `detours.md`
 (what it believed before being corrected), and `diary/` (one file per day). **All of it is empty shells and comments — not one memory is
 pre-filled**, because what to remember is the one thing nobody can decide for you. Point `memoryDir` at a folder you already use — a diary, an index, a rules file — and it
@@ -259,7 +259,7 @@ A missing file or a renamed heading never throws. **When no section loads at all
 says what it tried:**
 
 ```
-Could not load any section. Tried: INDEX.md → 常被提起 (heading_not_found)
+Could not load any section. Tried: index.md → 常被提起 (heading_not_found)
 ```
 
 `heading_not_found` is exact: `常被提起` does not match `常被提起（手动维护）`. An empty

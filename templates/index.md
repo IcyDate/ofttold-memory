@@ -12,13 +12,13 @@
 
 <!-- 这里不放锚点。
 
-   插件的默认注入源是 MEMORY.md 的「常被提起」和「Oft-told」两节，不是本文件。
+   插件的默认注入源是 memory.md 的「常被提起」和「Oft-told」两节，不是本文件。
    索引负责「找得到」，锚点负责「一开场就想起来」，两件事分开放。
-   如果确实想把某一节写在 INDEX.md，得在 profile 的 `sections` 里把 `file`
-   指到 INDEX.md——否则写了不会生效，而且不会有任何报错。
+   如果确实想把某一节写在 index.md，得在 profile 的 `sections` 里把 `file`
+   指到 index.md——否则写了不会生效，而且不会有任何报错。
 
-   The default injection source is MEMORY.md. A section written here only works
-   if `sections` points `file` at INDEX.md. -->
+   The default injection source is memory.md. A section written here only works
+   if `sections` points `file` at index.md. -->
 
 ## 月份
 

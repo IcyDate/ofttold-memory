@@ -730,7 +730,7 @@ test("the panel names the file the headings are read from", () => {
 });
 
 test("the panel's memory file name matches the one the reader actually opens", () => {
-  // 两处写死同一个名字：面板说 MEMORY.md，注入端读的也必须是 MEMORY.md。
+  // 两处写死同一个名字：面板说 memory.md，注入端读的也必须是 memory.md。
   const sources = readFileSync(join(PACKAGE_ROOT, "lib", "sources.js"), "utf8");
   const declared = /export const DEFAULT_MEMORY_FILE = "([^"]+)"/.exec(sources);
   assert.ok(declared !== null, "DEFAULT_MEMORY_FILE must be declared");

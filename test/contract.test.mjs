@@ -188,7 +188,7 @@ test("a real session's cwd is the base a relative memory folder resolves against
   const { tmpdir } = await import("node:os");
   const { join } = await import("node:path");
   const dir = mkdtempSync(join(tmpdir(), "ofttold-cwd-"));
-  writeFileSync(join(dir, "MEMORY.md"), "## 常被提起\n\n- 会话里才有的那条\n", "utf8");
+  writeFileSync(join(dir, "memory.md"), "## 常被提起\n\n- 会话里才有的那条\n", "utf8");
 
   const session = realSession(dir);
   const ctx = context();

@@ -15,7 +15,7 @@ window.__ModuleLoader__.load({
      */
     const VERSION = "0.1.12";
     const REPO = "https://github.com/IcyDate/ofttold-memory";
-    const MEMORY_FILE = "MEMORY.md";
+    const MEMORY_FILE = "memory.md";
 
     const en = {
       nav: "Oft-told",

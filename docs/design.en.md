@@ -284,7 +284,7 @@ someone installs this?**
 
 What happens today, measured:
 
-- `scaffoldMemory` writes one `MEMORY.md`, only when the folder is empty, with four
+- `scaffoldMemory` writes one `memory.md`, only when the folder is empty, with four
   sections: `常被提起` / `Oft-told` / `我是谁` / `硬约定`.
 - The plugin **registers no tools** (`ctx.tools.register` is never called).
 - No diary, no index, no emotion vocabulary, no relationship.md skeleton.
@@ -319,8 +319,8 @@ gets nothing added. Four files, all empty shells plus comments, no real content:
 
 ```
 memoryDir/
-  MEMORY.md        # exists: 常被提起 / Oft-told / 我是谁 / 硬约定
-  INDEX.md         # header plus one example line, no real entries
+  memory.md        # exists: 常被提起 / Oft-told / 我是谁 / 硬约定
+  index.md         # header plus one example line, no real entries
   relationship.md  # shell only: who I am / emotion cache / emotion memories
   diary/           # empty, with a .gitkeep naming the YYYY-MM-DD.md convention
 ```

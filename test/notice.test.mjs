@@ -18,10 +18,10 @@ test("a heading that does not match is named, with the folder and the reason", (
   const notice = buildNotice({
     header,
     memoryDir: "/somewhere/notes",
-    attempts: [{ file: "INDEX.md", heading: "常被提起", label: "拾光", reason: "heading_not_found" }],
+    attempts: [{ file: "index.md", heading: "常被提起", label: "拾光", reason: "heading_not_found" }],
   });
   assert.match(notice, /none of its headings matched/);
-  assert.match(notice, /INDEX\.md/);
+  assert.match(notice, /index\.md/);
   assert.match(notice, /常被提起/);
   assert.match(notice, /heading_not_found/);
   // 用户那边看不到这些细节，模型得负责转述。
@@ -32,7 +32,7 @@ test("an empty folder reads as day one, not as a fault", () => {
   const notice = buildNotice({
     header,
     memoryDir: "/somewhere/notes",
-    attempts: [{ file: "MEMORY.md", heading: "常被提起", label: "Oft-told", reason: "empty_section" }],
+    attempts: [{ file: "memory.md", heading: "常被提起", label: "Oft-told", reason: "empty_section" }],
   });
   assert.match(notice, /has nothing to read yet/);
   assert.match(notice, /not a failure/);
@@ -47,7 +47,7 @@ test("the home directory is shortened so the block stays readable", () => {
   const notice = buildNotice({
     header,
     memoryDir: `${home}/notes`,
-    attempts: [{ file: "MEMORY.md", heading: "x", label: "x", reason: "missing" }],
+    attempts: [{ file: "memory.md", heading: "x", label: "x", reason: "missing" }],
   });
   assert.ok(notice.includes("`~/notes`"), "the folder must print as ~/notes");
   assert.ok(!notice.includes(`${home}/notes`), "the absolute path must not appear");
@@ -58,8 +58,8 @@ test("a mixed result still points at the heading that failed", () => {
     header,
     memoryDir: "/somewhere/notes",
     attempts: [
-      { file: "MEMORY.md", heading: "常被提起", label: "a", reason: "missing" },
-      { file: "INDEX.md", heading: "常被提起（手动维护）", label: "b", reason: "heading_not_found" },
+      { file: "memory.md", heading: "常被提起", label: "a", reason: "missing" },
+      { file: "index.md", heading: "常被提起（手动维护）", label: "b", reason: "heading_not_found" },
     ],
   });
   assert.match(notice, /none of its headings matched/, "one mismatch among several still means misconfigured");

@@ -201,7 +201,7 @@ n = 有几天日记提回过它（按天去重，同一天提十次算一次）
 
 实测（0.1.10 + 未发布那几笔）现在会发生的事：
 
-- `scaffoldMemory` **缺哪个补哪个，已有的文件一个字不动**：`MEMORY.md` / `INDEX.md` / `relationship.md` / `detours.md` / `diary/README.md`。骨架里一条记忆都不预填。
+- `scaffoldMemory` **缺哪个补哪个，已有的文件一个字不动**：`memory.md` / `index.md` / `relationship.md` / `detours.md` / `diary/README.md`。骨架里一条记忆都不预填。
 - 注册两个工具：`remember_emotion`（改活值，校验词表）和 `remember_note`（把「记下了」变成一个动作，落在 `常被提起` 或 `待办`）。
 - 注入块：带契约的块头、读不到时的 `notice`、块尾的日记提醒 + 体检 + `detours.md` 陈旧提醒 + 待办条数。
 - 两份 skill 由 `ctx.skills.register()` 运行时注册——按需加载，所以「写什么、怎么写」在目录里，不在上下文里。
@@ -226,8 +226,8 @@ n = 有几天日记提回过它（按天去重，同一天提十次算一次）
 
 ```
 memoryDir/
-  MEMORY.md        # 已有：常被提起 / Oft-told / 我是谁 / 硬约定
-  INDEX.md         # 只有表头 + 一行示例格式，没有任何真实条目
+  memory.md        # 已有：常被提起 / Oft-told / 我是谁 / 硬约定
+  index.md         # 只有表头 + 一行示例格式，没有任何真实条目
   relationship.md  # 只有空壳：我是谁 / 情绪缓存区 / 情绪记忆
   diary/           # 空目录，放一个 .gitkeep 说明命名是 YYYY-MM-DD.md
 ```

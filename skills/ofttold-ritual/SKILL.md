@@ -16,8 +16,8 @@ Skipping a step does not throw an error; it just means the folder stops growing.
 
 ```
 memoryDir/
-  MEMORY.md        # what gets injected: 常被提起 / Oft-told / 我是谁 / 硬约定
-  INDEX.md         # one line per day, the way back into old entries
+  memory.md        # what gets injected: 常被提起 / Oft-told / 我是谁 / 硬约定
+  index.md         # one line per day, the way back into old entries
   relationship.md  # who this AI is, plus the live emotion value
   diary/
     YYYY-MM-DD.md  # one file per day
@@ -35,9 +35,9 @@ this skill as the whole story:
   word saying *when* it applies. That section is the single authority: never keep a second
   copy in a script or in the agent's instructions, because two copies drift and a word that
   drifts stops matching anything.
-- `MEMORY.md` → under whichever anchor heading is in use (`常被提起` or `Oft-told`): the cap
+- `memory.md` → under whichever anchor heading is in use (`常被提起` or `Oft-told`): the cap
   is 8 lines, and eviction is itself the ranking.
-- `INDEX.md` → its header: one line per day, at most three sections worth re-reading.
+- `index.md` → its header: one line per day, at most three sections worth re-reading.
 - `diary/README.md` → the file naming, and how long a day's worth of sections runs.
 
 A folder that already held notes before the plugin was installed may carry none of these
@@ -135,7 +135,7 @@ next week, a piece of work still owed — that is a `remember_note` call, **not 
 `记得` / `记下` / `放心上` / `别忘` / `你记着` are all the same request; do not look for the
 words, look for the thing being handed over.
 
-- `kind: "anchor"` (default) → one bullet in `MEMORY.md`'s `常被提起`:
+- `kind: "anchor"` (default) → one bullet in `memory.md`'s `常被提起`:
   `- **标题** → 说明`. The title is the handle you will scan for months later, so make it
   the phrase you would actually search for.
 - `kind: "task"` → `- [ ] 2026-11-02 起 ｜ …` under `待办`, created on first use. The date is
@@ -160,7 +160,7 @@ If you cannot write it, say you cannot, and say where it would have gone.
 
 ### 2. The index line
 
-After writing, go back and update `INDEX.md`: one line for the day, plus **at most
+After writing, go back and update `index.md`: one line for the day, plus **at most
 three sections worth re-reading**, each with one sentence on why.
 
 The test: **if this line were deleted, would the thing still be findable?** Yes → too

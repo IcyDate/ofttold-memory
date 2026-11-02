@@ -32,7 +32,7 @@
 
 ```mermaid
 flowchart LR
-    A[你的笔记<br/>MEMORY.md] -->|按小节名取| B[读取 + 截断]
+    A[你的笔记<br/>memory.md] -->|按小节名取| B[读取 + 截断]
     B --> C[注入一次<br/>作为用户消息]
     C --> D[会话上下文]
     D -->|留在历史里| E[之后每一轮]
@@ -49,7 +49,7 @@ flowchart LR
 dsh plugin --profile web add ofttold-memory@latest
 ```
 
-**这就是全部安装步骤。** 装的是 npm 上的预构建产物，没有构建步骤，不需要额外授权；想跟仓库最新代码走，把包名换成 `github:IcyDate/ofttold-memory` 即可。 第一次运行会创建 `~/.dsh/ofttold-memory/`，并铺一份五文件骨架：`MEMORY.md`（注入源）、`INDEX.md`（日记索引）、`relationship.md`（我是谁 + 情绪缓存区）、`detours.md`（我原以为是什么、实际是什么）、`diary/`（一天一个文件）。**全是空壳加注释，一条记忆都不预填**——写什么只能由你决定。把 `memoryDir` 指向你已有的文件夹——日记、索引、规则文件都算——插件**只补缺的那几个文件，已有文件一个字都不动**：它会补上 `relationship.md`（情绪词表与缓存区住在那里）和 `diary/`（块尾那句提醒靠它），否则写的那一半会缺一块。
+**这就是全部安装步骤。** 装的是 npm 上的预构建产物，没有构建步骤，不需要额外授权；想跟仓库最新代码走，把包名换成 `github:IcyDate/ofttold-memory` 即可。 第一次运行会创建 `~/.dsh/ofttold-memory/`，并铺一份五文件骨架：`memory.md`（注入源）、`index.md`（日记索引）、`relationship.md`（我是谁 + 情绪缓存区）、`detours.md`（我原以为是什么、实际是什么）、`diary/`（一天一个文件）。**全是空壳加注释，一条记忆都不预填**——写什么只能由你决定。把 `memoryDir` 指向你已有的文件夹——日记、索引、规则文件都算——插件**只补缺的那几个文件，已有文件一个字都不动**：它会补上 `relationship.md`（情绪词表与缓存区住在那里）和 `diary/`（块尾那句提醒靠它），否则写的那一半会缺一块。
 
 然后打开 **设置 → 拾光** 用鼠标调整，或者直接改 profile 的 `cordis.patch.yml`。
 
@@ -204,15 +204,15 @@ remember_emotion(word: "定")
 
 ```
 remember_note(text: "主人喜欢一条溪穿街的古镇，黄龙溪那种", title: "主人喜欢古镇")
-→ added to MEMORY.md · 常被提起: - **主人喜欢古镇** → 主人喜欢一条溪穿街的古镇，黄龙溪那种
+→ added to memory.md · 常被提起: - **主人喜欢古镇** → 主人喜欢一条溪穿街的古镇，黄龙溪那种
 ```
 
 `kind` 有两种：
 
 | 值 | 写到哪 | 用来记什么 |
 |---|---|---|
-| `anchor`（默认） | `MEMORY.md` 的 `常被提起` | **以后还该成立的事**——偏好、约定、纠正过的认知 |
-| `task` | `MEMORY.md` 的 `待办`（第一次用时建） | **还欠着的活** |
+| `anchor`（默认） | `memory.md` 的 `常被提起` | **以后还该成立的事**——偏好、约定、纠正过的认知 |
+| `task` | `memory.md` 的 `待办`（第一次用时建） | **还欠着的活** |
 
 任务是能结算的：
 
@@ -312,7 +312,7 @@ remember_note(text: "主人喜欢一条溪穿街的古镇，黄龙溪那种", ti
 文件不存在、小节名改了，都不会抛错。**一节都没读到时，注入块会照实说它试过什么：**
 
 ```
-Could not load any section. Tried: INDEX.md → 常被提起 (heading_not_found)
+Could not load any section. Tried: index.md → 常被提起 (heading_not_found)
 ```
 
 `heading_not_found` 只差一个字也算没找到（`常被提起` 匹配不上 `常被提起（手动维护）`）。空文件夹则是另一种说法：**这是第一天，不是坏了。**
