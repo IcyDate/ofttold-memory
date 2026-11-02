@@ -151,3 +151,14 @@ test("nothing to do means the text comes back byte-identical", async () => {
   assert.equal(capAnchors(text, dir, 0), text);
   rmSync(dir, { recursive: true, force: true });
 });
+
+test("the same local date scores the same at midnight and at noon", () => {
+  // 实测过的 bug：`today()` 原来用 UTC 日期，东八区凌晨 00:30 算出来是前一天，
+  // 于是同一个北京日期，凌晨算一遍、中午再算一遍，权重能差一倍（0.607 对 0.472）。
+  const night = new Date(2026, 10, 2, 0, 30); // 本地 11-02 00:30
+  const noon = new Date(2026, 10, 2, 12, 0);
+  assert.equal(today(night), today(noon), "同一个本地日期必须是同一个 day 数字");
+  // 而且必须和 dayOf() 用同一套算法，否则两者算出来的日子会错一天。
+  assert.equal(today(night), dayOf(isoOf(today(night))));
+  assert.equal(isoOf(today(night)), "2026-11-02");
+});
