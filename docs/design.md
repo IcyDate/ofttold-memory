@@ -203,7 +203,7 @@ n = 有几天日记提回过它（按天去重，同一天提十次算一次）
 
 - `scaffoldMemory` **缺哪个补哪个，已有的文件一个字不动**：`memory.md` / `index.md` / `relationship.md` / `detours.md` / `diary/README.md`。骨架里一条记忆都不预填。
 - 注册两个工具：`remember_emotion`（改活值，校验词表）和 `remember_note`（把「记下了」变成一个动作，落在 `常被提起` 或 `待办`）。
-- 注入块：带契约的块头、读不到时的 `notice`、块尾的日记提醒 + 体检 + `detours.md` 陈旧提醒 + 待办条数。
+- 注入块：带契约的块头、读不到时的 `notice`、块尾的日记提醒 + 体检 + `detours.md` 体量提醒 + 待办条数。
 - 两份 skill 由 `ctx.skills.register()` 运行时注册——按需加载，所以「写什么、怎么写」在目录里，不在上下文里。
 
 也就是：**结构有了、入口有了、方法在 skill 里**。剩下真正靠使用者自己的是判断——记什么、什么时候记、哪条该删。

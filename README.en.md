@@ -54,7 +54,7 @@ so no build approval is needed. To track the repository instead, use
 `github:IcyDate/ofttold-memory` in place of the package name. The first run creates `~/.dsh/ofttold-memory/` with a
 five-file skeleton: `memory.md` (the injected source), `index.md` (the diary index),
 `relationship.md` (who the assistant is, plus the live emotion value), `detours.md`
-(what it believed before being corrected), and `diary/` (one file per day). **All of it is empty shells and comments — not one memory is
+(the shapes of mistakes it keeps making), and `diary/` (one file per day). **All of it is empty shells and comments — not one memory is
 pre-filled**, because what to remember is the one thing nobody can decide for you. Point `memoryDir` at a folder you already use — a diary, an index, a rules file — and it
 **fills in only the files that are missing, never rewriting one that exists**. That
 typically means adding `relationship.md` (where the emotion vocabulary and cache live)
@@ -183,6 +183,7 @@ three — that is the layout answering.
 | `diarySections` | `0` | Sections per day. Default `0` = don't count — **a count cannot tell a transcript from a record**. |
 | `diaryCheck` | `true` | The diary check on or off. |
 | `detourChars` | `3000` | How large the file of wrong turns may grow. It holds **recurring shapes**, not incidents; past this it is a second diary. `0` turns it off. |
+| `taskStaleDays` | `30` | When a task is too old to keep counting — past it the block asks whether to keep it instead. `0` turns it off. |
 
 Everything else has a working default. The full field list, the object form of
 `sections` for the rare per-section case, exact heading matching, and cross-platform
@@ -295,7 +296,7 @@ declared away — so here is exactly what:
 
 | | |
 |---|---|
-| **Reads** | the `##` sections you name, inside `memoryDir`; today's entry under `diary/`; the vocabulary in `relationship.md`; the mtime of `detours.md` |
+| **Reads** | the `##` sections you name, inside `memoryDir`; today's entry under `diary/`; the vocabulary in `relationship.md`; the size of `detours.md` |
 | **Writes** | only inside `memoryDir`: filling in missing skeleton files, stamping a start date onto an undated anchor, appending or ticking a task in `MEMORY.md`, rewriting the one `**now**` line in `relationship.md`, renaming a legacy file into its new name |
 | **Never writes** | anything outside `memoryDir`. Not `~/.dsh`, not the workspace, not session data |
 | **Network** | none. No outbound request of any kind |

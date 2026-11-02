@@ -49,7 +49,7 @@ flowchart LR
 dsh plugin --profile web add ofttold-memory@latest
 ```
 
-**这就是全部安装步骤。** 装的是 npm 上的预构建产物，没有构建步骤，不需要额外授权；想跟仓库最新代码走，把包名换成 `github:IcyDate/ofttold-memory` 即可。 第一次运行会创建 `~/.dsh/ofttold-memory/`，并铺一份五文件骨架：`memory.md`（注入源）、`index.md`（日记索引）、`relationship.md`（我是谁 + 情绪缓存区）、`detours.md`（我原以为是什么、实际是什么）、`diary/`（一天一个文件）。**全是空壳加注释，一条记忆都不预填**——写什么只能由你决定。把 `memoryDir` 指向你已有的文件夹——日记、索引、规则文件都算——插件**只补缺的那几个文件，已有文件一个字都不动**：它会补上 `relationship.md`（情绪词表与缓存区住在那里）和 `diary/`（块尾那句提醒靠它），否则写的那一半会缺一块。
+**这就是全部安装步骤。** 装的是 npm 上的预构建产物，没有构建步骤，不需要额外授权；想跟仓库最新代码走，把包名换成 `github:IcyDate/ofttold-memory` 即可。 第一次运行会创建 `~/.dsh/ofttold-memory/`，并铺一份五文件骨架：`memory.md`（注入源）、`index.md`（日记索引）、`relationship.md`（我是谁 + 情绪缓存区）、`detours.md`（我总在哪一步拐错）、`diary/`（一天一个文件）。**全是空壳加注释，一条记忆都不预填**——写什么只能由你决定。把 `memoryDir` 指向你已有的文件夹——日记、索引、规则文件都算——插件**只补缺的那几个文件，已有文件一个字都不动**：它会补上 `relationship.md`（情绪词表与缓存区住在那里）和 `diary/`（块尾那句提醒靠它），否则写的那一半会缺一块。
 
 然后打开 **设置 → 拾光** 用鼠标调整，或者直接改 profile 的 `cordis.patch.yml`。
 
@@ -256,6 +256,7 @@ remember_note(text: "主人喜欢一条溪穿街的古镇，黄龙溪那种", ti
 | `diarySections` | `0` | 一天最多几节。默认 `0`＝不数——**节数说明不了是不是流水账**。 |
 | `diaryCheck` | `true` | 日记体检开关。 |
 | `detourChars` | `3000` | 弯路文件最大多少字。它只该装**重复犯的那几种错**，超了就已经是第二本日记。`0` 关掉。 |
+| `taskStaleDays` | `30` | 待办挂多少天算太久。超过就不算进「有几条」，改口问「还要不要」。`0` 关掉。 |
 
 **这 10 项在设置页里都能改**（面板把布尔项画成勾选框，不用手打 true/false）。剩下的 `header`、`workspaceRelative`、`refreshIntervalMs`、`refreshAfterMessages` 也有面板入口，只是平时不用动。完整字段表、`sections` 的对象写法、小节名精确匹配、跨平台行为在 **[配置说明](docs/config.md)**。
 
@@ -342,7 +343,7 @@ cat ~/.dsh/ofttold-memory/diagnostics.json
 
 | | |
 |---|---|
-| **读** | `memoryDir` 里你指定的那几个 `##` 小节；`diary/` 下今天的文件；`relationship.md` 的词表；`detours.md` 的时间 |
+| **读** | `memoryDir` 里你指定的那几个 `##` 小节；`diary/` 下今天的文件；`relationship.md` 的词表；`detours.md` 的字数 |
 | **写** | 只在 `memoryDir` 内：补缺失的骨架文件、给无日期的锚点补起算日、追加/勾选 `MEMORY.md` 的待办、改 `relationship.md` 的那一行「现在」、把旧文件名改过来 |
 | **不写** | `memoryDir` 之外一处都不写。不碰 `~/.dsh`、不碰工作区、不碰会话数据 |
 | **网络** | 零。没有任何出站请求 |
