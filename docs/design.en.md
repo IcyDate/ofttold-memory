@@ -27,10 +27,10 @@ that is already connected**. What flows through the other end is yours to grow.
 | Layer | What it is | Owned by | Exists today? |
 | --- | --- | --- | --- |
 | Injection | put "Oft-told" in view every session | code | yes |
-| Ritual | how to write a diary entry, update the index, tag an emotion, maintain relationship.md | planned as a runtime skill | **no, this is the gap** |
+| Ritual | how to write a diary entry, update the index, tag an emotion, maintain relationship.md | runtime skill | yes (`skills/ofttold-ritual`) |
 | Result | their diary, their words, their relationship notes | the user | theirs |
 
-The middle layer is the gap. See "After a stranger installs it".
+All three layers exist now. But the ritual layer is **loaded on demand, not injected every session** — it is not as reliable as the injection layer; see the section on what a stranger gets.
 
 **One principle: uninstalling the plugin costs speed, not memory.**
 
