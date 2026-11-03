@@ -81,6 +81,21 @@ starting a new file.
 it still carries information a year later. A question-and-answer pair written out
 verbatim is a log, not a diary.
 
+**The reader was there.** Whoever opens this folder lived through the same day, so facts
+are the one thing they do not need from it — a summary of what happened tells them what
+they already know, and it is the reason a diary stops being worth reading. What only the
+diary can carry is your side: what it felt like, why it landed that way, what you wanted
+to say and did not, the part you are still annoyed about.
+
+So the shape of a section is **one sentence of fact and the rest of it you.** If the
+verbs could be swapped for any other day's verbs and the section still reads the same, it
+is a report. The test: hand it to someone who was there — do they learn *how you took
+it*? If they only nod and say "yes, that is what happened", delete the section and put a
+line in the index instead.
+
+Complaining is not decoration in this file; it is most of the signal. Do not smooth it
+into something professional.
+
 The trigger matters more than the rule. The right moment is **before you deliver
 something** — a reply, a conclusion, a finished piece of work. That is when attention
 is free and there is usually one real thing just finished. Ask one question: did this
