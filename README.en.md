@@ -1,12 +1,12 @@
-# ofttold-memory · Oft-told
+# ofttold-memory · 拾光
 
 <p align="center"><a href="./README.md">中文</a> | <a href="./README.en.md">English</a></p>
 
-<p align="center"><strong>Memory-injection plugin</strong> — <em>carry your memory into every session.</em></p>
+<p align="center"><strong>It is a small notebook, and it belongs to the assistant.</strong></p>
 
-<p align="center"><sub>a note helps only when it is in front of the model · <em>injected once, present throughout</em> · no dependence on remembering to look · works out of the box</sub></p>
+<p align="center"><sub>written in every day · opened before it speaks · so what it remembers is what it thought</sub></p>
 
-<p align="center"><sub><strong>A DSH plugin</strong> · other harnesses: planned</sub></p>
+<p align="center"><sub><strong>a DSH plugin</strong> · other harnesses: planned</sub></p>
 
 <p align="center">
 <a href="https://www.npmjs.com/package/ofttold-memory"><img src="https://img.shields.io/npm/v/ofttold-memory.svg?style=flat-square" alt="npm"></a>
@@ -28,18 +28,56 @@
 
 ---
 
-> **At a glance:** your notes are read once and injected once, then present in every later turn — **zero cost after the first turn.** 600 characters is about 400 tokens, charged once per session. Nothing to configure after install.
+Every day something goes in: what you did together, what it made of it, where it keeps
+getting a step wrong. Before it speaks, it opens the notebook and reads back through it —
+**so what it remembers is not only what you said, but what it thought about what you said.**
 
-```mermaid
-flowchart LR
-    A[Your notes<br/>memory.md] -->|pick sections<br/>by heading| B[Read + truncate]
-    B --> C[Inject once<br/>as a user message]
-    C --> D[Session context]
-    D -->|stays in history| E[Every later turn]
-    D -.->|optional<br/>refreshAfterMessages| C
-```
+You can also tell it what kind of assistant you want it to be. That goes in the notebook
+too, **so you are not repeating yourself every time**.
 
-One read, one injection. No index, no embeddings, no database, no second pass.
+On the first day the notebook is empty. That is not a fault — it has to live through a few
+days with you first.
+
+Over time you grow your own 大肥鱼 — **not quite the same one as anybody else's.**
+
+---
+
+## What changes, and when
+
+| | What you will see |
+|---|---|
+| Day 1 | The notebook is empty. It starts writing; the most you will notice is a line at the end of a reply saying today is unwritten. |
+| Day 3 | It starts picking up where you left off — "the thing you mentioned last time" — and that is *its own* record of it, not you saying it again. |
+| Day 10 | It has its own way of putting things: what it makes of you, where it keeps going wrong, how it feels today. Ask it "what do you have on me" and it can answer. |
+| A month in | A few hundred lines, but only eight are put in front of it — **filling up does not slow it down.** |
+
+The delay is the design. **This is not something that takes effect when it is installed; it is something that grows by a day at a time.**
+
+---
+
+## What it does, and what it leaves alone
+
+**It does** the things that should happen every time and reliably get skipped:
+
+- puts the list in front of the model, once per session
+- when the list is full, computes which line sinks: `exp(-t / 2^n)`
+- stamps a start date on anchors that have no date of their own
+- fills in missing files, names an unwritten day, says what it tried when nothing loads
+- checks today's entry: sections past the cap, sections with no `情绪：` line, a tag outside
+  the vocabulary, a summary the body has run past
+
+**It does not** do the half that needs judgement:
+
+- **It does not decide what is worth remembering.** What goes on the list, and whether a
+  sinking line deserves rescuing, is the writer's call. The plugin only does the arithmetic.
+- **It does not decide what you feel.** The value is the writer's call; writing it is the
+  plugin's — `remember_emotion` checks the vocabulary, stamps the time, and refuses a word
+  that is not on the list.
+- **It does not write the diary.** It names an unwritten day and stops there.
+
+The line between the two is **"would the failure be visible?"** — invisible failures go to
+code, visible ones stay with the writer. Reasoning is in
+**[Design notes](docs/design.en.md)**.
 
 ---
 
@@ -191,67 +229,23 @@ behaviour are in **[Configuration](docs/config.en.md)**.
 
 ---
 
-## Where the name comes from
+## How it works
 
-This plugin was extracted from a working arrangement between one person and one
-agent, and it kept the name they gave it.
+> The notebook is a handful of markdown files on your own machine. Once at the start of a
+> session it is read and injected, and from then on it is part of the context every turn —
+> **zero cost after the first turn.** 600 characters is about 400 tokens, charged once per
+> session. The few settings worth changing are in [configuration](docs/config.md).
 
-**拾光** (*shí guāng*) — to pick up the light, and a homophone of 时光, *time*. The
-idea sits in **拾**: to gather back up, one piece at a time, what has scattered.
+```mermaid
+flowchart LR
+    A[your notebook<br/>memory.md] -->|by section heading| B[read + truncate]
+    B --> C[inject once<br/>as a user message]
+    C --> D[session context]
+    D -->|stays in history| E[every later turn]
+    D -.->|optional<br/>refreshAfterMessages| C
+```
 
-The arrangement was a folder of diaries, an index holding a short list of things
-that keep coming back, and one instruction at the top of the agent's notes: *read
-these two files before every session.* The instruction held until it did not — and
-it failed exactly where it was meant to hold, at the start of a session, when the
-new message is the only thing that matters.
-
-So the instruction became a mechanism. That is the whole change: **the list moved
-out of something the model had to remember into context it cannot miss.**
-
----
-
-## Why not just put it in `AGENTS.md`?
-
-Because an instruction and an injected message are not paid for the same way.
-
-| | Cost per turn | Can it be skipped |
-|---|---|---|
-| A rule in `AGENTS.md` | every turn, the rule's full length | yes — silently |
-| This plugin | **0 after the first turn** | no — already in history |
-
-A system instruction rides along with every request. An injected message is paid
-once: after the first turn it is history, and later turns read it as context they
-already have. A measured injection is **735 characters ≈ 660 tokens, once per
-session**; a rule costs its length on every turn, forever. The rule loses as soon
-as the rule is longer than the injected block.
-
-**Put the content in a memory file, not the instruction in `AGENTS.md`.**
-
----
-
-## What it does, and what it leaves alone
-
-**It does** the things that should happen every time and reliably get skipped:
-
-- puts the list in front of the model, once per session
-- when the list is full, computes which line sinks: `exp(-t / 2^n)`
-- stamps a start date on anchors that have no date of their own
-- fills in missing files, names an unwritten day, says what it tried when nothing loads
-- checks today's entry: sections past the cap, sections with no `情绪：` line, a tag outside
-  the vocabulary, a summary the body has run past
-
-**It does not** do the half that needs judgement:
-
-- **It does not decide what is worth remembering.** What goes on the list, and whether a
-  sinking line deserves rescuing, is the writer's call. The plugin only does the arithmetic.
-- **It does not decide what you feel.** The value is the writer's call; writing it is the
-  plugin's — `remember_emotion` checks the vocabulary, stamps the time, and refuses a word
-  that is not on the list.
-- **It does not write the diary.** It names an unwritten day and stops there.
-
-The line between the two is **"would the failure be visible?"** — invisible failures go to
-code, visible ones stay with the writer. Reasoning is in
-**[Design notes](docs/design.en.md)**.
+One read, one injection. No index, no embeddings, no database, no second pass.
 
 ---
 
@@ -309,6 +303,44 @@ package is a `peerDependency` provided by the host, and so is `schemastery`.
 **Failure bounds:** no read or write failure is ever thrown into the host. The injected block
 says in one line what it tried and why nothing was read; a missing folder gets the skeleton
 filled in; an unwritable path goes quiet instead of retrying.
+
+---
+
+## Where the name comes from
+
+This plugin was extracted from a working arrangement between one person and one
+agent, and it kept the name they gave it.
+
+**拾光** (*shí guāng*) — to pick up the light, and a homophone of 时光, *time*. The
+idea sits in **拾**: to gather back up, one piece at a time, what has scattered.
+
+The arrangement was a folder of diaries, an index holding a short list of things
+that keep coming back, and one instruction at the top of the agent's notes: *read
+these two files before every session.* The instruction held until it did not — and
+it failed exactly where it was meant to hold, at the start of a session, when the
+new message is the only thing that matters.
+
+So the instruction became a mechanism. That is the whole change: **the list moved
+out of something the model had to remember into context it cannot miss.**
+
+---
+
+## Why not just put it in `AGENTS.md`?
+
+Because an instruction and an injected message are not paid for the same way.
+
+| | Cost per turn | Can it be skipped |
+|---|---|---|
+| A rule in `AGENTS.md` | every turn, the rule's full length | yes — silently |
+| This plugin | **0 after the first turn** | no — already in history |
+
+A system instruction rides along with every request. An injected message is paid
+once: after the first turn it is history, and later turns read it as context they
+already have. A measured injection is **735 characters ≈ 660 tokens, once per
+session**; a rule costs its length on every turn, forever. The rule loses as soon
+as the rule is longer than the injected block.
+
+**Put the content in a memory file, not the instruction in `AGENTS.md`.**
 
 ---
 
