@@ -206,6 +206,12 @@ reminder that also sounds like a nag makes both lines skippable. It costs a sing
 written in the last seven days) or `off`. A folder without `diary/` is silent under all
 three — that is the layout answering.
 
+**`relationship.md` gets named once a day until it is opened.** The file never enters the
+injected block — it is only there when something opens it — so the tail says
+`- \`relationship.md\` has not been opened today` until the AI actually opens it with a file
+tool. It measures tool reads, not shell reads, so it errs toward asking again rather than
+assuming the file was seen.
+
 **A task that carries a due date is named on the day.**
 `- [ ] 2026-11-02 起 ｜ 2026-11-05 到期 ｜ …` makes the tail say
 `- 1 task due now: 修上游白名单（今天到期）` that morning, and `（逾期 3 天）` afterwards.

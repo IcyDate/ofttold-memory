@@ -28,10 +28,12 @@ import { buildNotice } from "./lib/notice.js";
 import { DIARY_CADENCES, localDay, pendingDiaryNudge } from "./lib/diary.js";
 import { detourSizeLine, diaryIssueLine, minutesOf } from "./lib/diarycheck.js";
 import { completeTask, rememberNote, taskStatusLine, ANCHOR_HEADING, NOTE_FILE, TASK_HEADING } from "./lib/notes.js";
+import { recordReadAt, unreadLine } from "./lib/reads.js";
+import { RELATIONSHIP_FILE } from "./lib/emotion.js";
 import { rememberEmotion } from "./lib/emotion.js";
 import { homedir } from "node:os";
 import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, isAbsolute, resolve } from "node:path";
 import z from "@deepseek-ai/schemastery";
 
 import { configValue } from "./lib/config.js";
@@ -345,7 +347,33 @@ function storageDirectory() {
  * @param {any} ctx - Plugin context; the listener is disposed with it.
  * @param {any} config - Validated plugin config.
  */
+/**
+ * Remember the day `relationship.md` was opened through the harness file tools.
+ *
+ * The event fires for reads, writes and edits alike — any of them means the file was
+ * in front of the model, which is the only thing this signal is for. A shell `cat`
+ * emits nothing; that limit is documented in `lib/reads.js` and is why the tail line
+ * says "not opened today" rather than anything stronger.
+ *
+ * Never throws: a failure here would take down an unrelated tool call.
+ */
+function watchRelationshipReads(ctx, config) {
+  ctx.on("fs/observed", (target, _observation, exec) => {
+    try {
+      const shown = String(target?.displayPath ?? "");
+      if (!shown.endsWith(RELATIONSHIP_FILE)) return;
+      const memoryDir = memoryDirectory(exec?.agent, config);
+      const full = isAbsolute(shown) ? shown : resolve(shown);
+      if (resolve(join(memoryDir, RELATIONSHIP_FILE)) !== resolve(full)) return;
+      recordReadAt(storageDirectory(), RELATIONSHIP_FILE, localDay());
+    } catch {
+      // ignore: the record is a convenience, not a correctness requirement
+    }
+  });
+}
+
 export function apply(ctx, config) {
+  watchRelationshipReads(ctx, config);
   // Same trap as `workspaceRelative`: the Config schema supplies this default
   // only after validation, so an unvalidated config would mean "no sections" and
   // the plugin would silently register nothing. State the documented default.
@@ -639,7 +667,12 @@ function localStamp(now = new Date()) {
         return undefined;
       }
     })();
-    const tail = [nudge, issue, oversized, tasks].filter((part) => part !== undefined).join("\n\n");
+    // 排在待办前面：读到一句话的代价，比翻一个文件的代价低得多，但它指向的正是那个
+    // 从不进注入块的文件。文件不在时不说——指向一个不存在的东西比不指更糟。
+    const unread = existsSync(join(memoryDir, RELATIONSHIP_FILE))
+      ? unreadLine({ storageDir: storageDirectory(), key: RELATIONSHIP_FILE, day: localDay() })
+      : undefined;
+    const tail = [nudge, issue, oversized, unread, tasks].filter((part) => part !== undefined).join("\n\n");
     if (tail !== "") {
       // 块尾那句也是「注入出去的东西」，README 里写的是「每一次注入决策都在里面」——
       // 它要算决策的一部分，否则那句话生效与否在诊断文件里查不到。

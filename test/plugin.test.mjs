@@ -264,8 +264,11 @@ test("the block ends by saying the day is not written yet", async () => {
   const text = decision.messages[0].content[0].text;
   assert.match(text, /no diary entry for today|no diary entry for \d{4}-\d{2}-\d{2} yet/);
   assert.match(text, /diary\/\d{4}-\d{2}-\d{2}\.md/);
-  // 状态行是块尾最后一行：它一句话、无句号、无指令，和上面那行体检区分得开。
-  assert.match(text.trimEnd(), /`diary\/\d{4}-\d{2}-\d{2}\.md`\)$/, "the status line stays last");
+  // 编排：日记提醒在最前，`relationship.md` 的「今天没打开」紧随，待办在最后。
+  const diaryAt = text.search(/- no diary entry for/);
+  const unreadAt = text.search(/- `relationship\.md` has not been opened today/);
+  assert.ok(diaryAt >= 0, "the diary line is there");
+  if (unreadAt >= 0) assert.ok(diaryAt < unreadAt, "the diary line opens the tail; the unread file follows it");
 });
 
 test("the default memory folder lives inside the workspace, not outside it", async () => {
