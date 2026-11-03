@@ -95,6 +95,12 @@ the same thread, **fold it into that section** rather than opening another one â
 reader should not have to stitch two headings back together. If it is a different
 thread, open a new one even if that makes the day long.
 
+Merging has a boundary that counting never had: **the same thread on the same day.** A
+thread that continues *tomorrow* is tomorrow's entry, not another section in this one â€”
+and when a topic has been running for days, the strong memory of yesterday's material
+slides into today's sentence as if it happened this morning. It did not. **One section is
+one day; the date at the top is a claim you can get wrong.**
+
 The failure this replaces was counting: a fixed cap punished busy days and said nothing
 about the actual defect. **Merging is a judgment; no count can make it.**
 
