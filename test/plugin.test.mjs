@@ -257,6 +257,7 @@ test("the block ends by saying the day is not written yet", async () => {
   // 单测覆盖了 lib/diary.js 的判定，这条盯着「它真的进了注入块、排在最后」。
   const dir = workspace();
   mkdirSync(join(dir, "diary"));
+  writeFileSync(join(dir, "diary", "2026-10-28.md"), "# entry\n"); // 不是第一天
   const h = harness(dir);
   apply(h.ctx, config());
   const decision = await h.drive({ step: 1 });

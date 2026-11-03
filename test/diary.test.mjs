@@ -39,12 +39,29 @@ test("the day is the local one, not the UTC one", () => {
 test("an unwritten day is named, with the file it expects", () => {
   const dir = folder();
   try {
+    // 先有一天旧的：没有这条会走「第一天」那条分支，测不到「今天没写」。
+    writeFileSync(join(dir, "diary", "2026-10-28.md"), "# entry\n");
     const line = pendingDiaryNudge(dir, new Date(2026, 9, 30, 9, 0));
     assert.ok(line !== undefined);
     assert.match(line, /diary\/2026-10-30\.md/);
     // 这一行是状态，不是指令：它只说「今天没有」，把「怎么写」留给注入块开头那句和 skill。
     // 指令语气会和同一块尾的体检报告抢注意力，两边都变得可跳过。
     assert.doesNotMatch(line, /ofttold-ritual|must|should/, "the status line must not read as an instruction");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("an empty folder says what it is, not that today is late", () => {
+  // 新装的文件夹里一条都没有。这时说「今天还没写」读起来像在催一个还没有机会
+  // 开始的人；而「装完没区别」这个最常听到的反馈，根子就是这个状态不说话。
+  const dir = folder();
+  try {
+    const line = pendingDiaryNudge(dir, new Date(2026, 9, 30, 9, 0));
+    assert.ok(line !== undefined, "the first day still says something");
+    assert.match(line, /has no entries yet/);
+    assert.doesNotMatch(line, /no diary entry for/, "it must not read as a missed day");
+    assert.doesNotMatch(line, /ofttold-ritual|must|should/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

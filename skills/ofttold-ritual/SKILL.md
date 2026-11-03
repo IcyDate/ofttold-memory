@@ -168,6 +168,21 @@ If yes, write it as an `anchor` (or into `relationship.md`); if not, leave it. *
 tick-and-promote by habit** — `常被提起` fills with one-off work that way, and a list of
 one-off work is not a list of what keeps coming up.
 
+### 1d. When the same thing keeps coming back
+
+The anchor list is the diary distilled, and distillation needs a moment or it never
+happens. That moment is **right after writing an entry**: ask once whether anything today
+was the *third* time it has come up. Three times is the test, not "it felt important" —
+once is an incident and twice is a coincidence, and a list of those is not a list of what
+keeps coming up.
+
+If something passed that test, it is what `常被提起` is for: one line, the handle you
+would search for months later. You do not have to wait for the user to say 「记住」 —
+noticing it yourself is the same job, and it is the half nobody else can do.
+
+If nothing passed, leave it. **An anchor written because the list looked empty is worse
+than an empty list**, and a new folder is supposed to be empty: the first day says so.
+
 **Only promises get a task.** Not "this is important" and not "you mentioned this once":
 the test is whether the sentence contains *something I am going to do*. When it is not
 clear, ask — a task shows up in the block tail every session, so putting one there is
