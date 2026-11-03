@@ -641,7 +641,10 @@ function localStamp(now = new Date()) {
     const cadence = DIARY_CADENCES.includes(configValue(config, "diaryCadence"))
       ? configValue(config, "diaryCadence")
       : "daily";
-    const nudge = pendingDiaryNudge(memoryDir, new Date(), cadence);
+    // 会话开始时间：用来分辨「今天这一篇是这个会话写的」还是「别的会话写的，
+    // 而这个会话什么都没放进去」。取不到就退回旧行为（只看文件在不在）。
+    const sessionStartedAt = Number(agent?.session?.header?.createdAt);
+    const nudge = pendingDiaryNudge(memoryDir, new Date(), cadence, { sessionStartedAt });
     // 体检跟提醒拼在一起：都在块尾，都只在「今天这一篇有问题」时才出现，都对模型说而不是
     // 对用户说——用户没义务转告。
     const issue = diaryIssueLine({

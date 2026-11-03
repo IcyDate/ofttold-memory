@@ -132,3 +132,33 @@ test("an empty vocabulary and a missing one are different stories", () => {
   }
 });
 
+
+test("a second session on the same day is told the entry is not its own", () => {
+  // 同一天开两个会话：第二个看到的是一份已经存在的文件，于是整段沉默，而它做了几
+  // 小时的事一个字都没进去。判据取了一个被别的会话满足过的代理值。
+  const dir = folder();
+  try {
+    const file = join(dir, "diary", "2026-10-30.md");
+    writeFileSync(file, "# 早些时候的会话写的\n");
+    const writtenAt = new Date(2026, 9, 30, 10, 26).getTime();
+    utimesSync(file, new Date(writtenAt), new Date(writtenAt));
+
+    const now = new Date(2026, 9, 30, 16, 0);
+
+    // 文件写在这个会话开始之前 → 要说一句
+    const later = pendingDiaryNudge(dir, now, "daily", { sessionStartedAt: now.getTime() - 5 * 3600 * 1000 });
+    assert.match(later, /last written at 10:26, before this session started/);
+
+    // 会话开始于写入之前 → 就是它自己写的，闭嘴
+    assert.equal(
+      pendingDiaryNudge(dir, now, "daily", { sessionStartedAt: writtenAt - 60_000 }),
+      undefined,
+      "an entry written after this session started is this session's",
+    );
+
+    // 没有会话开始时间 → 退回旧行为，只看文件在不在
+    assert.equal(pendingDiaryNudge(dir, now, "daily"), undefined);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
