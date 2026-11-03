@@ -159,6 +159,9 @@ words, look for the thing being handed over.
   the phrase you would actually search for.
 - `kind: "task"` → `- [ ] 2026-11-02 起 ｜ …` under `待办`, created on first use. The date is
   the day it was opened; `complete_task` appends the day it was finished and ticks the box.
+  **If the sentence contains a when, pass `due`** (`- [ ] 2026-11-02 起 ｜ 2026-11-05 到期 ｜ …`):
+  「过两天」「下周」「周五之前」all resolve to a date. A task with a due date is named in the
+  block tail on that day; one without it only ever ages, and "open 9 days" is not a moment.
   **A ticked task stays in the file** — it is the only evidence the thing was ever done —
   and the block tail reports how many are still open plus how long the oldest has waited.
 

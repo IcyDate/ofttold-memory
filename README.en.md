@@ -206,6 +206,11 @@ reminder that also sounds like a nag makes both lines skippable. It costs a sing
 written in the last seven days) or `off`. A folder without `diary/` is silent under all
 three — that is the layout answering.
 
+**A task that carries a due date is named on the day.**
+`- [ ] 2026-11-02 起 ｜ 2026-11-05 到期 ｜ …` makes the tail say
+`- 1 task due now: 修上游白名单（今天到期）` that morning, and `（逾期 3 天）` afterwards.
+Without a due date a task only ever ages — `the oldest open 5 days` is an age, not a moment.
+
 ---
 
 ## The settings that matter
