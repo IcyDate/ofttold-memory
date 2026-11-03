@@ -209,3 +209,11 @@ test("a due date that is not a date is refused", () => {
   assert.equal(bad.ok, false);
   assert.match(bad.message, /YYYY-MM-DD/);
 });
+
+test("a due date on an anchor is refused, not silently dropped", () => {
+  // 静默忽略是最难查的那种错：调用方以为记下了期限，文件里没有。
+  const dir = fresh();
+  const r = rememberNote({ memoryDir: dir, text: "一条事实", kind: "anchor", due: "2026-11-09" });
+  assert.equal(r.ok, false);
+  assert.match(r.message, /only applies to a task/);
+});
