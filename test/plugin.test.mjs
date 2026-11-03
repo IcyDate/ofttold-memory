@@ -29,6 +29,7 @@ const DOC = "## 常被提起\n\n- one\n- two\n";
  */
 function harness(base) {
   const listeners = [];
+  const observed = [];
   let state = {
     injectedCount: 0,
     lastInjectedAt: null,
@@ -47,12 +48,17 @@ function harness(base) {
     },
     on(event, handler) {
       if (event === "agent/pre-step") listeners.push(handler);
+      // 接线也要能测：这条事件不在单测里跑一遍，就等于没人验过它到底注册上没有。
+      else if (event === "fs/observed") observed.push(handler);
     },
   };
   const agent = { session: { header: { cwd: base } } };
   return {
     ctx,
     state: () => state,
+    observe(target, exec) {
+      for (const handler of observed) handler(target, { kind: "present" }, exec);
+    },
     log(kind) {
       state = reducer(state, {
         type: "user/message",
@@ -320,5 +326,69 @@ test("workspaceRelative does not move the default folder", async () => {
     assert.equal(memoryDirectory(agent, { workspaceRelative: false }), join(ws, ".ofttold"));
   } finally {
     rmSync(ws, { recursive: true, force: true });
+  }
+});
+
+test("opening relationship.md silences the tail line for the rest of the day", async () => {
+  // 这条盯着接线，不是盯着 lib/reads.js 的算术：事件没注册上，单测照样全绿。
+  const dir = workspace();
+  const home = mkdtempSync(join(tmpdir(), "dsh-home-"));
+  const previous = process.env.DSH_HOME;
+  process.env.DSH_HOME = home;
+  try {
+    const h = harness(dir);
+    apply(h.ctx, config());
+
+    const before = await h.drive({ step: 1 });
+    assert.match(before.messages[0].content[0].text, /`relationship\.md` has not been opened today/);
+
+    h.observe({ displayPath: join(dir, "relationship.md") }, { agent: { session: { header: { cwd: dir } } } });
+
+    const after = harness(dir);
+    apply(after.ctx, config());
+    const text = (await after.drive({ step: 1 })).messages[0].content[0].text;
+    assert.doesNotMatch(text, /has not been opened today/, "opened once is enough for the day");
+  } finally {
+    if (previous === undefined) delete process.env.DSH_HOME;
+    else process.env.DSH_HOME = previous;
+    rmSync(home, { recursive: true, force: true });
+  }
+});
+
+test("a read of some other relationship.md does not count", async () => {
+  const dir = workspace();
+  const home = mkdtempSync(join(tmpdir(), "dsh-home-"));
+  const previous = process.env.DSH_HOME;
+  process.env.DSH_HOME = home;
+  try {
+    const h = harness(dir);
+    apply(h.ctx, config());
+    // 另一个文件夹里同名的文件：路径比的是完整路径，不是文件名。
+    h.observe({ displayPath: "/tmp/somewhere-else/relationship.md" }, { agent: { session: { header: { cwd: dir } } } });
+    const text = (await h.drive({ step: 1 })).messages[0].content[0].text;
+    assert.match(text, /has not been opened today/);
+  } finally {
+    if (previous === undefined) delete process.env.DSH_HOME;
+    else process.env.DSH_HOME = previous;
+    rmSync(home, { recursive: true, force: true });
+  }
+});
+
+test("a workspace-relative read resolves against the session, not the process", async () => {
+  // displayPath 相对会话根；进程 cwd 可能是插件目录或 DSH 安装目录，用错基准就永远记不上。
+  const dir = workspace();
+  const home = mkdtempSync(join(tmpdir(), "dsh-home-"));
+  const previous = process.env.DSH_HOME;
+  process.env.DSH_HOME = home;
+  try {
+    const h = harness(dir);
+    apply(h.ctx, config());
+    h.observe({ displayPath: "relationship.md" }, { agent: { session: { header: { cwd: dir } } } });
+    const text = (await h.drive({ step: 1 })).messages[0].content[0].text;
+    assert.doesNotMatch(text, /has not been opened today/);
+  } finally {
+    if (previous === undefined) delete process.env.DSH_HOME;
+    else process.env.DSH_HOME = previous;
+    rmSync(home, { recursive: true, force: true });
   }
 });

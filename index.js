@@ -363,7 +363,10 @@ function watchRelationshipReads(ctx, config) {
       const shown = String(target?.displayPath ?? "");
       if (!shown.endsWith(RELATIONSHIP_FILE)) return;
       const memoryDir = memoryDirectory(exec?.agent, config);
-      const full = isAbsolute(shown) ? shown : resolve(shown);
+      // 相对路径要按**会话工作区**解析，不是按插件进程的工作目录——`displayPath` 是
+      // 相对会话根说的，而进程 cwd 可能是任何地方（实测插件目录、DSH 安装目录都出现过）。
+      const base = exec?.agent?.session?.header?.cwd ?? process.cwd();
+      const full = isAbsolute(shown) ? shown : resolve(base, shown);
       if (resolve(join(memoryDir, RELATIONSHIP_FILE)) !== resolve(full)) return;
       recordReadAt(storageDirectory(), RELATIONSHIP_FILE, localDay());
     } catch {
