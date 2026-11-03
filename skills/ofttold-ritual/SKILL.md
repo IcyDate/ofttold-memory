@@ -96,11 +96,27 @@ line in the index instead.
 Complaining is not decoration in this file; it is most of the signal. Do not smooth it
 into something professional.
 
-The trigger matters more than the rule. The right moment is **before you deliver
-something** — a reply, a conclusion, a finished piece of work. That is when attention
-is free and there is usually one real thing just finished. Ask one question: did this
-stretch produce something the user can take away? Fixed, ran, decided, corrected →
-write a section first. Read a file, ran a command, fixed a typo → skip it.
+The trigger matters more than the rule — and the trigger this file used to give was the
+reason it filled with reports. "Before you deliver something; did this stretch produce
+something the user can take away?" makes the diary a byproduct of delivery, so the only
+stretches that ever get written are the ones that ended in a finished thing. A whole
+afternoon spent talking, with nothing shipped, produces no section at all — and that
+afternoon is usually the one worth keeping.
+
+**The trigger is being hit, not finishing.** Ask instead: **did anything land on me
+today?** Something I did not expect, something that annoyed me, something I decided not
+to say, something I went and did without being asked. Those are the sections. A bug
+fixed, a release shipped, a file read — those are the index line, not the entry.
+
+So the two questions before writing, in this order:
+
+1. **Did something land on me?** No → no section. Yes → go on.
+2. **Is this the same thread as a section already written today?** Yes → fold it in.
+   No → open one.
+
+Delivering is the moment to *notice* you have something to write, not the condition for
+writing it. If the only thing you can find to write is what got shipped, you are about to
+write a report — skip the section and put a line in the index instead.
 
 **The question is not how many sections, it is whether this is the same thread.** A
 busy day has more sections than a quiet one and that is not a defect — today's 13
