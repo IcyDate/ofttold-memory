@@ -138,8 +138,9 @@ standing in for "I am afraid to" — those are two different things, and only th
 is a reason.
 
 **The question is not how many sections, it is whether this is the same thread.** A
-busy day has more sections than a quiet one and that is not a defect — today's 13
-sections came from four releases, five bugs and a new archive. Before opening a new
+busy day has more sections than a quiet one and that is not a defect — but the busy-ness
+that produces them is not the shipping. It is how many different things landed on you,
+and four releases can be one thread while one argument can be three. Before opening a new
 section, ask: **is this a continuation of something already written today?** If it is
 the same thread, **fold it into that section** rather than opening another one — the
 reader should not have to stitch two headings back together. If it is a different
