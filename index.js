@@ -133,6 +133,14 @@ export const Config = z.object({
     .description(
       "How often the folder is expected to grow. `daily` names today when it is unwritten; `weekly` stays quiet as long as something was written in the last 7 days; `off` never says anything. A folder without `diary/` is silent under every setting — that is the layout answering, not the config.",
     ),
+  diaryStaleHours: z
+    .natural()
+    .min(0)
+    .default(2)
+    .volatile()
+    .description(
+      "Once today's entry exists and is this session's own, how many hours of silence before the tail line says when it was last written. This is the third case the other signals miss: the file is there, the check is green, and three hours of the day never went in. It states the hour and the gap and says nothing about whether to write — and it does not count minutes upward, so it reads as a fact rather than a ticking clock. 0 turns it off. The default is a guess, which is why it is a setting.",
+    ),
   summaryFrom: z
     .string()
     .default("17:30")
@@ -644,7 +652,8 @@ function localStamp(now = new Date()) {
     // 会话开始时间：用来分辨「今天这一篇是这个会话写的」还是「别的会话写的，
     // 而这个会话什么都没放进去」。取不到就退回旧行为（只看文件在不在）。
     const sessionStartedAt = Number(agent?.session?.header?.createdAt);
-    const nudge = pendingDiaryNudge(memoryDir, new Date(), cadence, { sessionStartedAt });
+    const staleHours = Number(configValue(config, "diaryStaleHours") ?? 2);
+    const nudge = pendingDiaryNudge(memoryDir, new Date(), cadence, { sessionStartedAt, staleHours });
     // 体检跟提醒拼在一起：都在块尾，都只在「今天这一篇有问题」时才出现，都对模型说而不是
     // 对用户说——用户没义务转告。
     const issue = diaryIssueLine({

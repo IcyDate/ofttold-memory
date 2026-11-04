@@ -156,8 +156,53 @@ test("a second session on the same day is told the entry is not its own", () => 
       "an entry written after this session started is this session's",
     );
 
-    // 没有会话开始时间 → 退回旧行为，只看文件在不在
+    // 没有会话开始时间 → 只看「是不是这个会话写的」这一层，但它已经五个半小时没动，
+    // 所以第三种状态（今天写过，然后就不动了）要说一句
+    assert.match(
+      pendingDiaryNudge(dir, now, "daily", { staleHours: 2 }),
+      /last written at 10:26, more than 2h ago/,
+      "written today by this session, then untouched for hours, is its own state",
+    );
+
+    // 关掉阈值 → 退回只看「在不在」
+    assert.equal(pendingDiaryNudge(dir, now, "daily", { staleHours: 0 }), undefined);
+    // 不传阈值（库的默认）：沉默，默认值由配置层给，不在库里埋一个看不见的口味
     assert.equal(pendingDiaryNudge(dir, now, "daily"), undefined);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("an entry that exists but has not been touched for hours says when it stopped", () => {
+  // 第三种状态：文件在、也确实是这个会话写的、体检全绿——然后三个小时没再动过。
+  // 前两句只看「今天有没有这个文件」和「是不是别的会话写的」，都看不见这一段。
+  const dir = folder();
+  try {
+    const file = join(dir, "diary", "2026-10-30.md");
+    writeFileSync(file, "# 上午写的\n");
+    const writtenAt = new Date(2026, 9, 30, 9, 40).getTime();
+    utimesSync(file, new Date(writtenAt), new Date(writtenAt));
+
+    // 半小时后：还没到阈值，不说话
+    assert.equal(
+      pendingDiaryNudge(dir, new Date(2026, 9, 30, 10, 10), "daily", { staleHours: 2 }),
+      undefined,
+      "a fresh write is not stale",
+    );
+
+    // 两个半小时后：说一句，报时刻和「超过几小时」，不报分钟差
+    const line = pendingDiaryNudge(dir, new Date(2026, 9, 30, 12, 10), "daily", { staleHours: 2 });
+    assert.match(line, /last written at 09:40, more than 2h ago/);
+
+    // 只是事实，不是催促：不出现任何「该写了」的判断
+    assert.doesNotMatch(line, /should|yet|write it/i);
+
+    // 时刻不随分钟滚动——同一小时内反复渲染，这一行是稳定的
+    assert.equal(
+      line,
+      pendingDiaryNudge(dir, new Date(2026, 9, 30, 12, 55), "daily", { staleHours: 2 }),
+      "the line names an hour and a threshold, not a live countdown",
+    );
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

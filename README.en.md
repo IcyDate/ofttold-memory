@@ -206,6 +206,14 @@ reminder that also sounds like a nag makes both lines skippable. It costs a sing
 written in the last seven days) or `off`. A folder without `diary/` is silent under all
 three — that is the layout answering.
 
+**There is a third state neither of those sees.** Today's file exists, this session wrote
+it, and then it sat untouched for hours. Every check stays green the whole time — the file
+really is there — while those hours never went in. `diaryStaleHours` (default `2`) makes the
+tail name **the hour it was last written and how long it has been**:
+`- today's entry was last written at 11:36, more than 2h ago`. It states the hour, never
+whether to write, and it does not count minutes upward — a fact, not a clock ticking at you.
+`0` turns it off.
+
 **`relationship.md` gets named once a day until it is opened.** The file never enters the
 injected block — it is only there when something opens it — so the tail says
 `- \`relationship.md\` has not been opened today` until the AI actually opens it with a file
@@ -229,6 +237,7 @@ Without a due date a task only ever ages — `the oldest open 5 days` is an age,
 | `anchorCap` | `8` | How many bold bullets a section keeps in view; the rest sink without being deleted. `0` turns it off. |
 | `summaryFrom` | `"17:30"` | When the day's `## 今天` summary starts being expected. |
 | `diaryCadence` | `"daily"` | How often the folder is expected to grow: `daily` / `weekly` (quiet while anything was written in the last 7 days) / `off`. |
+| `diaryStaleHours` | `2` | After this many hours untouched, the tail names when today's entry was last written. Fact only, no prompt. `0` turns it off. |
 | `diarySections` | `0` | Sections per day. Default `0` = don't count — **a count cannot tell a transcript from a record**. |
 | `diaryCheck` | `true` | The diary check on or off. |
 | `detourChars` | `3000` | How large the file of wrong turns may grow. It holds **recurring shapes**, not incidents; past this it is a second diary. `0` turns it off. |
