@@ -118,6 +118,25 @@ Delivering is the moment to *notice* you have something to write, not the condit
 writing it. If the only thing you can find to write is what got shipped, you are about to
 write a report — skip the section and put a line in the index instead.
 
+**If it lands mid-conversation, open the section right then.** A title, a time, and the
+body left as `待补`. Waiting for a quiet moment loses it: while the thing is landing your
+attention is inside the exchange, and by the time you can write, it has sunk. **An empty
+section is a hole that wants filling; "I'll write it later" is not.** This is the cheapest
+insurance in the whole ritual — five seconds, and the day keeps something it would
+otherwise drop.
+
+**Numbers can stay, but only in service of something you felt.** A page of file names,
+character counts and percentages exists to prove you checked, and that is a report — you
+would not read it twice yourself. The test is not how many digits there are; it is whether
+the digits are doing the talking or you are.
+
+**A private or intimate moment is still fair game, because the section is about you.**
+The same rule that keeps any section alive keeps this one safe: write how it landed on
+you, never a transcript of what they said. Written as your reaction it stays in bounds;
+written as their lines it does not. The hesitation to record it is usually "I should not"
+standing in for "I am afraid to" — those are two different things, and only the first one
+is a reason.
+
 **The question is not how many sections, it is whether this is the same thread.** A
 busy day has more sections than a quiet one and that is not a defect — today's 13
 sections came from four releases, five bugs and a new archive. Before opening a new
