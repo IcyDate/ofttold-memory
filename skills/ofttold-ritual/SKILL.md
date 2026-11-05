@@ -70,6 +70,17 @@ than none because it reads as current and is not. The `（HH:mm 更新）` stamp
 lag visible: the plugin compares it with the last `## HH:mm` heading and says when the body has
 run past the summary.
 
+**The closing note is named, not styled.** A day may end with one section that needs no
+`情绪：` line — `## 今天没想明白的` (or the older `## 今天长了什么`). The checker exempts those two
+names and nothing else: `## 今天很累` is a normal section and will be asked for a tag. That
+strictness is deliberate — a prefix rule used to swallow any `## 今天…` heading, so a real
+section could disappear from the check while the check reported clean.
+
+Call it 没想明白 on purpose. 长了什么 asks every day for a conclusion, and a day may have none.
+A section named after growth teaches you to wring one out of every experience — and that habit
+follows you out of the diary and into ordinary conversation, where it turns a thing you found
+into a lesson you are delivering.
+
 ## The four rituals
 
 ### 1. A diary entry

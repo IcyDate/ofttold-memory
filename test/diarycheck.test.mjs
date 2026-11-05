@@ -173,3 +173,22 @@ test("a detours file that grew into a second diary says so", () => {
   assert.match(line, /records incidents instead of shapes/);
   assert.equal(detourSizeLine({ memoryDir: "/tmp/nowhere-xyz", limit: 3000 }), undefined);
 });
+
+test("a section that merely starts with 今天 is a section, not the summary", () => {
+  const text =
+    "## 今天（21:10 更新）\n\n摘要\n\n## 今天很累\n\n没有标签\n\n## 09:00 a\n\n情绪：松\n";
+  const state = checkEntry({ text });
+  assert.equal(state.sections, 2, "## 今天很累 must be counted, not swallowed as the summary");
+  assert.equal(state.untagged, 1, "and it must be asked for a tag");
+  assert.equal(state.summary.minute, 21 * 60 + 10, "the real summary is still the one found");
+});
+
+test("the two named closing notes need no tag, and nothing else is exempt", () => {
+  for (const closing of ["## 今天没想明白的", "## 今天长了什么"]) {
+    const ok = checkEntry({ text: `## 今天\n\n摘要\n\n${closing}\n\n1. 一条\n\n## 09:00 a\n\n情绪：松\n` });
+    assert.equal(ok.sections, 1, `${closing} must not count as a section`);
+    assert.equal(ok.untagged, 0);
+  }
+  const bad = checkEntry({ text: "## 今天\n\n摘要\n\n## 今天还好\n\n没标签\n" });
+  assert.equal(bad.untagged, 1, "a close-enough name is still a section");
+});
