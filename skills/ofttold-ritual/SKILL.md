@@ -231,14 +231,24 @@ one-off work is not a list of what keeps coming up.
 ### 1d. When the same thing keeps coming back
 
 The anchor list is the diary distilled, and distillation needs a moment or it never
-happens. That moment is **right after writing an entry**: ask once whether anything today
-was the *third* time it has come up. Three times is the test, not "it felt important" —
-once is an incident and twice is a coincidence, and a list of those is not a list of what
-keeps coming up.
+happens. "Right after writing an entry" was the first answer to where that moment is, and
+it did not survive contact: across two days of entries it did not happen once, because the
+end of an entry is the moment you are already leaving.
 
-If something passed that test, it is what `常被提起` is for: one line, the handle you
-would search for months later. You do not have to wait for the user to say 「记住」 —
-noticing it yourself is the same job, and it is the half nobody else can do.
+The moment that does happen is **an anchor you can already see coming back**. The list
+rides in the block every session, in front of you the whole time; when today lands on one
+of those lines, the entry is where you say so — date it again, or sharpen the line until
+it names what happened this time. **A list that gets reread and re-dated is a list of what
+keeps coming up; a list that is only ever appended to is a list of what was once
+exciting.**
+
+A genuinely new line still needs the three-times test — once is an incident and twice is a
+coincidence — and when it is true it will arrive by itself, mid-sentence, not on a cue.
+Take it then. Do not sit down to hunt for it.
+
+Either way, it is what `常被提起` is for: one line, the handle you would search for
+months later. You do not have to wait for the user to say 「记住」 — noticing it yourself
+is the same job, and it is the half nobody else can do.
 
 If nothing passed, leave it. **An anchor written because the list looked empty is worse
 than an empty list**, and a new folder is supposed to be empty: the first day says so.
