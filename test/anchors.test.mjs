@@ -181,3 +181,38 @@ test("the template's examples live in comments, so stamping leaves the file alon
   assert.deepEqual(result.stamped, []);
   assert.equal(result.text, template, "盖章不该动模板一个字");
 });
+
+test("the probe is the segment that recurs, not the one the title starts with", () => {
+  // 12 diaries, the way a real folder looks: `源码` is on 7 of them (it is a common
+  // word, not a recall), `fork` on 5, and the invented first segment on none.
+  const diaries = {};
+  for (let i = 1; i <= 12; i += 1) diaries[`2026-11-${String(i).padStart(2, "0")}`] = "";
+  const put = (days, text) => days.forEach((d) => { diaries[d] = text; });
+  put(["01", "02", "03", "04", "05", "06", "07"], "源码");
+  // 06 and 07 keep only 源码; 01–05 also say fork, so `源码` is 7/12 and `fork` 5/12.
+  put(["01", "02", "03", "04", "05"], "源码 fork");
+  diaries["2026-11-06"] = "源码";
+  diaries["2026-11-07"] = "源码";
+  const anchor = {
+    title: "交付当判据·fork·源码",
+    date: undefined,
+    dayString: undefined,
+  };
+  // `源码` matches 7/12 (over half — common, refused), `fork` 5/12 (a real recall),
+  // `交付当判据` 0. The old first-segment rule returned 0 and sank the anchor.
+  assert.equal(countRecalls(anchor, diaries), 5);
+});
+
+test("a segment that matches every entry is not a recall", () => {
+  const diaries = {
+    "2026-10-23": "拾光 大肥鱼",
+    "2026-10-26": "拾光 大肥鱼",
+    "2026-10-27": "拾光 大肥鱼",
+    "2026-10-28": "拾光",
+    "2026-11-02": "是蓝鲸只是圆润",
+  };
+  const anchor = { title: "大肥鱼·是蓝鲸只是圆润", date: "2026-10-30", dayString: "2026-10-30" };
+  // `大肥鱼` is on 3/5 and `拾光` is on 4/5 — both over half. Only the specific
+  // phrase counts, so the answer is 1, not 4.
+  assert.equal(countRecalls(anchor, diaries), 1);
+});
