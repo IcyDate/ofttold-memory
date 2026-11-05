@@ -61,7 +61,7 @@ The delay is the design. **This is not something that takes effect when it is in
 
 - puts the list in front of the model, once per session
 - when the list is full, computes which line sinks: `exp(-t / 2^n)`
-- stamps a start date on anchors that have no date of their own
+- stamps a start date on lines that have no date of their own
 - fills in missing files, names an unwritten day, says what it tried when nothing loads
 - checks today's entry: sections past the cap, sections with no `情绪：` line, a tag outside
   the vocabulary, a summary the body has run past
@@ -133,7 +133,7 @@ nothing is ever enough.
 
 ## A full list does not keep growing
 
-Past eight anchors the plugin **ranks which line sinks** rather than asking anyone to delete
+Past eight lines the plugin **ranks which one sinks** rather than asking anyone to delete
 one: what gets reached for stays, what has gone quiet drops out of view. Sinking is **not
 deleting** — the line is still in the file, and one mention in a diary day floats it back.
 
@@ -232,7 +232,7 @@ Without a due date a task only ever ages — `the oldest open 5 days` is an age,
 | Setting | Default | Meaning |
 | --- | --- | --- |
 | `memoryDir` | `.ofttold` (inside the workspace) | Your memory folder. Missing files are filled in on first run; existing ones are never rewritten. |
-| `sections` | see below | Which headings ride along. Unset: the anchor heading (`Oft-told` / `常被提起`, whichever comes first in the file) plus `我是谁` and `硬约定` when they exist. |
+| `sections` | see below | Which headings ride along. Unset: the `Oft-told` / `常被提起` heading (whichever comes first in the file) plus `我是谁` and `硬约定` when they exist. |
 | `maxChars` | `600` | Character budget per section. 600 characters ≈ 400 tokens. |
 | `anchorCap` | `8` | How many bold bullets a section keeps in view; the rest sink without being deleted. `0` turns it off. |
 | `summaryFrom` | `"17:30"` | When the day's `## 今天` summary starts being expected. |
@@ -311,7 +311,7 @@ declared away — so here is exactly what:
 | | |
 |---|---|
 | **Reads** | the `##` sections you name, inside `memoryDir`; today's entry under `diary/`; the vocabulary in `relationship.md`; the size of `detours.md` |
-| **Writes** | only inside `memoryDir`: filling in missing skeleton files, stamping a start date onto an undated anchor, appending or ticking a task in `MEMORY.md`, rewriting the one `**now**` line in `relationship.md`, renaming a legacy file into its new name |
+| **Writes** | only inside `memoryDir`: filling in missing skeleton files, stamping a start date onto an undated line, appending or ticking a task in `MEMORY.md`, rewriting the one `**now**` line in `relationship.md`, renaming a legacy file into its new name |
 | **Never writes** | anything outside `memoryDir`. Not `~/.dsh`, not the workspace, not session data |
 | **Network** | none. No outbound request of any kind |
 | **Subprocess** | none. No exec, no spawn, no shell |

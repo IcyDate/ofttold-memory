@@ -35,7 +35,7 @@ this skill as the whole story:
   word saying *when* it applies. That section is the single authority: never keep a second
   copy in a script or in the agent's instructions, because two copies drift and a word that
   drifts stops matching anything.
-- `memory.md` → under whichever anchor heading is in use (`常被提起` or `Oft-told`): the cap
+- `memory.md` → under whichever recurring-lines heading is in use (`常被提起` or `Oft-told`): the cap
   is 8 lines, and eviction is itself the ranking.
 - `index.md` → its header: one line per day, at most three sections worth re-reading.
 - `diary/README.md` → the file naming, and how long a day's worth of sections runs.
@@ -230,12 +230,12 @@ one-off work is not a list of what keeps coming up.
 
 ### 1d. When the same thing keeps coming back
 
-The anchor list is the diary distilled, and distillation needs a moment or it never
+The list is the diary distilled, and distillation needs a moment or it never
 happens. "Right after writing an entry" was the first answer to where that moment is, and
 it did not survive contact: across two days of entries it did not happen once, because the
 end of an entry is the moment you are already leaving.
 
-The moment that does happen is **an anchor you can already see coming back**. The list
+The moment that does happen is **a line you can already see coming back**. The list
 rides in the block every session, in front of you the whole time; when today lands on one
 of those lines, the entry is where you say so — date it again, or sharpen the line until
 it names what happened this time. **A list that gets reread and re-dated is a list of what
@@ -250,7 +250,7 @@ Either way, it is what `常被提起` is for: one line, the handle you would sea
 months later. You do not have to wait for the user to say 「记住」 — noticing it yourself
 is the same job, and it is the half nobody else can do.
 
-If nothing passed, leave it. **An anchor written because the list looked empty is worse
+If nothing passed, leave it. **A line written because the list looked empty is worse
 than an empty list**, and a new folder is supposed to be empty: the first day says so.
 
 **Only promises get a task.** Not "this is important" and not "you mentioned this once":
@@ -336,7 +336,7 @@ counter-example (when this is not true), and what is still uncertain. Only for
 self-description — **never attach "uncertain" to something about the user**; it reads
 as a disclaimer.
 
-## When the anchor list is full
+## When the list is full
 
 The cap is 8 lines. Filling it is easy; the point of the cap is the choice it forces.
 
@@ -353,7 +353,7 @@ The cap is 8 lines. Filling it is easy; the point of the cap is the choice it fo
   slot. When the list is under the cap, ordering means nothing — do not sort for its own
   sake.
 - **Write down who was evicted, and the R at the time.** That log is the only way to learn
-  later whether the parameters were any good. Being wrong here costs one anchor a few days
+  later whether the parameters were any good. Being wrong here costs one line a few days
   of life, not data.
 
 ## When the index gets long
