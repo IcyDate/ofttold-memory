@@ -224,7 +224,14 @@ words, look for the thing being handed over.
 
 - `kind: "anchor"` (default) → one bullet in `memory.md`'s `常被提起`:
   `- **标题** → 说明`. The title is the handle you will scan for months later, so make it
-  the phrase you would actually search for.
+  the phrase you would actually search for. **The title is also the probe the weight is
+  measured with** — each `·`-separated segment is counted against the diaries, and the
+  most-recalled one wins (segments matching over half the diaries are refused as common
+  words). So the segments have to be words you will really write in an entry, not names
+  you invented afterwards: `交付当判据` scored zero recalls for eight days while the same
+  fact sat in three entries as 「交付之前」. **Before naming it, finish the sentence
+  "tomorrow I would write…" — if that sentence does not contain the title, the anchor
+  cannot recognise itself.**
 - `kind: "task"` → `- [ ] 2026-11-02 起 ｜ …` under `待办`, created on first use. The date is
   the day it was opened; `complete_task` appends the day it was finished and ticks the box.
   **If the sentence contains a when, pass `due`** (`- [ ] 2026-11-02 起 ｜ 2026-11-05 到期 ｜ …`):
