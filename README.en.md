@@ -269,6 +269,29 @@ One read, one injection. No index, no embeddings, no database, no second pass.
 
 ---
 
+## What it costs in tokens
+
+> **Injected once per session — but it stays in the context and is re-sent every turn** (at the cache-hit price). So it costs per *turn*, not per *session*.
+
+Measured with 8 lines that keep coming back plus 2 open tasks: **945 characters ≈ 700 tokens**.
+
+| Turns a day | Injected tokens | Cache hit (0.02 / M) | Cache miss (1 / M) |
+|---|---|---|---|
+| 50 | 35 K | 0.0007 | 0.035 |
+| 200 | 140 K | 0.0028 | 0.14 |
+
+**Under a cent a day.** Even with no cache hit it is spare change.
+
+**What actually costs money is the conversation, not this plugin.** The longer the context, the more gets re-sent each turn — the bill follows length, not the 700 tokens here.
+
+Our own case (2026-11-03 → 11-06, four days, 1108 steps, `deepseek-v4.1-flash`, list price at the time): **236 M input tokens** (202 M of them cache hits) and **818 K output** — **around 40–80 CNY**. That is "talking all day" intensity, not an average user.
+
+Formula (prices change; plug in your own): **per turn ≈ context tokens × input price + output tokens × output price**, with the plugin's ~700 tokens counted inside the context.
+
+To see your own bill: the session log stores `inputTokens` / `cacheReadTokens` / `outputTokens` per call — add them up.
+
+---
+
 ## When nothing appears
 
 A missing file or a renamed heading never throws. **When no section loads at all, the block
