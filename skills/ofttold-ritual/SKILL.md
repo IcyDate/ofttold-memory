@@ -38,7 +38,7 @@ this skill as the whole story:
 - `memory.md` → under whichever recurring-lines heading is in use (`常被提起` or `Oft-told`): the cap
   is 8 lines, and eviction is itself the ranking.
 - `index.md` → its header: one line per day, at most three sections worth re-reading.
-- `diary/README.md` → the file naming, and how long a day's worth of sections runs.
+- `README.md` → the file naming, and how long a day's worth of sections runs. (It was `diary/README.md` here; that file has never existed — the naming doc lives at the folder root.)
 
 A folder that already held notes before the plugin was installed may carry none of these
 headings — the skeleton only writes into an empty folder, so a pre-existing folder never got
