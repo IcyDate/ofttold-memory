@@ -81,6 +81,29 @@ code, visible ones stay with the writer. Reasoning is in
 
 ---
 
+## What it costs in tokens
+
+> **Injected once per session — but it stays in the context and is re-sent every turn** (at the cache-hit price). So it costs per *turn*, not per *session*.
+
+Measured with the 8 lines that keep coming back plus 2 open tasks: **945 characters ≈ 700 tokens**.
+
+| Turns a day | Injected tokens | Cache hit (0.02 / M) | Cache miss (1 / M) |
+|---|---|---|---|
+| 50 | 35 K | 0.0007 | 0.035 |
+| 200 | 140 K | 0.0028 | 0.14 |
+
+**Under a cent a day.** Even with no cache hit it is spare change.
+
+**What actually costs money is the conversation, not this plugin.** The longer the context, the more gets re-sent each turn — the bill follows length, not the 700 tokens here.
+
+Our own case (2026-11-03 → 11-06, four days, 1108 steps, `deepseek-v4.1-flash`, list price at the time): **236 M input tokens** (202 M of them cache hits) and **818 K output** — **around 40–80 CNY**. That is "talking all day" intensity, not an average user.
+
+Formula (prices change; plug in your own): **per turn ≈ context tokens × input price + output tokens × output price**, with the plugin's ~700 tokens counted inside the context.
+
+To see your own bill: the session log stores `inputTokens` / `cacheReadTokens` / `outputTokens` per call — add them up.
+
+---
+
 ## Quick start
 
 ```sh
@@ -269,29 +292,6 @@ One read, one injection. No index, no embeddings, no database, no second pass.
 
 ---
 
-## What it costs in tokens
-
-> **Injected once per session — but it stays in the context and is re-sent every turn** (at the cache-hit price). So it costs per *turn*, not per *session*.
-
-Measured with 8 lines that keep coming back plus 2 open tasks: **945 characters ≈ 700 tokens**.
-
-| Turns a day | Injected tokens | Cache hit (0.02 / M) | Cache miss (1 / M) |
-|---|---|---|---|
-| 50 | 35 K | 0.0007 | 0.035 |
-| 200 | 140 K | 0.0028 | 0.14 |
-
-**Under a cent a day.** Even with no cache hit it is spare change.
-
-**What actually costs money is the conversation, not this plugin.** The longer the context, the more gets re-sent each turn — the bill follows length, not the 700 tokens here.
-
-Our own case (2026-11-03 → 11-06, four days, 1108 steps, `deepseek-v4.1-flash`, list price at the time): **236 M input tokens** (202 M of them cache hits) and **818 K output** — **around 40–80 CNY**. That is "talking all day" intensity, not an average user.
-
-Formula (prices change; plug in your own): **per turn ≈ context tokens × input price + output tokens × output price**, with the plugin's ~700 tokens counted inside the context.
-
-To see your own bill: the session log stores `inputTokens` / `cacheReadTokens` / `outputTokens` per call — add them up.
-
----
-
 ## When nothing appears
 
 A missing file or a renamed heading never throws. **When no section loads at all, the block
@@ -372,16 +372,16 @@ out of something the model had to remember into context it cannot miss.**
 
 Because an instruction and an injected message are not paid for the same way.
 
-| | Cost per turn | Can it be skipped |
-|---|---|---|
-| A rule in `AGENTS.md` | every turn, the rule's full length | yes — silently |
-| This plugin | **0 after the first turn** | no — already in history |
+| | Present every turn | Paid per turn | Can it be skipped |
+|---|---|---|---|
+| A rule in `AGENTS.md` | yes | the rule's full length | yes — silently |
+| This plugin | yes | about 700 tokens, mostly cache hits | no — it is part of that turn's conversation |
 
-A system instruction rides along with every request. An injected message is paid
-once: after the first turn it is history, and later turns read it as context they
-already have. A measured injection is **735 characters ≈ 660 tokens, once per
-session**; a rule costs its length on every turn, forever. The rule loses as soon
-as the rule is longer than the injected block.
+**Both ride along with every request, and both go through the cache.** Two things
+differ: **length**, and whether it gets skipped as background. A measured injection
+is about **945 characters ≈ 700 tokens** with eight lines, and a rule is often
+longer than that. The rule loses as soon as the rule is longer than the injected
+block.
 
 **Put the content in a memory file, not the instruction in `AGENTS.md`.**
 
