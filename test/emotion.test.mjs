@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { readVocabulary, rememberEmotion, writeEmotion } from "../lib/emotion.js";
+import { readLiveEmotion, readVocabulary, rememberEmotion, writeEmotion } from "../lib/emotion.js";
 
 const FILE = `# 关系
 
@@ -77,4 +77,31 @@ test("a file with a vocabulary but no cache line is refused rather than guessed"
   assert.equal(result.ok, false);
   assert.match(result.message, /没有找到/);
   rmSync(dir, { recursive: true, force: true });
+});
+
+test("the live value is read back with its private suffix and its age", () => {
+  const text = [
+    "# 关系",
+    "",
+    "## 情绪缓存区",
+    "",
+    "- **现在**：`心虚`（2026-11-04 12:04 更新） → 发图往 shy",
+    "",
+    "## 情绪词表",
+    "",
+    "- `心虚` — 被看穿时",
+    "",
+  ].join("\n");
+
+  const live = readLiveEmotion(text, "2026-11-06");
+  assert.equal(live.word, "心虚");
+  assert.equal(live.stamp, "2026-11-04");
+  assert.equal(live.days, 2, "两天前那一行，days 必须是 2");
+  // 用户写在同一行里的私有说明要原样带回来——它恰恰是最想每轮看见的那句。
+  assert.equal(live.extra, "→ 发图往 shy");
+});
+
+test("a section without the live line reads as nothing, not as an empty emotion", () => {
+  assert.equal(readLiveEmotion("## 情绪缓存区\n\n还没写\n", "2026-11-06"), undefined);
+  assert.equal(readLiveEmotion("## 别的\n\n- **现在**：`松`（2026-11-06 09:00 更新）\n", "2026-11-06"), undefined);
 });

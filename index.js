@@ -29,7 +29,7 @@ import { DIARY_CADENCES, localDay, pendingDiaryNudge } from "./lib/diary.js";
 import { detourSizeLine, diaryIssueLine, minutesOf } from "./lib/diarycheck.js";
 import { completeTask, rememberNote, taskStatusLine, ANCHOR_HEADING, NOTE_FILE, TASK_HEADING } from "./lib/notes.js";
 import { recordReadAt, unreadLine } from "./lib/reads.js";
-import { RELATIONSHIP_FILE } from "./lib/emotion.js";
+import { RELATIONSHIP_FILE, readLiveEmotion } from "./lib/emotion.js";
 import { rememberEmotion } from "./lib/emotion.js";
 import { homedir } from "node:os";
 import { existsSync, readFileSync } from "node:fs";
@@ -687,7 +687,23 @@ function localStamp(now = new Date()) {
     const unread = existsSync(join(memoryDir, RELATIONSHIP_FILE))
       ? unreadLine({ storageDir: storageDirectory(), key: RELATIONSHIP_FILE, day: localDay() })
       : undefined;
-    const tail = [nudge, issue, oversized, unread, tasks].filter((part) => part !== undefined).join("\n\n");
+    // 情绪的活值：一行，和「今天的日记还没写」同一层——**它必须在我眼前，否则等于没有。**
+    // 11-06 量的：那一节冻了两天、十二节日记一次没抄，因为缓存区只活在文件里，
+    // 而文件要人自己打开才在场。这一行把这个状态搬进每一轮的上下文。
+    // 超过两天就自己说一句：活值一旦不更新，就不再是「现在」，而是一个死值。
+    const emotion = (() => {
+      try {
+        const live = readLiveEmotion(readFileSync(join(memoryDir, RELATIONSHIP_FILE), "utf8"), localDay());
+        if (live === undefined) return undefined;
+        const when = live.stamp === undefined ? "" : `（${live.stamp}）`;
+        const stale = live.days !== undefined && live.days >= 2 ? `——${live.days} 天没更新了，它可能已经不是现在的样子` : "";
+        const extra = live.extra === undefined ? "" : ` ${live.extra}`;
+        return `- 现在的情绪：\`${live.word}\`${when}${extra}${stale}`;
+      } catch {
+        return undefined;
+      }
+    })();
+    const tail = [emotion, nudge, issue, oversized, unread, tasks].filter((part) => part !== undefined).join("\n\n");
     if (tail !== "") {
       // 块尾那句也是「注入出去的东西」，README 里写的是「每一次注入决策都在里面」——
       // 它要算决策的一部分，否则那句话生效与否在诊断文件里查不到。
