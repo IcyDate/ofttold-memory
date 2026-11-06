@@ -699,7 +699,15 @@ function localStamp(now = new Date()) {
       });
       diagnostics.flush(storageDirectory());
     }
-    const text = tail === "" ? rendered.text : `${rendered.text}\n\n${tail}`;
+    // 日期锚：会话可能跨天，所以这一行**自带过期说明**——写清它是「注入那一刻」的日子，
+    // 并当场告诉模型怎么核对。一个会过期的锚比没有锚更糟：今天刚栽过（没有今天的日记，
+    // 我就把今天的事全对到了昨天那一篇上）。所以它不假装自己是「现在」。
+    const stampedAt = new Date();
+    const dateAnchor = `Written on ${localDay(stampedAt)} ${String(stampedAt.getHours()).padStart(2, "0")}:${String(stampedAt.getMinutes()).padStart(2, "0")} — the day this block was made, not necessarily today. Run \`date\` before saying "today" or "yesterday"; a session can outlive its own date.`;
+    // 放在正文之后、块尾之前：正文第一行仍是以 "Standing" 开头的那句身份说明
+    // （测试和读者的第一眼都靠它），日期锚紧跟着自己的正文走，不抢开头。
+    const body = `${rendered.text}\n\n${dateAnchor}`;
+    const text = tail === "" ? body : `${body}\n\n${tail}`;
 
     return {
       ...decision,
