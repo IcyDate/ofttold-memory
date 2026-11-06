@@ -311,7 +311,7 @@ declared away — so here is exactly what:
 | | |
 |---|---|
 | **Reads** | the `##` sections you name, inside `memoryDir`; today's entry under `diary/`; the vocabulary in `relationship.md`; the size of `detours.md` |
-| **Writes** | only inside `memoryDir`: filling in missing skeleton files, stamping a start date onto an undated line, appending or ticking a task in `MEMORY.md`, rewriting the one `**now**` line in `relationship.md`, renaming a legacy file into its new name |
+| **Writes** | only inside `memoryDir`: filling in missing skeleton files, stamping a start date onto an undated line, appending or ticking a task in `memory.md`, rewriting the one `**now**` line in `relationship.md`, renaming a legacy file into its new name |
 | **Never writes** | anything outside `memoryDir`. Not `~/.dsh`, not the workspace, not session data |
 | **Network** | none. No outbound request of any kind |
 | **Subprocess** | none. No exec, no spawn, no shell |

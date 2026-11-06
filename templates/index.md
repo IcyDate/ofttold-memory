@@ -4,7 +4,7 @@
 > 用途：要翻旧事时先看这里，再定点读 `diary/YYYY-MM-DD.md`，不用扫整个目录。
 > **不写细节、不罗列全部小节**——细节在日记里，这里只负责「找得到」。
 > 判断标准：如果这一行删掉，还找得到那件事吗？能 → 太啰嗦了。
-> 新的一天写完日记后回来补一行。**同类覆盖，异类新增。**
+> **补这一行不挂在日记后面。** 这个会话动过东西（改文件、发版、跑通、得出结论）就补，不管当天有没有写日记——索引是账本，日记是感受，两本账。**同类覆盖，异类新增。**
 >
 > One line per day: what happened (one sentence) plus at most three sections worth
 > re-reading, each with one sentence on why. It is a door, not a summary of the

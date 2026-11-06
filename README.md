@@ -354,7 +354,7 @@ cat ~/.dsh/ofttold-memory/diagnostics.json
 | | |
 |---|---|
 | **读** | `memoryDir` 里你指定的那几个 `##` 小节；`diary/` 下今天的文件；`relationship.md` 的词表；`detours.md` 的字数 |
-| **写** | 只在 `memoryDir` 内：补缺失的骨架文件、给没日期的条目补起算日、追加/勾选 `MEMORY.md` 的待办、改 `relationship.md` 的那一行「现在」、把旧文件名改过来 |
+| **写** | 只在 `memoryDir` 内：补缺失的骨架文件、给没日期的条目补起算日、追加/勾选 `memory.md` 的待办、改 `relationship.md` 的那一行「现在」、把旧文件名改过来 |
 | **不写** | `memoryDir` 之外一处都不写。不碰 `~/.dsh`、不碰工作区、不碰会话数据 |
 | **网络** | 零。没有任何出站请求 |
 | **子进程** | 零。不 exec、不 spawn、不 shell |

@@ -282,8 +282,13 @@ If you cannot write it, say you cannot, and say where it would have gone.
 
 ### 2. The index line
 
-After writing, go back and update `index.md`: one line for the day, plus **at most
-three sections worth re-reading**, each with one sentence on why.
+**This is not a step after the diary.** A session that changed something — edited a
+file, shipped a release, ran something through, reached a conclusion — gets an index
+line whether or not it produced a diary entry. The entry records what landed on you;
+the index records what happened. Two ledgers, two triggers.
+
+One line for the day, plus **at most three sections worth re-reading**, each with one
+sentence on why.
 
 The test: **if this line were deleted, would the thing still be findable?** Yes → too
 verbose. The index is a door, not a summary of the diary.
