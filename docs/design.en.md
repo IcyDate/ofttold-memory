@@ -279,6 +279,31 @@ characters ≈ 67549 tokens).
 Three tiers: hot = the last 14 days kept in full; warm = older, four days merged into
 one line; cold = untouched original text, still greppable.
 
+**The rule was written for a year and never once carried out.** Measured 2026-11-09: the
+hot layer's heading said "the last 14 days" and held 24 entries, one of them seventeen days
+old. The rule was fine; what was wrong is that it lived only in a document — and *a rule
+that exists only in a document reads exactly like a rule that does not exist*. A heavy
+index has no symptom: it still reads fine, it just costs more every time.
+
+So since 0.1.28 the machine does the half a machine can do:
+
+- **count** — at session start the plugin reads `index.md`, and when the hot layer
+  passes 9436 characters, or holds an entry older than fourteen days, the block tail
+  **names the days**. (Characters, not entries: "twenty lines ≈ 9436 characters" was
+  measured when a line ran to 472; with lines capped at 150, twenty entries is six
+  thousand characters — what the reader pays for is characters.) Naming, not counting: "three entries are stale" still makes the
+  reader go count, and counting is the part that gets skipped.
+- **move** — `tier_index(days, text)` deletes those entries from the hot layer, files their
+  originals into the cold layer verbatim, and appends the given line to the warm one.
+  Deleting the originals is the expensive half of the operation: miss it and the same day
+  exists twice, one copy already stale, both reading like the real one.
+- **not write** — what four days become in one sentence is a judgement. The tool moves
+  position; it never supplies the sentence.
+
+A folder with no `index.md`, or with an index that has none of the three headings, gets no
+reminder: that is a structure nobody chose, and an alarm about something unrecognised is
+noise.
+
 ## A recall is the fact coming up, not the day coming up
 
 `countRecalls` used to probe the **birth date**: one diary mentioning `2026-10-30` scored every anchor born that day.

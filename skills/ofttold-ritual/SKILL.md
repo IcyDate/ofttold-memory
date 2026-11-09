@@ -400,6 +400,14 @@ more than it returns and should be tiered, not shortened:
 
 The trigger is a count, not a feeling. Before that, leave it flat.
 
+The block tail now says it for you: once a hot-layer entry is past fourteen days, or the
+layer passes 9436 characters, the tail names the days. `tier_index(days, text)` does the
+surgery — deletes those entries from the hot layer, files their originals into the cold
+layer verbatim, appends your line to the warm one. **You write the merged line; the tool
+never does**, because four days becoming one sentence is the judgement, and the silent
+failure next to it is the mechanical one: forgetting to delete the originals, so the same
+day exists twice and one copy is already stale.
+
 ## Hard limits
 
 - **Never write secrets into the folder**: passwords, tokens, phone numbers, internal

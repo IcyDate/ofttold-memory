@@ -46,10 +46,10 @@ function plugin() {
   };
 }
 
-test("all three tools register", () => {
+test("all four tools register", () => {
   const p = plugin();
   try {
-    assert.deepEqual(Object.keys(p.tools).sort(), ["complete_task", "remember_emotion", "remember_note"]);
+    assert.deepEqual(Object.keys(p.tools).sort(), ["complete_task", "remember_emotion", "remember_note", "tier_index"]);
   } finally {
     p.done();
   }
@@ -73,6 +73,22 @@ test("complete_task ticks the line instead of deleting it", async () => {
     const r = await p.run("complete_task", { text: "复核接线" });
     assert.equal(r.ok, true, r.message);
     assert.match(p.noteText(), /- \[x\] .*复核接线（.*完成）/);
+  } finally {
+    p.done();
+  }
+});
+
+test("tier_index moves the day and files the original into the cold layer", async () => {
+  const p = plugin();
+  try {
+    const file = join(p.memoryDir, "index.md");
+    writeFileSync(file, "# 索引\n\n## 热层\n\n- **2026-10-23** — 旧事\n\n## 温层\n\n## 冷层\n");
+    const result = await p.run("tier_index", { days: ["2026-10-23"], text: "四天一条" });
+    assert.equal(result.ok, true, result.message);
+    const after = readFileSync(file, "utf8");
+    assert.match(after, /## 温层\n\n- 四天一条/);
+    assert.match(after, /## 冷层\n\n- \*\*2026-10-23\*\* — 旧事/);
+    assert.doesNotMatch(after.split("## 温层")[0], /2026-10-23/);
   } finally {
     p.done();
   }

@@ -32,6 +32,7 @@ import { recordReadAt, unreadLine } from "./lib/reads.js";
 import { RELATIONSHIP_FILE, readLiveEmotion } from "./lib/emotion.js";
 import { rememberEmotion } from "./lib/emotion.js";
 import { syncEmotionFromDiary } from "./lib/emotion-sync.js";
+import { INDEX_FILE, tierIndexFile, tierLine, tierStatus } from "./lib/tiers.js";
 import { homedir } from "node:os";
 import { existsSync, readFileSync } from "node:fs";
 import { join, isAbsolute, resolve } from "node:path";
@@ -536,6 +537,29 @@ function registerTool(ctx, tool) {
     },
   }));
 
+  // 索引分层的那一半：判断是「这四天并成哪一句」，搬运是「把这四行从热层挪走、原文
+  // 收进冷层、把新句放进温层」。写下来才发现漏删原件，是这份文件最贵的错——同一天出现
+  // 两次，其中一次已经过期，而两份都读得像真的。
+  registerTool(ctx, defineTool({
+    name: "tier_index",
+    description:
+      `Move days out of the hot layer of the memory folder's ${INDEX_FILE}: the named entries are deleted from 热层, their originals appended verbatim to 冷层, and your merged line added to 温层. Use it when the block tail says the index is over its line — after you have decided what the merged line says, because this tool moves text and never writes the summary. The file must already have 热层 / 温层 / 冷层 headings.`,
+    parameters: {
+      days: { type: "array", items: { type: "string" }, description: "The entries to move, as YYYY-MM-DD, exactly as they appear in the hot layer. Four at a time is the convention." },
+      text: { type: "string", description: "The merged line for the warm layer, without a leading `- `. It should name the day range it covers." },
+    },
+    output: {
+      schema: { type: "json" },
+      render: (_args, value) => [{ type: "text", text: value.message }],
+    },
+    execute(args, exec) {
+      const dir = memoryDirectory(exec?.agent, config);
+      const days = Array.isArray(args.days) ? args.days.map((day) => String(day)) : [];
+      const result = tierIndexFile({ memoryDir: dir, days, merged: typeof args.text === "string" ? args.text : "" });
+      return { ok: result.ok, message: result.message };
+    },
+  }));
+
   // 「记下了」得是一个动作，不能是一句话。措辞千变万化（记下了/记住了/放心上了），
   // 所以这里不认词，只提供一个便宜的落点：调用它就有可见的一行，没调用就是没发生。
   registerTool(ctx, defineTool({
@@ -713,6 +737,16 @@ function registerTool(ctx, tool) {
       memoryDir,
       limit: Number(configValue(config, "detourChars") ?? 3000),
     });
+    // 索引的分层：到量了、或者有条目已经过了 14 天，就在块尾说一句。只说不改——
+    // 四条并成一句是判断；把删掉的原文收进冷层是搬运，那是 `tier_index` 的事。
+    // 没有 index.md 或者没有那三个标题的人不该被提醒：那是他从没选过的结构。
+    const tiers = (() => {
+      try {
+        return tierLine(tierStatus(readFileSync(join(memoryDir, INDEX_FILE), "utf8"), { today: new Date() }));
+      } catch {
+        return undefined;
+      }
+    })();
     // 待办写进文件也不算「有家」——它不注入就没人读。这里只报条数，不搬正文：
     // 搬正文等于把任务塞进每一轮的上下文，而「有几条」就足够让人去翻那一段。
     const tasks = (() => {
@@ -756,7 +790,7 @@ function registerTool(ctx, tool) {
         return undefined;
       }
     })();
-    const tail = [emotion, nudge, issue, oversized, unread, tasks].filter((part) => part !== undefined).join("\n\n");
+    const tail = [emotion, nudge, issue, oversized, tiers, unread, tasks].filter((part) => part !== undefined).join("\n\n");
     if (tail !== "") {
       // 块尾那句也是「注入出去的东西」，README 里写的是「每一次注入决策都在里面」——
       // 它要算决策的一部分，否则那句话生效与否在诊断文件里查不到。

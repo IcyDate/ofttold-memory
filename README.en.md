@@ -219,6 +219,33 @@ section: that would quietly undo a value set by hand.
 get it wrong are silent — a word outside the list stops matching any diary tag, and a stale
 timestamp makes the cache look fresher than it is.
 
+## When the index needs tiers
+
+`index.md` is one line per day, and sooner or later reading it costs thousands of tokens.
+So it has three layers: hot = the last 14 days kept in full, warm = older days merged four
+into one line, cold = the untouched originals, still greppable.
+
+**The rule sat in a document for a year and was never once carried out.** Measured
+2026-11-09: the hot layer's heading said "the last 14 days" and held 24 entries, one of them
+seventeen days old — the rule was fine, it just lived only in a document. A heavy index has
+no symptom: it still reads fine, it simply costs more each time.
+
+The machine now does two things:
+
+- **count** — when the hot layer passes 9436 characters, or holds an entry older
+  than 14 days, the block tail names the days. **Named, not counted**: "3 are stale"
+  still makes the reader go count, and counting is the part that gets skipped.
+- **move** — `tier_index(days: ["2026-10-19", …], text: "the one merged line")` deletes
+  those entries from the hot layer, files the originals into the cold layer verbatim, and
+  appends that line to the warm one.
+
+**It does not write the line.** What four days become in one sentence is the judgement; the
+other half is forgetting to delete the originals, which is worse — the same day appears
+twice, one copy already stale, and both read like the real one.
+
+An index without `## 热层` / `## 温层` / `## 冷层` headings gets nothing at all: that is a
+structure nobody chose, and an alarm about something unrecognised is only noise.
+
 ## The line at the end
 
 If the folder has a `diary/`, the injected block closes with one status line:

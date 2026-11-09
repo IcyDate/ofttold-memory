@@ -115,6 +115,21 @@ test("injects once at step 1 and never again", async () => {
   assert.deepEqual(second.messages, [], "second turn must not inject again");
 });
 
+test("the tail names the days that are past the hot layer's fourteen", async () => {
+  const dir = workspace();
+  const old = new Date(Date.now() - 20 * 86_400_000);
+  const day = `${old.getFullYear()}-${String(old.getMonth() + 1).padStart(2, "0")}-${String(old.getDate()).padStart(2, "0")}`;
+  writeFileSync(join(dir, "index.md"), `# 索引\n\n## 热层\n\n- **${day}** — 旧事\n\n## 温层\n\n## 冷层\n`, "utf8");
+  const h = harness(dir);
+  apply(h.ctx, config());
+
+  const first = await h.drive({ step: 1 });
+  const text = first.messages[0].content[0].text;
+  assert.match(text, /索引热层 1 条/);
+  assert.match(text, new RegExp(day), "the day is named, not just counted");
+  assert.match(text, /tier_index/);
+});
+
 test("does not inject at step 2 of the same turn", async () => {
   const dir = workspace();
   const h = harness(dir);
