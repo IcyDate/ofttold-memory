@@ -128,6 +128,49 @@ translated into a judgement ("I mistook reluctance for irresponsibility" contain
 
 The plugin does not tag emotions. You tag them; it carries them.
 
+## Who copies the live value
+
+Everyone who keeps a diary hits the same step: a section is finished, `情绪：定` sits under
+its heading, and **the cache line still says yesterday's `软`**. The judgement is already
+made; only the copy is missing.
+
+That copy used to be a command (`tools/em.sh --from-diary`). The command was fine; what it
+asked for was remembering to run it — and on the machine this was built on it froze for two
+days while twelve sections were written, every one of them tagged. **The command existed,
+and it was still missed.** That is the canonical shape of "by habit" failing, and the whole
+reason this plugin exists. Since 0.1.28 the plugin does the copy.
+
+The boundary is the only guardrail this feature needs: **the judgement is human, the copy is
+code.** The word comes from the entry; the plugin never decides whether today is `定` or `软`.
+It reads the word already written in the last section and writes it into the `**现在**` line.
+If that section has no `情绪：` line, nothing moves — `diaryCheck` reports it, and a
+compensating guess is not the plugin's business.
+
+**Hung on an event, not a moment.** The trigger is "today's entry was written"
+(`fs/observed`), not "look once at session start". The latter would only catch up at the
+next session, while a day of writing goes by; the former is the moment the judgement
+happens. Session start runs the same copy as a backstop: an entry written through a shell
+never raises the file-tool event — the same limit the read signal has always had, and says so
+in `lib/reads.js`.
+
+Two guards, each covering a way the copy could **roll back a human decision**:
+
+| Guard | What it stops |
+| --- | --- |
+| Only the **last section's** word is copied | A section was appended after the tagged one and its tag was forgotten. Copying the older word would quietly undo a value the writer set in the meantime |
+| The entry must be **newer than the cache** (minute resolution) | A hand-set value with no diary write behind it is the newer decision, so it stays |
+
+Minute resolution exists so the main path is not blocked by itself: a write and the copy
+triggered by it in the same minute count as newer.
+
+**No sidecar.** Nothing records "copied up to here" — that would be a second home, and two
+homes drift. Each run reads, compares, and writes only if needed: one stat and one read,
+in exchange for having no state to lose.
+
+A related hole was fixed in the same pass: `writeEmotion` used to rewrite the whole line and
+delete whatever the user had written after the timestamp (`→ 发图往 happy`). That is the only
+part of the line worth injecting every turn, and it disappeared without an error.
+
 ## Two machines, one live value
 
 One memory folder can be in use on two machines at once (one writing code, one talking to
@@ -364,7 +407,7 @@ the same test one belongs in the plugin and the other does not:
 
 | Script | What its failure looks like | Visible? | Owner |
 | --- | --- | --- | --- |
-| `em.sh`, rewriting one line of the emotion cache | the cache **freezes** — no error, no symptom, it simply stops updating | no | the plugin should provide it (in the skeleton, or taught by the skill) |
+| `em.sh`, rewriting one line of the emotion cache | the cache **freezes** — no error, no symptom, it simply stops updating | no | now the plugin's job (0.1.28): writing today's entry copies the last section's word |
 | `sync-agents.sh` | `--check` turns red and exits 1 | yes | the user's own repo hygiene, **not the plugin** |
 
 That is the test in practice. It is not a restatement of "is it important": `em.sh`

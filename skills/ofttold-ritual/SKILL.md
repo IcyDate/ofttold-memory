@@ -317,8 +317,18 @@ orphans to create; a used one does. Unused is not by itself a reason to delete �
 whether any situation exists where another word is more accurate. Keep it under about 24
 entries; past that the distinctions are no longer worth a name.
 
-After writing a section, copy its `情绪：` word into the `**现在**` line of
-`relationship.md`. That is the same act of attention, not a second task.
+After writing a section, the copy is made for you: when today's entry is saved, the plugin
+writes the last section's `情绪：` word into the `**现在**` line. The **judgement is still
+yours** — the tag you put under the heading is the decision, and that is the half no code can
+make — but there is no longer a command to remember afterwards.
+
+Two things the copy will not do, so you know where it stops:
+
+- **An entry written through a shell** never raises the plugin's write event; the next session
+  start copies it instead. Same entry, later.
+- **The last section has no tag** → nothing moves. It will not reach back to an older section:
+  copying that word would silently undo a newer decision, and a silent undo is worse than a
+  stale value, because the stale value at least says so.
 
 **When the feeling changes mid-conversation, update that line right there.** Not
 "when the next diary entry is written" — on days with no diary entry the cache would

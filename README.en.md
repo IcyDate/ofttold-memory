@@ -209,6 +209,12 @@ remember_emotion(word: "定")
   more copy that drifts.
 - Only the backticked value and the timestamp change; the rest of the line is untouched.
 
+**Writing the entry does not require copying it here.** When today's entry is saved, the
+plugin moves the last section's `情绪：` word into the cache — the judgement is still yours
+(the tag is the judgement); the command afterwards is gone. If that section has no tag, or
+its word is not in the vocabulary, nothing moves, and it will not reach back to an older
+section: that would quietly undo a value set by hand.
+
 **Why a tool and not a paragraph**: this line changes several times a day, and both ways to
 get it wrong are silent — a word outside the list stops matching any diary tag, and a stale
 timestamp makes the cache look fresher than it is.

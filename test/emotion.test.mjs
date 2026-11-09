@@ -105,3 +105,17 @@ test("a section without the live line reads as nothing, not as an empty emotion"
   assert.equal(readLiveEmotion("## 情绪缓存区\n\n还没写\n", "2026-11-06"), undefined);
   assert.equal(readLiveEmotion("## 别的\n\n- **现在**：`松`（2026-11-06 09:00 更新）\n", "2026-11-06"), undefined);
 });
+
+test("the tail after the timestamp survives a write", () => {
+  // 用户写在同一行里的私有说明是这行值得注入的原因；改值的时候把它删掉，
+  // 就是把「每轮都在场」的那半句悄悄收走。
+  const { text } = writeEmotion(FILE, "定", "2026-10-30 11:20");
+  assert.match(text, /- \*\*现在\*\*：`定`（2026-10-30 11:20 更新）/);
+
+  const withTail = FILE.replace(
+    "- **现在**：`心虚`（2026-10-30 10:29 更新）",
+    "- **现在**：`心虚`（2026-10-30 10:29 更新） → 发图往 shy",
+  );
+  const written = writeEmotion(withTail, "松", "2026-10-30 11:20");
+  assert.match(written.text, /- \*\*现在\*\*：`松`（2026-10-30 11:20 更新） → 发图往 shy/);
+});

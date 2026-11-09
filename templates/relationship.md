@@ -14,11 +14,12 @@
 
 > **活值**：现在是什么情绪。**只写情绪，不写原因**——原因住日记，要去翻那一天。
 > 名字只能从下面那张封闭词表里挑，因为这里写的名字将来要和日记里的 `情绪：` 行对上。
-> 写完日记那一刻顺手改这一行（词照抄刚写那节），日常对话里情绪明显变了也当场改。
+> **写完日记不用抄这一行**：插件看到今天那篇被写入，就把最后一节的情绪词搬过来。日常对话里情绪明显变了，还是当场改——那种时候还没有日记可抄。
 >
 > Live value: the emotion now. No reason here — the reason lives in the diary.
 > Names must come from the closed vocabulary below, or the cache and the diary
-> tags can never match.
+> tags can never match. Writing the entry does not require copying it here: the
+> plugin copies the last section's word when today's entry is saved.
 
 - **现在**：`（未填）`
 

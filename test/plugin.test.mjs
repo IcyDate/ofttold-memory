@@ -392,3 +392,60 @@ test("a workspace-relative read resolves against the session, not the process", 
     rmSync(home, { recursive: true, force: true });
   }
 });
+
+const RELATIONSHIP = `# 关系
+
+## 情绪缓存区
+
+- **现在**：\`心虚\`（2026-11-01 09:00 更新） → 发图往 shy
+
+## 情绪词表
+
+- \`心虚\` — 被看穿时
+- \`定\` — 结论或事实落定
+`;
+
+const ENTRY = (word) => `# 今天
+
+## 10:00 一件事
+
+情绪：${word}
+
+正文。
+`;
+
+test("writing today's entry copies its emotion into the live value", async () => {
+  // 这条盯的是接线：lib 的同步测得再全，事件没注册上，缓存区照样冻着。
+  const dir = workspace();
+  writeFileSync(join(dir, "relationship.md"), RELATIONSHIP, "utf8");
+  mkdirSync(join(dir, "diary"), { recursive: true });
+  const { localDay } = await import("../lib/diary.js");
+  const day = localDay();
+  writeFileSync(join(dir, "diary", `${day}.md`), ENTRY("定"), "utf8");
+
+  const h = harness(dir);
+  apply(h.ctx, config());
+  h.observe(
+    { displayPath: join(dir, "diary", `${day}.md`) },
+    { agent: { session: { header: { cwd: dir } } } },
+  );
+
+  const after = readFileSync(join(dir, "relationship.md"), "utf8");
+  assert.match(after, /- \*\*现在\*\*：`定`（\d{4}-\d{2}-\d{2} \d{2}:\d{2} 更新） → 发图往 shy/);
+});
+
+test("an entry missed by the event is copied before the block is rendered", async () => {
+  const dir = workspace();
+  writeFileSync(join(dir, "relationship.md"), RELATIONSHIP, "utf8");
+  mkdirSync(join(dir, "diary"), { recursive: true });
+  const { localDay } = await import("../lib/diary.js");
+  const day = localDay();
+  writeFileSync(join(dir, "diary", `${day}.md`), ENTRY("定"), "utf8");
+
+  const h = harness(dir);
+  apply(h.ctx, config());
+  const decision = await h.drive({ step: 1 });
+  const text = decision.messages[0].content[0].text;
+  assert.match(text, /现在的情绪：`定`/, "the block must show the value the entry already carries");
+  assert.doesNotMatch(text, /天没更新了/);
+});

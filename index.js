@@ -25,12 +25,13 @@
 import { defineTool } from "@deepseek-ai/dsh-tools";
 import { createUserMessage } from "@deepseek-ai/dsh-llm";
 import { buildNotice } from "./lib/notice.js";
-import { DIARY_CADENCES, localDay, pendingDiaryNudge } from "./lib/diary.js";
+import { DIARY_CADENCES, DIARY_DIR, localDay, pendingDiaryNudge } from "./lib/diary.js";
 import { detourSizeLine, diaryIssueLine, minutesOf } from "./lib/diarycheck.js";
 import { completeTask, rememberNote, taskStatusLine, ANCHOR_HEADING, NOTE_FILE, TASK_HEADING } from "./lib/notes.js";
 import { recordReadAt, unreadLine } from "./lib/reads.js";
 import { RELATIONSHIP_FILE, readLiveEmotion } from "./lib/emotion.js";
 import { rememberEmotion } from "./lib/emotion.js";
+import { syncEmotionFromDiary } from "./lib/emotion-sync.js";
 import { homedir } from "node:os";
 import { existsSync, readFileSync } from "node:fs";
 import { join, isAbsolute, resolve } from "node:path";
@@ -383,8 +384,57 @@ function watchRelationshipReads(ctx, config) {
   });
 }
 
+/**
+ * Copy today's last diary emotion into the live value as soon as the entry is written.
+ *
+ * This is the second half of the loop the plugin already keeps one half of: the block says
+ * `现在的情绪：定`, and the diary says `情绪：定`, and both are only true if something copies
+ * the word across. Asking the model to run a command afterwards was measured to fail — the
+ * command existed and the cache still sat for two days — so the copy hangs on the event that
+ * *is* the judgement: the write itself.
+ *
+ * Any observation of the file counts, reads included. A read means the entry was just in
+ * front of the model, and copying what it says is idempotent and correct either way.
+ * Writes through a shell are invisible here, exactly like `cat` is for the read signal; the
+ * pre-step sync is the backstop for those.
+ *
+ * Never throws: a failure here would take down an unrelated tool call.
+ */
+function watchDiaryWrites(ctx, config) {
+  ctx.on("fs/observed", (target, _observation, exec) => {
+    try {
+      const shown = String(target?.displayPath ?? "");
+      const day = localDay();
+      if (!shown.endsWith(`${DIARY_DIR}/${day}.md`) && !shown.endsWith(`${DIARY_DIR}\\${day}.md`)) return;
+      const memoryDir = memoryDirectory(exec?.agent, config);
+      // 和 relationship.md 那条一样：相对路径按会话工作区解析，不按插件进程的 cwd。
+      const base = exec?.agent?.session?.header?.cwd ?? process.cwd();
+      const full = isAbsolute(shown) ? shown : resolve(base, shown);
+      if (resolve(join(memoryDir, DIARY_DIR, `${day}.md`)) !== resolve(full)) return;
+      const synced = syncEmotionFromDiary({ memoryDir, day, stamp: localStamp() });
+      if (synced.changed) {
+        ctx.logger?.info?.(
+          "ofttold-memory: live emotion followed today's entry to `%s` (copied from %s/%s.md)",
+          synced.word,
+          DIARY_DIR,
+          day,
+        );
+      }
+    } catch {
+      // ignore: the copy is a convenience; the injection still shows the old value.
+    }
+  });
+}
+
+/** `2026-10-30 11:20` — local, because the writer reads it, not a logger. */
+function localStamp(now = new Date()) {
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${localDay(now)} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+}
+
 export function apply(ctx, config) {
   watchRelationshipReads(ctx, config);
+  watchDiaryWrites(ctx, config);
   // Same trap as `workspaceRelative`: the Config schema supplies this default
   // only after validation, so an unvalidated config would mean "no sections" and
   // the plugin would silently register nothing. State the documented default.
@@ -456,12 +506,6 @@ function registerTool(ctx, tool) {
     ctx.logger?.warn?.(`ofttold-memory: could not register ${tool?.name ?? "tool"}: ${error?.message ?? error}`);
     return false;
   }
-}
-
-/** `2026-10-30 11:20` — local, because the writer reads it, not a logger. */
-function localStamp(now = new Date()) {
-  const pad = (value) => String(value).padStart(2, "0");
-  return `${localDay(now)} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
 }
 
   // The emotion cache is one line that changes many times a day, and the two ways to get
@@ -691,6 +735,15 @@ function localStamp(now = new Date()) {
     // 11-06 量的：那一节冻了两天、十二节日记一次没抄，因为缓存区只活在文件里，
     // 而文件要人自己打开才在场。这一行把这个状态搬进每一轮的上下文。
     // 超过两天就自己说一句：活值一旦不更新，就不再是「现在」，而是一个死值。
+    //
+    // 先抄一遍再读：写日记那一刻的 `情绪：` 就是判断，插件只负责把它搬到缓存区。
+    // 写文件那一刻已经有 fs/observed 那条路在抄；这一条是兜底——用 shell 写的日记
+    // 不会被观察到，而会话开头正是「昨天那篇写完就再没醒过」的下一面。
+    try {
+      syncEmotionFromDiary({ memoryDir, day: localDay(), stamp: localStamp() });
+    } catch {
+      // 抄不过去不算这一轮的错误：下面照旧读缓存区里现有的值。
+    }
     const emotion = (() => {
       try {
         const live = readLiveEmotion(readFileSync(join(memoryDir, RELATIONSHIP_FILE), "utf8"), localDay());
