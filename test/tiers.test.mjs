@@ -78,6 +78,17 @@ test("moves the day: out of hot, verbatim into cold, one line into warm", () => 
   assert.match(result.message, /1 条原件进了冷层/);
 });
 
+test("a day written in two passes still counts, and can still be moved", () => {
+  // `- **2026-11-02（补九）** — …` is a real shape; requiring `**` right after the date
+  // skipped eight of these on the first index this ran against.
+  const hot = "- **2026-11-02（补九）** — 收工前定下的那件事\n";
+  const status = tierStatus(index({ hot }), { today: new Date("2026-11-09T10:00:00") });
+  assert.equal(status.hotCount, 1);
+  const moved = moveToWarm(index({ hot }), { days: ["2026-11-02"], merged: "11-02 四天一条" });
+  assert.equal(moved.ok, true, moved.message);
+  assert.match(moved.text, /## 冷层（原文不动，仍然 grep 得到）\n\n- \*\*2026-11-02（补九）\*\* — 收工前定下的那件事/);
+});
+
 test("a merged line already written with a bullet does not get a second one", () => {
   const result = moveToWarm(index({ hot: TWO_DAYS }), { days: ["2026-10-23"], merged: "- 四天一条" });
   assert.equal(result.ok, true, result.message);
