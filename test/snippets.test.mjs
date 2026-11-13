@@ -4,7 +4,7 @@ import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { rememberSnippet, SNIPPET_FILE } from "../lib/snippets.js";
+import { rememberSnippet, snippetStatusLine, SNIPPET_FILE } from "../lib/snippets.js";
 
 const fresh = () => mkdtempSync(join(tmpdir(), "ofttold-snippets-"));
 const read = (dir) => readFileSync(join(dir, SNIPPET_FILE), "utf8");
@@ -74,4 +74,24 @@ test("已经存在的片段文件不会被覆盖，只在末尾接一节", () =>
   const text = read(dir);
   assert.match(text, /- 早就有的一行/);
   assert.match(text, /## 2026-11-13\n\n- 08:15 新的一幕/);
+});
+
+test("块尾那一行只在今天有条目时出现", () => {
+  const dir = fresh();
+  assert.equal(snippetStatusLine({ memoryDir: dir, day: "2026-11-13" }), undefined);
+  rememberSnippet({ memoryDir: dir, text: "第一幕", at: "09:00", day: "2026-11-13" });
+  rememberSnippet({ memoryDir: dir, text: "第二幕", at: "10:30", day: "2026-11-13" });
+  const line = snippetStatusLine({ memoryDir: dir, day: "2026-11-13" });
+  assert.match(line, /今天 2 条/);
+  assert.match(line, /10:30/);
+  // 换一天就没有了：它说的是「今天」。
+  assert.equal(snippetStatusLine({ memoryDir: dir, day: "2026-11-14" }), undefined);
+});
+
+test("块尾那一行跟着配置的文件名走", () => {
+  const dir = fresh();
+  mkdirSync(join(dir, "我"), { recursive: true });
+  rememberSnippet({ memoryDir: dir, text: "私有布局的一幕", at: "08:00", day: "2026-11-13", file: "我/日常片段.md" });
+  assert.match(snippetStatusLine({ memoryDir: dir, day: "2026-11-13", file: "我/日常片段.md" }), /今天 1 条/);
+  assert.equal(snippetStatusLine({ memoryDir: dir, day: "2026-11-13" }), undefined);
 });

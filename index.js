@@ -28,7 +28,7 @@ import { buildNotice } from "./lib/notice.js";
 import { DIARY_CADENCES, DIARY_DIR, localDay, pendingDiaryNudge } from "./lib/diary.js";
 import { detourSizeLine, diaryIssueLine, minutesOf } from "./lib/diarycheck.js";
 import { completeTask, rememberNote, taskStatusLine, ANCHOR_HEADING, NOTE_FILE, TASK_HEADING } from "./lib/notes.js";
-import { rememberSnippet, SNIPPET_FILE } from "./lib/snippets.js";
+import { rememberSnippet, snippetStatusLine, SNIPPET_FILE } from "./lib/snippets.js";
 import { recordReadAt, unreadLine } from "./lib/reads.js";
 import { RELATIONSHIP_FILE, readLiveEmotion } from "./lib/emotion.js";
 import { rememberEmotion } from "./lib/emotion.js";
@@ -796,6 +796,12 @@ function registerTool(ctx, tool) {
         return undefined;
       }
     })();
+    // 片段：工具往一个插件自己不读的文件里写行。没有这一行，新用户写完就再也看不到它。
+    const snippets = snippetStatusLine({
+      memoryDir,
+      file: configValue(config, "snippetFile", SNIPPET_FILE),
+      day: localDay(),
+    });
     // 排在待办前面：读到一句话的代价，比翻一个文件的代价低得多，但它指向的正是那个
     // 从不进注入块的文件。文件不在时不说——指向一个不存在的东西比不指更糟。
     const unread = existsSync(join(memoryDir, RELATIONSHIP_FILE))
@@ -826,7 +832,7 @@ function registerTool(ctx, tool) {
         return undefined;
       }
     })();
-    const tail = [emotion, nudge, issue, oversized, tiers, unread, tasks].filter((part) => part !== undefined).join("\n\n");
+    const tail = [emotion, nudge, issue, oversized, tiers, unread, tasks, snippets].filter((part) => part !== undefined).join("\n\n");
     if (tail !== "") {
       // 块尾那句也是「注入出去的东西」，README 里写的是「每一次注入决策都在里面」——
       // 它要算决策的一部分，否则那句话生效与否在诊断文件里查不到。
