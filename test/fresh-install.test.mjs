@@ -21,6 +21,8 @@ import { rememberEmotion } from "../lib/emotion.js";
 import { rememberNote } from "../lib/notes.js";
 import { rememberSnippet, snippetStatusLine } from "../lib/snippets.js";
 import { tierIndexFile } from "../lib/tiers.js";
+import { detourUnreadLine } from "../lib/diarycheck.js";
+import { appendFileSync } from "node:fs";
 
 const fresh = () => {
   const dir = mkdtempSync(join(tmpdir(), "ofttold-fresh-"));
@@ -95,6 +97,26 @@ test("已经有热层的文件不会被再套一层", () => {
     assert.equal(result.ok, true, result.message);
     const after = readFileSync(index, "utf8");
     assert.equal((after.match(/## 热层/g) ?? []).length, 1, after);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("岔路文件：新装不打扰，写了内容才提醒，读过的当天不再提醒", () => {
+  const dir = fresh();
+  try {
+    // 骨架里的 detours.md 只有标题和一段注释——那不算「有东西」，第一天不该报。
+    assert.equal(detourUnreadLine({ memoryDir: dir, storageDir: dir, day: "2026-11-13" }), undefined);
+
+    appendFileSync(join(dir, "detours.md"), "\n## 一 · 改写\n原文被删掉时，读者会以为自己记错了。\n", "utf8");
+    const line = detourUnreadLine({ memoryDir: dir, storageDir: dir, day: "2026-11-13" });
+    assert.match(line, /岔路/);
+
+    // 今天打开过就不说：这条线的意义是「提醒去读」，不是「每轮念一遍」。
+    assert.equal(
+      detourUnreadLine({ memoryDir: dir, storageDir: dir, day: "2026-11-13", readDay: "2026-11-13" }),
+      undefined,
+    );
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

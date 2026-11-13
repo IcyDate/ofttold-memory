@@ -26,7 +26,7 @@ import { defineTool } from "@deepseek-ai/dsh-tools";
 import { createUserMessage } from "@deepseek-ai/dsh-llm";
 import { buildNotice } from "./lib/notice.js";
 import { DIARY_CADENCES, DIARY_DIR, localDay, pendingDiaryNudge } from "./lib/diary.js";
-import { detourSizeLine, diaryIssueLine, minutesOf } from "./lib/diarycheck.js";
+import { DETOURS_FILE, detourSizeLine, detourUnreadLine, diaryIssueLine, minutesOf } from "./lib/diarycheck.js";
 import { completeTask, rememberNote, taskStatusLine, ANCHOR_HEADING, NOTE_FILE, TASK_HEADING } from "./lib/notes.js";
 import { rememberSnippet, snippetStatusLine, SNIPPET_FILE } from "./lib/snippets.js";
 import { recordReadAt, unreadLine } from "./lib/reads.js";
@@ -385,6 +385,11 @@ function watchRelationshipReads(ctx, config) {
       // 相对会话根说的，而进程 cwd 可能是任何地方（实测插件目录、DSH 安装目录都出现过）。
       const base = exec?.agent?.session?.header?.cwd ?? process.cwd();
       const full = isAbsolute(shown) ? shown : resolve(base, shown);
+      // 岔路文件和 relationship 同一套账：读到就算「今天打开过」。
+      if (resolve(join(memoryDir, DETOURS_FILE)) === resolve(full)) {
+        recordReadAt(storageDirectory(), DETOURS_FILE, localDay());
+        return;
+      }
       if (resolve(join(memoryDir, RELATIONSHIP_FILE)) !== resolve(full)) return;
       recordReadAt(storageDirectory(), RELATIONSHIP_FILE, localDay());
     } catch {
@@ -769,6 +774,13 @@ function registerTool(ctx, tool) {
       enabled: configValue(config, "diaryCheck") !== false,
     });
     // 当初设计这个文件时真正想问的那一件事：**它会不会长大**。
+    // 岔路：只写不读的文件等于没写（2026-11-13 主人问「只写不读有啥意义」）。
+    // 有正文、而今天没打开过，就说一句；内容不搬进来——搬了就是把事故塞进每轮上下文。
+    const detourUnread = detourUnreadLine({
+      memoryDir,
+      storageDir: storageDirectory(),
+      day: localDay(),
+    });
     const oversized = detourSizeLine({
       memoryDir,
       limit: Number(configValue(config, "detourChars") ?? 3000),
@@ -832,7 +844,7 @@ function registerTool(ctx, tool) {
         return undefined;
       }
     })();
-    const tail = [emotion, nudge, issue, oversized, tiers, unread, tasks, snippets].filter((part) => part !== undefined).join("\n\n");
+    const tail = [emotion, nudge, issue, oversized, detourUnread, tiers, unread, tasks, snippets].filter((part) => part !== undefined).join("\n\n");
     if (tail !== "") {
       // 块尾那句也是「注入出去的东西」，README 里写的是「每一次注入决策都在里面」——
       // 它要算决策的一部分，否则那句话生效与否在诊断文件里查不到。
