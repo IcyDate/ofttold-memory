@@ -129,6 +129,13 @@ export const Config = z.object({
     .description(
       "How much of each section to read, when a section does not set its own. 600 characters is about 400 tokens, charged once per session, so raising this raises what every session pays.",
     ),
+  snippetFile: z
+    .string()
+    .default("snippets.md")
+    .volatile()
+    .description(
+      "Where `remember_snippet` appends its lines, relative to memoryDir. The default is a neutral name; point it at your own file (for example `我/日常片段.md`) to keep a private layout out of the public defaults.",
+    ),
   diaryCadence: z
     .string()
     .default("daily")
@@ -614,6 +621,7 @@ function registerTool(ctx, tool) {
       const dir = memoryDirectory(exec?.agent, config);
       const result = rememberSnippet({
         memoryDir: dir,
+        file: configValue(config, "snippetFile", "snippets.md"),
         text: typeof args.text === "string" ? args.text : "",
         at: typeof args.at === "string" && args.at.trim() !== "" ? args.at.trim() : undefined,
         day: localDay(),

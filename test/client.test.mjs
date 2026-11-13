@@ -557,6 +557,7 @@ test("the panel renders cards, controls and a where-line for the headings", () =
     workspaceRelative: fieldState("true"),
     anchorCap: fieldState("8"),
     diaryCadence: fieldState("daily"),
+    snippetFile: fieldState("snippets.md"),
     summaryFrom: fieldState("17:30"),
     diaryStaleHours: fieldState("2"),
     diarySections: fieldState("8"),

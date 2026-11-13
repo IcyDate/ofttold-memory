@@ -122,15 +122,17 @@ test("remember_emotion refuses an empty vocabulary, then works once words exist"
     p.done();
   }
 });
-test("remember_snippet writes under today's heading in 我/日常片段.md", async () => {
+test("remember_snippet writes under today's heading, at the configured path", async () => {
   const p = plugin();
   try {
     const r = await p.run("remember_snippet", { text: "他把笔抽走，说先吃饭", at: "12:31" });
     assert.equal(r.ok, true, r.message);
-    const text = readFileSync(join(p.memoryDir, "我/日常片段.md"), "utf8");
+    // 默认是中性名 `snippets.md`——私有布局（我/日常片段.md）由配置指过去，不进公共默认。
+    const text = readFileSync(join(p.memoryDir, "snippets.md"), "utf8");
     assert.match(text, /## \d{4}-\d{2}-\d{2}/);
     assert.match(text, /- 12:31 他把笔抽走，说先吃饭/);
   } finally {
     p.done();
   }
 });
+
