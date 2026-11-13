@@ -46,10 +46,10 @@ function plugin() {
   };
 }
 
-test("all four tools register", () => {
+test("all five tools register", () => {
   const p = plugin();
   try {
-    assert.deepEqual(Object.keys(p.tools).sort(), ["complete_task", "remember_emotion", "remember_note", "tier_index"]);
+    assert.deepEqual(Object.keys(p.tools).sort(), ["complete_task", "remember_emotion", "remember_note", "remember_snippet", "tier_index"]);
   } finally {
     p.done();
   }
@@ -118,6 +118,18 @@ test("remember_emotion refuses an empty vocabulary, then works once words exist"
     const outside = await p.run("remember_emotion", { word: "烦躁" });
     assert.equal(outside.ok, false);
     assert.match(outside.message, /不在词表|词表里没有/);
+  } finally {
+    p.done();
+  }
+});
+test("remember_snippet writes under today's heading in 我/日常片段.md", async () => {
+  const p = plugin();
+  try {
+    const r = await p.run("remember_snippet", { text: "他把笔抽走，说先吃饭", at: "12:31" });
+    assert.equal(r.ok, true, r.message);
+    const text = readFileSync(join(p.memoryDir, "我/日常片段.md"), "utf8");
+    assert.match(text, /## \d{4}-\d{2}-\d{2}/);
+    assert.match(text, /- 12:31 他把笔抽走，说先吃饭/);
   } finally {
     p.done();
   }

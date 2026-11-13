@@ -28,6 +28,7 @@ import { buildNotice } from "./lib/notice.js";
 import { DIARY_CADENCES, DIARY_DIR, localDay, pendingDiaryNudge } from "./lib/diary.js";
 import { detourSizeLine, diaryIssueLine, minutesOf } from "./lib/diarycheck.js";
 import { completeTask, rememberNote, taskStatusLine, ANCHOR_HEADING, NOTE_FILE, TASK_HEADING } from "./lib/notes.js";
+import { rememberSnippet, SNIPPET_FILE } from "./lib/snippets.js";
 import { recordReadAt, unreadLine } from "./lib/reads.js";
 import { RELATIONSHIP_FILE, readLiveEmotion } from "./lib/emotion.js";
 import { rememberEmotion } from "./lib/emotion.js";
@@ -590,6 +591,34 @@ function registerTool(ctx, tool) {
         kind,
         stampText: localDay(),
         due: typeof args.due === "string" ? args.due : undefined,
+      });
+      return { ok: result.ok, message: result.message };
+    },
+  }));
+
+
+  // 碎片记忆（2026-11-13 主人让做的）：情绪、待办、分层都有工具了，
+  // 日常片段却还停在 `tools/pian.sh`——那天用得最多的一样，反而最依赖记性。
+  registerTool(ctx, defineTool({
+    name: "remember_snippet",
+    description:
+      `Append one small scene to ${SNIPPET_FILE} under today's heading, in the shape "- HH:MM 那一幕". Use it the moment something small happens that you would want to reread later — not a conclusion, not a task, just the scene. Saying you recorded it without calling this is a claim with no action behind it.`,
+    parameters: {
+      text: { type: "string", description: "The scene, one line. What it looked like, in the words you would use to yourself later." },
+      at: { type: "string", description: "Optional clock time HH:MM. Defaults to now; pass it when the moment was earlier than this call." },
+    },
+    output: {
+      schema: { type: "json" },
+      render: (_args, value) => [{ type: "text", text: value.message }],
+    },
+    execute(args, exec) {
+      const dir = memoryDirectory(exec?.agent, config);
+      const result = rememberSnippet({
+        memoryDir: dir,
+        text: typeof args.text === "string" ? args.text : "",
+        at: typeof args.at === "string" && args.at.trim() !== "" ? args.at.trim() : undefined,
+        day: localDay(),
+        now: new Date(),
       });
       return { ok: result.ok, message: result.message };
     },
