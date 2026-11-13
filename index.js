@@ -596,7 +596,6 @@ function registerTool(ctx, tool) {
     },
   }));
 
-
   // 碎片记忆（2026-11-13 主人让做的）：情绪、待办、分层都有工具了，
   // 日常片段却还停在 `tools/pian.sh`——那天用得最多的一样，反而最依赖记性。
   registerTool(ctx, defineTool({
