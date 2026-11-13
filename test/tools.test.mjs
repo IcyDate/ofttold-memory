@@ -94,26 +94,14 @@ test("tier_index moves the day and files the original into the cold layer", asyn
   }
 });
 
-test("remember_emotion refuses an empty vocabulary, then works once words exist", async () => {
+test("remember_emotion works out of the box, and still refuses a word outside the list", async () => {
   const p = plugin();
   try {
-    // 模板里的词表只有占位符，读出来是空的——工具不许自己造一份权威。
-    const refused = await p.run("remember_emotion", { word: "定" });
-    assert.equal(refused.ok, false);
-    assert.match(refused.message, /情绪词表/);
-
-    const file = join(p.memoryDir, "relationship.md");
-    writeFileSync(
-      file,
-      p.relationshipText().replace(
-        "- `（词）` — （什么时候用这个词；它和近义词的分工在哪）",
-        "- `定` — 结论或事实落定，认知有了结果",
-      ),
-    );
-
-    const ok = await p.run("remember_emotion", { word: "定" });
+    // 2026-11-13 改：模板现在带三个示例词。原来这里断言「模板是空的、工具先拒绝」——
+    // 那条守住的是「工具不许自己造权威」，可代价是新用户装完一个情绪都记不了。
+    // 现在的分寸：**词表非空（示例可用），但不在表里的词照样拒绝。**
+    const ok = await p.run("remember_emotion", { word: "烦" });
     assert.equal(ok.ok, true, ok.message);
-    assert.match(p.relationshipText(), /- \*\*现在\*\*：`定`（/);
 
     const outside = await p.run("remember_emotion", { word: "烦躁" });
     assert.equal(outside.ok, false);
@@ -122,6 +110,7 @@ test("remember_emotion refuses an empty vocabulary, then works once words exist"
     p.done();
   }
 });
+
 test("remember_snippet writes under today's heading, at the configured path", async () => {
   const p = plugin();
   try {

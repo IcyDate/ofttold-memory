@@ -39,9 +39,14 @@ test('the INDEX template does not claim to be the default injection source', () 
   }
 });
 
-test('the template vocabulary is a placeholder, not a word', () => {
+test('the template vocabulary ships usable examples, and says they are examples', () => {
+  // 2026-11-13 改：原来这里要求「模板词表是空的」——那是为了不让一份别人写的词表冒充权威。
+  // 但空词表意味着新装用户一个情绪都记不了（工具会拒绝）。现在放三个示例词，
+  // 条件是**旁边必须写明这是示例**，否则读的人会以为是自己的词表被人替他定了。
   const tpl = readFileSync(new URL('../templates/relationship.md', import.meta.url), 'utf8');
-  assert.deepEqual(readVocabulary(tpl), []);
+  const words = readVocabulary(tpl);
+  assert.ok(words.length >= 3, `模板词表至少要有三个示例词，现在是 ${JSON.stringify(words)}`);
+  assert.match(tpl, /示例/, '示例词旁边必须写明它们是示例');
 });
 
 test('an undated anchor is neutral, not "newest"', () => {

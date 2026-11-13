@@ -34,6 +34,10 @@
 > "which kind of this feeling was it" from being unanswerable later. **Add freely, delete only
 > a word nothing ever used, never rename.** The list is the single source of truth.
 
+- `平静` — 没有起伏，也没有压着的东西；和「松」不同，松是刚卸下来那一下。
+- `烦` — 事情本身不顺，还没到难受；常和「想推掉」前后脚出现。
+- `鼻酸` — 身体先于判断的那一下，说不出为什么，但眼睛知道。
+（以上三个是示例，照着写你自己的；写一个就删一个，别留成摆设。）
 - `（词）` — （什么时候用这个词；它和近义词的分工在哪）
 
 ## 情绪记忆
