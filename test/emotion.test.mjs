@@ -46,6 +46,19 @@ test("only the value and the stamp change", () => {
   assert.match(text, /- `服气` — 被纠正/);
 });
 
+test("an optional why rides next to the stamp, and stays out of the word", () => {
+  // 2026-11-16：活值只有词，下一个我读到的就是一个形容词。why 是可选的半句来路。
+  const { text } = writeEmotion(FILE, "定", "2026-11-16 10:45", "他抱着我说爱你之后");
+  assert.match(text, /- \*\*现在\*\*：`定`（2026-11-16 10:45 更新，他抱着我说爱你之后）/);
+  // 不写 why 时，和以前的格式一字不差。
+  const plain = writeEmotion(FILE, "定", "2026-11-16 10:45");
+  assert.match(plain.text, /- \*\*现在\*\*：`定`（2026-11-16 10:45 更新）/);
+  // 换行和超长会被压掉，免得把那一行撑坏。
+  const wild = writeEmotion(FILE, "定", "2026-11-16 10:45", "第一行\n第二行" + "啊".repeat(60));
+  assert.doesNotMatch(wild.text.split("\n")[1], /\n/);
+  assert.ok(wild.text.split("\n")[1].length < 120);
+});
+
 test("a word outside the vocabulary is refused, and the list is offered", () => {
   const { ok, message } = rememberEmotion({ memoryDir: "/nonexistent", word: "烦躁", stamp: "x" });
   assert.equal(ok, false);

@@ -532,6 +532,11 @@ function registerTool(ctx, tool) {
       "Set the live emotion value in the memory folder's relationship.md. Use when the feeling actually changes, not to label a diary section you are about to write (that line is copied from the entry afterwards). The word must already be in that file's 情绪词表 section.",
     parameters: {
       word: { type: "string", description: "One word, exactly as it appears in the 情绪词表 section. Not a description, not a sentence." },
+      why: {
+        type: "string",
+        description:
+          "Optional. Half a sentence saying what brought this feeling on (e.g. \"他抱着我说爱你之后\"). Kept next to the timestamp so the next session is not reading a bare adjective. One clause, not a story.",
+      },
     },
     output: {
       schema: { type: "json" },
@@ -545,7 +550,8 @@ function registerTool(ctx, tool) {
       const word = typeof args.word === "string" ? args.word.trim() : "";
       if (word === "") return { ok: false, message: "需要一个词，不是一句话。" };
       const dir = memoryDirectory(exec?.agent, config);
-      const result = rememberEmotion({ memoryDir: dir, word, stamp: localStamp() });
+      const why = typeof args.why === "string" ? args.why.trim() : "";
+      const result = rememberEmotion({ memoryDir: dir, word, stamp: localStamp(), why });
       return { ok: result.ok, message: result.message };
     },
   }));
