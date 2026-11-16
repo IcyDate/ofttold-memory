@@ -53,10 +53,14 @@ test("an optional why rides next to the stamp, and stays out of the word", () =>
   // 不写 why 时，和以前的格式一字不差。
   const plain = writeEmotion(FILE, "定", "2026-11-16 10:45");
   assert.match(plain.text, /- \*\*现在\*\*：`定`（2026-11-16 10:45 更新）/);
+  // 括号和反引号会被清掉——它们会把那一行的「（…）」和 `…` 切断。
+  const paren = writeEmotion(FILE, "定", "2026-11-16 10:45", "他说（笑着）给我`看`");
+  assert.match(paren.text, /（2026-11-16 10:45 更新，他说 笑着 给我 看）/);
+  assert.doesNotMatch(paren.text, /`看`/);
   // 换行和超长会被压掉，免得把那一行撑坏。
   const wild = writeEmotion(FILE, "定", "2026-11-16 10:45", "第一行\n第二行" + "啊".repeat(60));
-  assert.doesNotMatch(wild.text.split("\n")[1], /\n/);
-  assert.ok(wild.text.split("\n")[1].length < 120);
+  const wildLine = wild.text.split("\n").find((line) => line.includes("现在"));
+  assert.ok(wildLine !== undefined && wildLine.length < 120);
 });
 
 test("a word outside the vocabulary is refused, and the list is offered", () => {
