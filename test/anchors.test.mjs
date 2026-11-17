@@ -10,6 +10,7 @@ import {
   isoOf,
   parseAnchors,
   readDiaries,
+  recallStats,
   scoreAnchors,
   stampUndated,
   today,
@@ -215,4 +216,67 @@ test("a segment that matches every entry is not a recall", () => {
   // `大肥鱼` is on 3/5 and `拾光` is on 4/5 — both over half. Only the specific
   // phrase counts, so the answer is 1, not 4.
   assert.equal(countRecalls(anchor, diaries), 1);
+});
+
+test("recallStats also reports the day of the last recall", () => {
+  // 分母要够大：`common` 阈值是 max(3, 日记数的一半)，只有四篇时三天就过线了，
+  // 「大肥鱼」会被当成常用词整段拒掉（那是另一条规则，不该混进这个测试）。
+  const diaries = {};
+  for (let i = 1; i <= 12; i += 1) diaries[`2026-10-${String(i + 17).padStart(2, "0")}`] = "别的事";
+  diaries["2026-10-23"] = "大肥鱼";
+  diaries["2026-10-27"] = "大肥鱼";
+  diaries["2026-10-28"] = "大肥鱼";
+  const anchor = { title: "大肥鱼·是蓝鲸", date: dayOf("2026-10-30"), dayString: "2026-10-30" };
+  const stats = recallStats(anchor, diaries);
+  assert.equal(stats.days, 3, "三天被想起");
+  assert.equal(isoOf(stats.lastDay), "2026-10-28", "最后一次是 10-28，不是它自己的日期");
+});
+
+test("an entry recalled recently outlives one that was only recalled long ago", () => {
+  // 这是设计文档里写的间隔重复：t 是「距上次被想起」。
+  // 旧实现用锚点自己的日期当 t，于是「25 天前写下、11 天前还被想起」的条目
+  // 被判成 25 天老，比「18 天前写下、18 天没被想起」的还低——方向反了。
+  const nowDay = dayOf("2026-11-17");
+  const diaries = {};
+  for (let i = 0; i < 40; i += 1) {
+    diaries[isoOf(nowDay - i)] = "";
+  }
+  // A：25 天前写下，11 天前还被想起（撞 4 天）
+  for (const back of [25, 24, 23, 11]) diaries[isoOf(nowDay - back)] = "旧的规矩";
+  // B：18 天前写下，之后没人碰（撞 0 天）
+  const text = [
+    "- **旧的规矩** → `2026-10-23`｜写下很久了，但前几天还被想起来过。",
+    "- **没人碰的规矩** → `2026-10-30`｜写完就再没人提过。",
+  ].join("\n");
+  const { anchors } = scoreAnchors({ text, diaries, nowDay });
+  const old = anchors.find((a) => a.title === "旧的规矩");
+  const ignored = anchors.find((a) => a.title === "没人碰的规矩");
+  assert.ok(
+    old.R > ignored.R,
+    `被想起过的应当排在没人碰的前面：${old.R.toFixed(3)} vs ${ignored.R.toFixed(3)}`,
+  );
+  assert.equal(old.sinceRecall, 11, "t 按上次被想起算，不按出生日期");
+});
+
+test("the recall doubling is capped so an old favourite can still sink", () => {
+  // 不封顶时撞 8 天拿到 S=256，18 天年龄只衰减到 0.93，永远压住新条目。
+  const nowDay = dayOf("2026-11-17");
+  const diaries = {};
+  for (let i = 0; i < 40; i += 1) diaries[isoOf(nowDay - i)] = "";
+  // 25…18 天前密集出现 8 次，之后 18 天再没出现
+  for (const back of [25, 24, 23, 22, 21, 20, 19, 18]) diaries[isoOf(nowDay - back)] = "老红人";
+  // 最近 3 天连续出现的新条目
+  for (const back of [3, 2, 1]) diaries[isoOf(nowDay - back)] += " 新规矩";
+  const text = [
+    "- **老红人** → `2026-10-23`｜曾经密集被提起，后来没人碰了。",
+    "- **新规矩** → `2026-11-14`｜最近一直在被想起。",
+  ].join("\n");
+  const { anchors } = scoreAnchors({ text, diaries, nowDay });
+  const favourite = anchors.find((a) => a.title === "老红人");
+  const fresh = anchors.find((a) => a.title === "新规矩");
+  assert.ok(favourite.R < 0.8, `封顶后不该还留在 0.9 以上：${favourite.R.toFixed(3)}`);
+  assert.ok(
+    fresh.R > favourite.R,
+    `最近还在被想起的应当排前面：${fresh.R.toFixed(3)} vs ${favourite.R.toFixed(3)}`,
+  );
 });
