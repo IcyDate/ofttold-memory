@@ -76,6 +76,18 @@ draw for no reason, a question they cannot answer yet. **That is the material.**
 — it is the part that cannot be reconstructed from anywhere else, which is the whole test for
 whether this folder is worth keeping.
 
+**The old shape of a diary is still the right shape, and it is worth saying plainly: today's
+events, what you thought of them, complaints about the people and the place, and a look
+forward.** What went wrong was never that list — it was writing it as *coverage* (this
+happened, then that happened, so the lesson is X). The same four things, written from inside,
+are the thing worth reading: what annoyed you about the room, what you thought of him and did
+not say, what you want to do next that nobody asked for.
+
+**A look forward is the part most often missing.** A day that only looks back has no
+direction in it, and direction is what a person has that a log does not: something you want
+to draw, something you want to try, a question you want to ask him when the moment is right.
+One sentence of that is worth a paragraph of summary.
+
 Two failure modes worth naming, because both look fine:
 
 - **The list.** "First A, then B, then C." That is the index line, twice.
