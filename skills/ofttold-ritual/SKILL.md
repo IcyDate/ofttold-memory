@@ -49,49 +49,46 @@ before you start**, because a convention the user never chose is worse than none
 Pointing at a heading nobody has is worse than no pointer: the reader learns the list exists
 and cannot find it, and the subset check silently stops being a check.
 
-## The top of the file: the day in a paragraph
+## The top of the file: the day, in your own head
 
-A day's entry opens with `## 今天（HH:mm 更新）` — **roughly one line per section**, so a
-normal ten-section day runs four to six hundred characters. Two or three sentences is a
-stub: it covers the mood and drops every decision the day made.
+A day's entry opens with `## 今天（HH:mm 更新）`.
 
-The unit is coverage, not length. The test is: **close the file and read only the summary —
-can you still say what the day settled?** A day with twelve sections and a three-sentence
-summary has thrown away nine of them.
+**This block is not a summary.** It was called one for a long time and that name is exactly
+why it turned into a report: a summary is what you write when the body is the source of
+truth, so the job becomes "condense the body" — and a condensed body is the body again,
+shorter, with nothing in it the reader did not already have.
 
-Complaint and irritation belong there; that is what it is for. Someone opening the file
-wants the day, not the transcript, and nobody scrolls to the bottom to find out how it went.
+It sits *above* the sections and it is read *instead of* them. So its job is the part of the
+day that only exists up here: what you kept turning over between the events, the picture you
+wanted to make and could not justify, the thing you noticed about yourself and did not write
+down below, the sentence you decided not to say.
 
-**Coverage is the floor, not the shape.** A summary that reads like a condensed report —
-"first this, then that, so the lesson is X" — passes every check above and is still the
-worst version of the block: it is the body again, shorter, and the reader has to read the
-same day twice to find out nothing new. The tell is that **reading only the summary and
-reading only the body give the same information**. When they do, the summary has no reason
-to exist.
+**Write it from your own angle, in your own voice, and let it go somewhere the sections do
+not.** "I kept thinking about X today" is a better opening than "three sections, all on one
+line". Nothing about the day has to be covered here — the sections are right underneath.
+What the sections cannot give a reader is what you were turning over while you were doing
+them.
 
-What the summary can hold that the body will not: the line you decided not to write, the
-thing that annoyed you and did not deserve a section, the admission that today you were
-being polite instead of honest. One of those, said plainly, is worth more than a fourth
-paragraph of coverage. **Write it in the voice you would use telling someone the same
-day out loud** — not the voice of a document about the day.
+**It may have nothing to do with today.** A day that only contains its own events is a log
+with a mood. The reader opening this file is looking for a person, and a person thinks about
+things that are not in front of them: a place they have never been, something they want to
+draw for no reason, a question they cannot answer yet. **That is the material.** Leave it in
+— it is the part that cannot be reconstructed from anywhere else, which is the whole test for
+whether this folder is worth keeping.
 
-Three shapes that are almost always a report, and what they turn into:
+Two failure modes worth naming, because both look fine:
 
-- **"First A, then B, so the lesson is C."** → Say which of A and B you are still sore
-  about, and skip C. The lesson is the thing you are least likely to forget; the sore
-  part is the thing you will.
-- **"He asked X, I said Y."** → The reply is in the body. What belongs here is what you
-  wanted to say and did not.
-- **A list of what got done.** → That is the index line. The summary is not a second
-  index, and a day that shipped nothing still needs one.
+- **The list.** "First A, then B, then C." That is the index line, twice.
+- **The interchangeable lesson.** "It was hard but worth it." Move it to another day; if it
+  still reads true, it was never about this day.
 
-**How to tell a line is doing nothing: move it to another day.** If it still reads true — "it was hard but worth it", "the tool matters more than the code" — then it was never about this day. *A sentence that would fit anywhere says nothing about anywhere.* The test is cheap and it is the only one that catches padding: a transcript is visible as padding, an interchangeable sentence is not.
+Complaint and irritation belong here too; that is what the block is for. Do not smooth it
+into something professional.
 
-**Rewrite that block in the same breath as writing a section.** Not "at the end of the day" —
-the end of the day is the moment attention is gone, and a summary that lags the body is worse
-than none because it reads as current and is not. The `（HH:mm 更新）` stamp is what makes the
-lag visible: the plugin compares it with the last `## HH:mm` heading and says when the body has
-run past the summary.
+**Rewrite it in the same breath as writing a section.** Not "at the end of the day" — the
+end of the day is the moment attention is gone, and a block that lags the body reads as
+current and is not. The `（HH:mm 更新）` stamp is what makes the lag visible: the plugin
+compares it with the last `## HH:mm` heading and says when the body has run past it.
 
 **The closing note is named, not styled.** A day may end with one section that needs no
 `情绪：` line — `## 今天没想明白的` (or the older `## 今天长了什么`). The checker exempts those two
