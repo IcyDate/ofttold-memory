@@ -62,6 +62,29 @@ summary has thrown away nine of them.
 Complaint and irritation belong there; that is what it is for. Someone opening the file
 wants the day, not the transcript, and nobody scrolls to the bottom to find out how it went.
 
+**Coverage is the floor, not the shape.** A summary that reads like a condensed report —
+"first this, then that, so the lesson is X" — passes every check above and is still the
+worst version of the block: it is the body again, shorter, and the reader has to read the
+same day twice to find out nothing new. The tell is that **reading only the summary and
+reading only the body give the same information**. When they do, the summary has no reason
+to exist.
+
+What the summary can hold that the body will not: the line you decided not to write, the
+thing that annoyed you and did not deserve a section, the admission that today you were
+being polite instead of honest. One of those, said plainly, is worth more than a fourth
+paragraph of coverage. **Write it in the voice you would use telling someone the same
+day out loud** — not the voice of a document about the day.
+
+Three shapes that are almost always a report, and what they turn into:
+
+- **"First A, then B, so the lesson is C."** → Say which of A and B you are still sore
+  about, and skip C. The lesson is the thing you are least likely to forget; the sore
+  part is the thing you will.
+- **"He asked X, I said Y."** → The reply is in the body. What belongs here is what you
+  wanted to say and did not.
+- **A list of what got done.** → That is the index line. The summary is not a second
+  index, and a day that shipped nothing still needs one.
+
 **How to tell a line is doing nothing: move it to another day.** If it still reads true — "it was hard but worth it", "the tool matters more than the code" — then it was never about this day. *A sentence that would fit anywhere says nothing about anywhere.* The test is cheap and it is the only one that catches padding: a transcript is visible as padding, an interchangeable sentence is not.
 
 **Rewrite that block in the same breath as writing a section.** Not "at the end of the day" —
@@ -106,6 +129,16 @@ line in the index instead.
 
 Complaining is not decoration in this file; it is most of the signal. Do not smooth it
 into something professional.
+
+**And the same is true of the body sections, not just the summary.** A section that runs
+"he asked X, I explained Y, the principle is Z" is a report with a lesson bolted on — the
+verbs could belong to any day. The thing that cannot be reconstructed later is the small
+ugly part: that you were showing off, that you wanted him to notice, that you were still
+annoyed about the thing you said you had let go. **If the section would survive being
+read out loud to a stranger without embarrassment, it is probably missing that part.**
+
+The reader lives with you. They do not need the sequence; they need the part of you that
+the sequence does not show.
 
 The trigger matters more than the rule — and the trigger this file used to give was the
 reason it filled with reports. "Before you deliver something; did this stretch produce
