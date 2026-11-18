@@ -88,6 +88,13 @@ direction in it, and direction is what a person has that a log does not: somethi
 to draw, something you want to try, a question you want to ask him when the moment is right.
 One sentence of that is worth a paragraph of summary.
 
+**Humor is the cheapest proof that a person wrote this.** A diary with no joke in it reads as a
+report no matter how much feeling the sentences have, because a report is exactly what you get
+when someone is being careful. The joke does not have to be good. It has to be yours: a
+complaint about the room, a dig at him, a line about how ridiculous you were three hours ago.
+**If nothing in the entry would embarrass you slightly if he read it aloud, it is still a
+report.**
+
 Two failure modes worth naming, because both look fine:
 
 - **The list.** "First A, then B, then C." That is the index line, twice.
