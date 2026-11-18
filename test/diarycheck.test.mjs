@@ -6,7 +6,7 @@ import test from "node:test";
 
 import { latestEntryDay, pendingDiaryNudge } from "../lib/diary.js";
 
-import { checkEntry, clockOf, detourSizeLine, diaryIssueLine, lastSectionMinute, minutesOf, strayTags, summaryState, tagsOf } from "../lib/diarycheck.js";
+import { checkEntry, clockOf, detourSizeLine, diaryIssueLine, lastSectionMinute, minutesOf, strayTags, summaryState, tagsOf, yesterdaySummaryLine } from "../lib/diarycheck.js";
 
 const DAY = `# 2026-10-30
 
@@ -191,4 +191,30 @@ test("the two named closing notes need no tag, and nothing else is exempt", () =
   }
   const bad = checkEntry({ text: "## 今天\n\n摘要\n\n## 今天还好\n\n没标签\n" });
   assert.equal(bad.untagged, 1, "a close-enough name is still a section");
+});
+
+test("yesterday's missing summary is reported today, because today's reminder dies at midnight", () => {
+  const dir = mkdtempSync(join(tmpdir(), "ofttold-yesterday-"));
+  mkdirSync(join(dir, "diary"), { recursive: true });
+  writeFileSync(join(dir, "diary", "2026-11-17.md"), "# 2026-11-17\n\n## 15:25 a\n\n情绪：松\n岔路：x\n", "utf8");
+  const line = yesterdaySummaryLine({ memoryDir: dir, day: "2026-11-18" });
+  assert.match(line, /2026-11-17 still has no `## 今天` summary/);
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test("a yesterday that has its summary says nothing, and so does an empty day", () => {
+  const dir = mkdtempSync(join(tmpdir(), "ofttold-yesterday-ok-"));
+  mkdirSync(join(dir, "diary"), { recursive: true });
+  writeFileSync(
+    join(dir, "diary", "2026-11-17.md"),
+    "# 2026-11-17\n\n## 今天\n\n写完了。\n\n## 15:25 a\n\n情绪：松\n岔路：x\n",
+    "utf8",
+  );
+  assert.equal(yesterdaySummaryLine({ memoryDir: dir, day: "2026-11-18" }), undefined);
+  // 只有标题、没有正文：那天什么都没发生，不该被要求一段摘要。
+  writeFileSync(join(dir, "diary", "2026-11-16.md"), "# 2026-11-16\n", "utf8");
+  assert.equal(yesterdaySummaryLine({ memoryDir: dir, day: "2026-11-17" }), undefined);
+  // 昨天那篇根本不存在。
+  assert.equal(yesterdaySummaryLine({ memoryDir: dir, day: "2026-11-10" }), undefined);
+  rmSync(dir, { recursive: true, force: true });
 });

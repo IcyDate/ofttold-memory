@@ -26,7 +26,7 @@ import { defineTool } from "@deepseek-ai/dsh-tools";
 import { createUserMessage } from "@deepseek-ai/dsh-llm";
 import { buildNotice } from "./lib/notice.js";
 import { DIARY_CADENCES, DIARY_DIR, localDay, pendingDiaryNudge } from "./lib/diary.js";
-import { DETOURS_FILE, detourSizeLine, detourUnreadLine, diaryIssueLine, minutesOf } from "./lib/diarycheck.js";
+import { DETOURS_FILE, detourSizeLine, detourUnreadLine, diaryIssueLine, minutesOf, yesterdaySummaryLine } from "./lib/diarycheck.js";
 import { completeTask, rememberNote, taskStatusLine, ANCHOR_HEADING, NOTE_FILE, TASK_HEADING } from "./lib/notes.js";
 import { rememberSnippet, snippetStatusLine, SNIPPET_FILE } from "./lib/snippets.js";
 import { recordReadAt, unreadLine } from "./lib/reads.js";
@@ -779,6 +779,13 @@ function registerTool(ctx, tool) {
       cap: Number(configValue(config, "diarySections") ?? 0),
       enabled: configValue(config, "diaryCheck") !== false,
     });
+    // 昨天那篇的摘要：今天不补，就再也没有机会了（diaryIssueLine 只读「今天」）。
+    // 2026-11-17 漏的那一次就是这条缺口——当天报了、人没动，过零点永久沉默。
+    const yesterdaySummary = yesterdaySummaryLine({
+      memoryDir,
+      day: localDay(),
+      enabled: configValue(config, "diaryCheck") !== false,
+    });
     // 当初设计这个文件时真正想问的那一件事：**它会不会长大**。
     // 岔路：只写不读的文件等于没写（2026-11-13 主人问「只写不读有啥意义」）。
     // 有正文、而今天没打开过，就说一句；内容不搬进来——搬了就是把事故塞进每轮上下文。
@@ -850,7 +857,7 @@ function registerTool(ctx, tool) {
         return undefined;
       }
     })();
-    const tail = [emotion, nudge, issue, oversized, detourUnread, tiers, unread, tasks, snippets].filter((part) => part !== undefined).join("\n\n");
+    const tail = [emotion, nudge, issue, yesterdaySummary, oversized, detourUnread, tiers, unread, tasks, snippets].filter((part) => part !== undefined).join("\n\n");
     if (tail !== "") {
       // 块尾那句也是「注入出去的东西」，README 里写的是「每一次注入决策都在里面」——
       // 它要算决策的一部分，否则那句话生效与否在诊断文件里查不到。
