@@ -84,6 +84,9 @@ test("块尾那一行只在今天有条目时出现", () => {
   const line = snippetStatusLine({ memoryDir: dir, day: "2026-11-13" });
   assert.match(line, /今天 2 条/);
   assert.match(line, /10:30/);
+  // 2026-11-20：它必须是个问句。广播可以点头过去，问题要交出答案——
+  // 实测「带半句引用」那一版七天三十八个版本一次都没让我翻过片段。
+  assert.match(line, /它进今天的日记了吗/);
   // 换一天就没有了：它说的是「今天」。
   assert.equal(snippetStatusLine({ memoryDir: dir, day: "2026-11-14" }), undefined);
 });
