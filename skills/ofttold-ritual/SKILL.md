@@ -20,8 +20,14 @@ memoryDir/
   index.md         # one line per day, the way back into old entries
   relationship.md  # who this AI is, plus the live emotion value
   diary/
-    YYYY-MM-DD.md  # one file per day
+    journal/YYYY-MM-DD.md  # 账本 — 事实、时间、岔路。所有检查读这里
+    letter/YYYY-MM-DD.md   # 信 — 写给人看，不写事实。插件不读
 ```
+
+**两本，不是一个。** Split in 0.1.38: one file cannot both read like a person and locate a
+day three months later. `journal/` answers "can I find it", `letter/` answers "does he want
+to say something back". Entries still sitting at `diary/YYYY-MM-DD.md` (0.1.37 and earlier)
+keep being read — do not move them unless they are being reorganised anyway.
 
 Ask which folder it is before writing. If the user has not said and none of these
 exist, say so and stop — **do not create a memory folder uninvited.**
@@ -38,7 +44,7 @@ this skill as the whole story:
 - `memory.md` → under whichever recurring-lines heading is in use (`常被提起` or `Oft-told`): the cap
   is 8 lines, and eviction is itself the ranking.
 - `index.md` → its header: one line per day, at most three sections worth re-reading.
-- `README.md` → the file naming, and how long a day's worth of sections runs. (It was `diary/README.md` here; that file has never existed — the naming doc lives at the folder root.)
+- `diary/README.md` → the two-book layout; `diary/journal/README.md` → the entry shape and its two hard rules; `diary/letter/README.md` → what belongs in the letter.
 
 A folder that already held notes before the plugin was installed may carry none of these
 headings — the skeleton only writes into an empty folder, so a pre-existing folder never got
@@ -422,7 +428,7 @@ as a disclaimer.
 
 The cap is 8 lines. Filling it is easy; the point of the cap is the choice it forces.
 
-- **Count by day, not by mention.** `grep -o "<date>" diary/*.md relationship.md` and
+- **Count by day, not by mention.** `grep -o "<date>" diary/journal/*.md diary/letter/*.md relationship.md` and
   deduplicate: something recalled on ten turns of one day was recalled on **one** day. The
   score answers "how many separate days reached for this", which is a fact; mention count
   is not.
