@@ -247,3 +247,18 @@ test("a letter in diary/letter/ is not a journal entry", () => {
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("the summary is looked for in the letter, not the journal", () => {
+  // 0.1.38：账本记事实，`## 今天` 那段搬进了信。检查要是还盯着账本，写完了也报没写。
+  const dir = folder();
+  try {
+    mkdirSync(join(dir, "diary", "journal"), { recursive: true });
+    mkdirSync(join(dir, "diary", "letter"), { recursive: true });
+    writeFileSync(join(dir, "diary", "journal", "2026-10-30.md"), "# 2026-10-30\n\n## 09:50 做过的事\n\n情绪：定\n\n正文。\n");
+    writeFileSync(join(dir, "diary", "letter", "2026-10-30.md"), "# 2026-10-30\n\n## 今天\n\n今天心里在转一件事。\n");
+    const line = diaryIssueLine({ memoryDir: dir, day: "2026-10-30", nowMinute: 18 * 60, summaryFrom: 18 * 60 });
+    assert.doesNotMatch(String(line), /no `## 今天` summary/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

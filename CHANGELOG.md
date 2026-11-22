@@ -24,6 +24,7 @@
 
 - `diary/README.md` 改成「两本，不是一本」，上半页讲目录和判据的分工。
 - 新增模板 `templates/diary-journal-README.md` 与 `templates/diary-letter-README.md`。
+- **摘要检查改看信**：`## 今天` 那段搬进 `letter/` 之后，`diaryIssueLine` 和 `yesterdaySummaryLine` 都改成先读信、读不到再回落到账本——不然账本写完了也会报「no `## 今天` summary」，逼着把摘要又搬回去。
 
 ## [0.1.37] — 2026-11-20
 
