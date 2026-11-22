@@ -284,7 +284,7 @@ test("the block ends by saying the day is not written yet", async () => {
   const decision = await h.drive({ step: 1 });
   const text = decision.messages[0].content[0].text;
   assert.match(text, /no diary entry for today|no diary entry for \d{4}-\d{2}-\d{2} yet/);
-  assert.match(text, /diary\/\d{4}-\d{2}-\d{2}\.md/);
+  assert.match(text, /diary\/journal\/\d{4}-\d{2}-\d{2}\.md/);
   // 编排：日记提醒在最前，`relationship.md` 的「今天没打开」紧随，待办在最后。
   const diaryAt = text.search(/- no diary entry for/);
   const unreadAt = text.search(/- `relationship\.md` has not been opened today/);

@@ -1,4 +1,20 @@
-# diary/ — 一天一个文件 / one file per day
+# diary/ — 两本，不是一本
+
+```
+diary/
+├── journal/YYYY-MM-DD.md   账本：事实、时间、哪一步出错      ← 所有检查读这里
+└── letter/YYYY-MM-DD.md    信：今天心里在转什么，不写事实    ← 没人查，也不能变成交作业
+```
+
+两本分开的理由：一篇同时要干两件互相打架的事——写得有人味，和写得能定位——结果两样都不够好。
+
+账本用 `journal/`，信放 `letter/`。**旧的账本可能还躺在 `diary/` 根上，插件两处都读，不用搬。**
+
+下面是账本的写法。
+
+---
+
+## 账本：一天一个文件 / one file per day
 
 File name: `YYYY-MM-DD.md`, for example `2026-10-29.md`. If today's file already
 exists, append a `## HH:mm` section instead of starting a new file.

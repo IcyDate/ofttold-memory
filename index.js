@@ -25,7 +25,7 @@
 import { defineTool } from "@deepseek-ai/dsh-tools";
 import { createUserMessage } from "@deepseek-ai/dsh-llm";
 import { buildNotice } from "./lib/notice.js";
-import { DIARY_CADENCES, DIARY_DIR, localDay, pendingDiaryNudge } from "./lib/diary.js";
+import { DIARY_CADENCES, DIARY_DIR, JOURNAL_DIR, entryPath, localDay, pendingDiaryNudge } from "./lib/diary.js";
 import { DETOURS_FILE, detourSizeLine, detourUnreadLine, diaryIssueLine, minutesOf, yesterdaySummaryLine } from "./lib/diarycheck.js";
 import { completeTask, rememberNote, taskStatusLine, ANCHOR_HEADING, NOTE_FILE, TASK_HEADING } from "./lib/notes.js";
 import { rememberSnippet, snippetStatusLine, SNIPPET_FILE } from "./lib/snippets.js";
@@ -419,18 +419,33 @@ function watchDiaryWrites(ctx, config) {
     try {
       const shown = String(target?.displayPath ?? "");
       const day = localDay();
-      if (!shown.endsWith(`${DIARY_DIR}/${day}.md`) && !shown.endsWith(`${DIARY_DIR}\\${day}.md`)) return;
+      // 账本从 0.1.38 起落在 `diary/journal/`，旧的还在 `diary/` 根上；两处都算今天的账本。
+      if (
+        !shown.endsWith(`${DIARY_DIR}/${JOURNAL_DIR}/${day}.md`) &&
+        !shown.endsWith(`${DIARY_DIR}\\${JOURNAL_DIR}\\${day}.md`) &&
+        !shown.endsWith(`${DIARY_DIR}/${day}.md`) &&
+        !shown.endsWith(`${DIARY_DIR}\\${day}.md`)
+      )
+        return;
       const memoryDir = memoryDirectory(exec?.agent, config);
       // 和 relationship.md 那条一样：相对路径按会话工作区解析，不按插件进程的 cwd。
       const base = exec?.agent?.session?.header?.cwd ?? process.cwd();
       const full = isAbsolute(shown) ? shown : resolve(base, shown);
-      if (resolve(join(memoryDir, DIARY_DIR, `${day}.md`)) !== resolve(full)) return;
+      if (resolve(entryPath(memoryDir, day)) !== resolve(full)) {
+        // entryPath 只在文件已存在时回落到旧位置；刚写入时也可能两处都还没有，
+        // 那就按新位置比一次，别因为「文件还没被读进来」漏掉这条写入。
+        const candidates = [
+          join(memoryDir, DIARY_DIR, JOURNAL_DIR, `${day}.md`),
+          join(memoryDir, DIARY_DIR, `${day}.md`),
+        ].map((candidate) => resolve(candidate));
+        if (!candidates.includes(resolve(full))) return;
+      }
       const synced = syncEmotionFromDiary({ memoryDir, day, stamp: localStamp() });
       if (synced.changed) {
         ctx.logger?.info?.(
           "ofttold-memory: live emotion followed today's entry to `%s` (copied from %s/%s.md)",
           synced.word,
-          DIARY_DIR,
+          `${DIARY_DIR}/${JOURNAL_DIR}`,
           day,
         );
       }

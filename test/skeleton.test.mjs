@@ -43,7 +43,7 @@ test("the skeleton lays down all five files in an empty folder", () => {
   const dir = mkdtempSync(join(tmpdir(), "ofttold-skeleton-"));
   const result = scaffoldMemory(dir);
   assert.equal(result.skipped, false);
-  assert.deepEqual(result.createdFiles, ["memory.md", "index.md", "relationship.md", "detours.md", "snippets.md", "diary/README.md"]);
+  assert.deepEqual(result.createdFiles, ["memory.md", "index.md", "relationship.md", "detours.md", "snippets.md", "diary/README.md", "diary/journal/README.md", "diary/letter/README.md"]);
   assert.ok(existsSync(join(dir, "memory.md")));
   assert.ok(existsSync(join(dir, "index.md")));
   assert.ok(existsSync(join(dir, "relationship.md")));
@@ -81,7 +81,7 @@ test("an existing notes folder gains only the files it is missing", () => {
   writeFileSync(join(dir, "index.md"), mine, "utf8");
   const result = scaffoldMemory(dir);
   assert.equal(result.skipped, false);
-  assert.deepEqual(result.createdFiles, ["memory.md", "relationship.md", "detours.md", "snippets.md", "diary/README.md"]);
+  assert.deepEqual(result.createdFiles, ["memory.md", "relationship.md", "detours.md", "snippets.md", "diary/README.md", "diary/journal/README.md", "diary/letter/README.md"]);
   assert.equal(readFileSync(join(dir, "index.md"), "utf8"), mine, "the file that was already there must be untouched");
 });
 

@@ -43,7 +43,7 @@ test("an unwritten day is named, with the file it expects", () => {
     writeFileSync(join(dir, "diary", "2026-10-28.md"), "# entry\n");
     const line = pendingDiaryNudge(dir, new Date(2026, 9, 30, 9, 0));
     assert.ok(line !== undefined);
-    assert.match(line, /diary\/2026-10-30\.md/);
+    assert.match(line, /diary\/journal\/2026-10-30\.md/);
     // 这一行是状态，不是指令：它只说「今天没有」，把「怎么写」留给注入块开头那句和 skill。
     // 指令语气会和同一块尾的体检报告抢注意力，两边都变得可跳过。
     assert.doesNotMatch(line, /ofttold-ritual|must|should/, "the status line must not read as an instruction");
@@ -203,6 +203,46 @@ test("an entry that exists but has not been touched for hours says when it stopp
       pendingDiaryNudge(dir, new Date(2026, 9, 30, 12, 55), "daily", { staleHours: 2 }),
       "the line names an hour and a threshold, not a live countdown",
     );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("a journal entry under diary/journal/ counts as today being written", () => {
+  // 0.1.38 起账本落在 diary/journal/。文件在子目录里而检查还在根上找，
+  // 是这次拆分最容易漏的一处：插件会天天说「今天没写」。
+  const dir = folder();
+  try {
+    mkdirSync(join(dir, "diary", "journal"));
+    writeFileSync(join(dir, "diary", "journal", "2026-10-30.md"), "# entry\n");
+    const line = pendingDiaryNudge(dir, new Date(2026, 9, 30, 9, 0));
+    assert.equal(line, undefined);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("an entry still sitting in diary/ keeps counting after the upgrade", () => {
+  // 老用户的账本全在根上。一升级就「今天没写」是拿命名习惯惩罚人，所以两处都读。
+  const dir = folder();
+  try {
+    writeFileSync(join(dir, "diary", "2026-10-30.md"), "# entry\n");
+    const line = pendingDiaryNudge(dir, new Date(2026, 9, 30, 9, 0));
+    assert.equal(line, undefined);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("a letter in diary/letter/ is not a journal entry", () => {
+  // 信不进任何检查——它没有「今天必须写」这回事，也不该把账本的 nudge 挡掉。
+  const dir = folder();
+  try {
+    mkdirSync(join(dir, "diary", "letter"), { recursive: true });
+    writeFileSync(join(dir, "diary", "letter", "2026-10-30.md"), "# 信\n");
+    const line = pendingDiaryNudge(dir, new Date(2026, 9, 30, 9, 0));
+    // 一封信不算账本：这时该说的是「还没有任何账本」，而不是「今天还没写」。
+    assert.match(line, /no entries yet/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
