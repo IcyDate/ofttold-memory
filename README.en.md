@@ -28,6 +28,25 @@
 
 ---
 
+
+## In thirty seconds
+
+**What it is.** A DeepSeek Harness (DSH) plugin. At the start of every session it injects a **hand-written** markdown memory list into the context — so you never re-explain who you are, what you were doing, or where you left off.
+
+**What it is not.** Not a vector store, not RAG, and it does not summarise your conversations. It reads the files you wrote, truncates and orders them by rule, and injects once.
+
+**Requires** Node.js 22+ / DSH 1.x.
+
+```sh
+dsh plugin --profile web add ofttold-memory@latest
+```
+
+Then point `memoryDir` at a folder (or let it create `.ofttold/` in place). **Day one it is empty** — it needs a few days of living with you first.
+
+---
+
+## What it is (in plain language)
+
 Every day something goes in: what you did together, what it made of it, where it keeps
 getting a step wrong. Before it speaks, it opens the notebook and reads back through it —
 **so what it remembers is not only what you said, but what it thought about what you said.**
@@ -42,20 +61,67 @@ Over time you grow your own 大肥鱼 — **not quite the same one as anybody el
 
 ---
 
-## What changes, and when
 
-| | What you will see |
-|---|---|
-| Day 1 | The notebook is empty. It starts writing; the most you will notice is a line at the end of a reply saying today is unwritten. |
-| Day 3 | It starts picking up where you left off — "the thing you mentioned last time" — and that is *its own* record of it, not you saying it again. |
-| Day 10 | It has its own way of putting things: what it makes of you, where it keeps going wrong, how it feels today. Ask it "what do you have on me" and it can answer. |
-| A month in | A few hundred lines, but only eight are put in front of it — **filling up does not slow it down.** |
+## The problem
 
-The delay is the design. **This is not something that takes effect when it is installed; it is something that grows by a day at a time.**
+A language model has no state: every new conversation starts blank.
+
+The two common answers both fall short:
+
+- **Re-explain everything each time** — you will miss things, and you repeat yourself daily.
+- **Automatic retrieval (vector store / RAG)** — the snippets often miss the point, and you lose control over *what* it remembers.
+
+This plugin takes a third path: **a hand-written list, with weights computed by code.** What deserves remembering belongs to the person writing; what sinks belongs to the plugin. The dividing line is single: **would a failure be visible?** If not, code handles it. If you would see it, it stays yours.
 
 ---
 
+## An example
+
+Once installed, every session opens with a block like this (illustrative content, not real data):
+
+```markdown
+### Oft-told (8 entries; the list sinks when full)
+
+- **Check the date before answering** → from 2026-10-01 | run `date` before writing "today"; convert relative times to dates
+- **Ask first, then act** → from 2026-10-03 | say which files you are about to touch, before touching them
+- **When unsure, leave a line** → from 2026-10-09 | one extra line takes a second to delete; a missing one never comes back
+
+### Open tasks
+- [ ] since 2026-10-05 | replace hardcoded paths in the deploy script with config (2 days overdue)
+
+> Diary written at 11:20 today · diary present
+```
+
+That block rides along with every turn, while costing you none of what you actually write. You stop briefing it; it stops guessing.
+
+---
+
+
+
+## How it works
+
+
+> The notebook is a handful of markdown files on your own machine. Once at the start of a
+> session it is read and injected, and from then on it is part of the context every turn —
+> **zero cost after the first turn.** 600 characters is about 400 tokens, charged once per
+> session. The few settings worth changing are in [configuration](docs/config.md).
+
+```mermaid
+flowchart LR
+    A[your notebook<br/>memory.md] -->|by section heading| B[read + truncate]
+    B --> C[inject once<br/>as a user message]
+    C --> D[session context]
+    D -->|stays in history| E[every later turn]
+    D -.->|optional<br/>refreshAfterMessages| C
+```
+
+One read, one injection. No index, no embeddings, no database, no second pass.
+
+---
+
+
 ## What it does, and what it leaves alone
+
 
 **It does** the things that should happen every time and reliably get skipped:
 
@@ -81,7 +147,9 @@ code, visible ones stay with the writer. Reasoning is in
 
 ---
 
+
 ## What it costs in tokens
+
 
 > **Injected once per session — but it stays in the context and is re-sent every turn** (at the cache-hit price). So it costs per *turn*, not per *session*.
 
@@ -104,7 +172,24 @@ To see your own bill: the session log stores `inputTokens` / `cacheReadTokens` /
 
 ---
 
+
+## What changes, and when
+
+
+| | What you will see |
+|---|---|
+| Day 1 | The notebook is empty. It starts writing; the most you will notice is a line at the end of a reply saying today is unwritten. |
+| Day 3 | It starts picking up where you left off — "the thing you mentioned last time" — and that is *its own* record of it, not you saying it again. |
+| Day 10 | It has its own way of putting things: what it makes of you, where it keeps going wrong, how it feels today. Ask it "what do you have on me" and it can answer. |
+| A month in | A few hundred lines, but only eight are put in front of it — **filling up does not slow it down.** |
+
+The delay is the design. **This is not something that takes effect when it is installed; it is something that grows by a day at a time.**
+
+---
+
+
 ## Quick start
+
 
 ```sh
 dsh plugin --profile web add ofttold-memory@latest
@@ -127,12 +212,17 @@ profile's `cordis.patch.yml` by hand.
 
 ---
 
+
 ## What goes in the file
+
 
 ```markdown
 # My memory
 
+---
+
 ## Oft-told
+
 
 > Cap of 8 suggested. When it is full, one entry is evicted — and the eviction
 > itself is the ranking, which beats "add one whenever it comes to mind".
@@ -140,11 +230,17 @@ profile's `cordis.patch.yml` by hand.
 - **Where the project is** → `~/work/my-project` | saves asking every time
 - **What not to touch** → do not edit `config/prod.yml`
 
+---
+
 ## Who I am
+
 
 - (how you address me, speech habits, temper, what I care about)
 
+---
+
 ## Hard rules
+
 
 - (things whose absence causes wrong work: who owns what, commands never to run)
 ```
@@ -154,7 +250,10 @@ mistake? Not "important", not "mentioned often" — *"not seeing this would brea
 the work"*. Written to that test, eight entries are plenty; written to "important",
 nothing is ever enough.
 
+---
+
 ## A full list does not keep growing
+
 
 Past eight lines the plugin **ranks which one sinks** rather than asking anyone to delete
 one: what gets reached for stays, what has gone quiet drops out of view. Sinking is **not
@@ -162,7 +261,10 @@ deleting** — the line is still in the file, and one mention in a diary day flo
 
 The formula and its reasoning are in **[Design notes § the sinking mechanism](docs/design.en.md)**.
 
+---
+
 ## The day opens with a paragraph
+
 
 A day's file starts with `## 今天（17:40 更新）` — two or three sentences saying what the day
 was and what it was like, grumbling included. Detail lives below it, for whoever wants it.
@@ -172,7 +274,10 @@ It is **rewritten as the day is written**, not filled in at night. The plugin co
 its summary is named instead of quietly going stale. `summaryFrom` (default `17:30`) holds
 the requirement back until the day is actually far enough along to summarise.
 
+---
+
 ## The diary check
+
 
 The same line reports three more things, and **reports only**:
 
@@ -193,7 +298,10 @@ exactly the failure this plugin exists to remove, so the check names it.
 **Why it never repairs anything**: consolidating means compressing, and compressing deletes
 the evidence the weight counts. Reasoning in **[Design notes](docs/design.en.md)**.
 
+---
+
 ## Setting an emotion
+
 
 The `**现在**` line in `relationship.md` is the **live value**: the feeling right now, no
 reason attached. It is written by tool, not by remembering a format:
@@ -219,7 +327,10 @@ section: that would quietly undo a value set by hand.
 get it wrong are silent — a word outside the list stops matching any diary tag, and a stale
 timestamp makes the cache look fresher than it is.
 
+---
+
 ## When the index needs tiers
+
 
 `index.md` is one line per day, and sooner or later reading it costs thousands of tokens.
 So it has three layers: hot = the last 14 days kept in full, warm = older days merged four
@@ -246,7 +357,10 @@ twice, one copy already stale, and both read like the real one.
 An index without `## 热层` / `## 温层` / `## 冷层` headings gets nothing at all: that is a
 structure nobody chose, and an alarm about something unrecognised is only noise.
 
+---
+
 ## The line at the end
+
 
 If the folder has a `diary/`, the injected block closes with one status line:
 
@@ -283,7 +397,9 @@ Without a due date a task only ever ages — `the oldest open 5 days` is an age,
 
 ---
 
+
 ## The settings that matter
+
 
 | Setting | Default | Meaning |
 | --- | --- | --- |
@@ -305,27 +421,9 @@ behaviour are in **[Configuration](docs/config.en.md)**.
 
 ---
 
-## How it works
-
-> The notebook is a handful of markdown files on your own machine. Once at the start of a
-> session it is read and injected, and from then on it is part of the context every turn —
-> **zero cost after the first turn.** 600 characters is about 400 tokens, charged once per
-> session. The few settings worth changing are in [configuration](docs/config.md).
-
-```mermaid
-flowchart LR
-    A[your notebook<br/>memory.md] -->|by section heading| B[read + truncate]
-    B --> C[inject once<br/>as a user message]
-    C --> D[session context]
-    D -->|stays in history| E[every later turn]
-    D -.->|optional<br/>refreshAfterMessages| C
-```
-
-One read, one injection. No index, no embeddings, no database, no second pass.
-
----
 
 ## When nothing appears
+
 
 A missing file or a renamed heading never throws. **When no section loads at all, the block
 says what it tried:**
@@ -359,7 +457,9 @@ install rather than the content.
 
 ---
 
+
 ## What it touches, and what it leaves alone
+
 
 For a supply-chain reviewer. This plugin reads and writes files — that cannot be
 declared away — so here is exactly what:
@@ -382,7 +482,9 @@ filled in; an unwritable path goes quiet instead of retrying.
 
 ---
 
+
 ## Where the name comes from
+
 
 This plugin was extracted from a working arrangement between one person and one
 agent, and it kept the name they gave it.
@@ -401,7 +503,9 @@ out of something the model had to remember into context it cannot miss.**
 
 ---
 
+
 ## Why not just put it in `AGENTS.md`?
+
 
 Because an instruction and an injected message are not paid for the same way.
 
@@ -420,13 +524,17 @@ block.
 
 ---
 
+
 ## Other harnesses
+
 
 **Planned.** The plugin is tied to DSH; the same idea is meant to ship as a skill that any
 harness can read. It has not run on a second harness yet, so no usage is documented here.
 
 ---
 
+
 ## License
+
 
 MIT.
